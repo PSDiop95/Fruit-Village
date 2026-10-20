@@ -70,6 +70,9 @@ enum Quality { LOW, MEDIUM, HIGH }
 ## Hit-stop : temps réel figé et échelle de temps pendant ce gel.
 @export var hitstop_time: float = 0.04
 @export var hitstop_time_scale: float = 0.05
+## Pas de temps réel max compté par frame pour les ralentis (s) : une frame
+## lente (chargement, à-coup) ne consomme pas tout un hit-stop d'un coup.
+@export var time_scale_max_step: float = 0.034
 ## Zoom caméra (fraction de la taille orthographique) et durée aller-retour.
 @export var combo_zoom: float = 0.04
 @export var combo_zoom_time: float = 0.25

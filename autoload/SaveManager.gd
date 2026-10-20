@@ -9,6 +9,8 @@ const DEFAULT_SETTINGS := {
 	&"music_on": true,
 	&"sfx_on": true,
 	&"vibration_on": true,
+	## -1 = automatique (VisualQuality.detect), sinon JuiceConfig.Quality.
+	&"quality": -1,
 }
 
 ## Surchargeable (tests) pour ne jamais toucher la vraie sauvegarde joueur.
@@ -85,4 +87,6 @@ func load_data() -> void:
 		if saved is Dictionary:
 			for k in DEFAULT_SETTINGS:
 				if saved.has(String(k)):
-					settings[k] = saved[String(k)]
+					var v: Variant = saved[String(k)]
+					# JSON relit les entiers en flottants : on garde le type par défaut.
+					settings[k] = int(v) if DEFAULT_SETTINGS[k] is int else v

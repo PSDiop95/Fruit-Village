@@ -61,6 +61,63 @@ static func eye_highlight_mesh(color: Color) -> SphereMesh:
 		return m)
 
 
+## Visage complet d'une expression (yeux + reflets + bouche) fusionné en un
+## seul mesh à couleurs de sommets : 1 draw call par fruit au lieu de 5.
+## Repère : origine = point avant d'une sphère unité (visage en (0, 0, 1)).
+static func face_mesh(mood: int, closed: bool, cfg: JuiceConfig) -> ArrayMesh:
+	return _cached("face_%d_%d" % [mood, int(closed)], _build_face.bind(mood, closed, cfg))
+
+
+static func _build_face(mood: int, closed: bool, cfg: JuiceConfig) -> ArrayMesh:
+	var eye_scale := Vector3.ONE
+	var highlights := true
+	if closed:
+		eye_scale = Vector3(1.2, 0.15, 1.0)
+		highlights = false
+	elif mood == FruitFace.Mood.SQUASHED:
+		eye_scale = Vector3(1.15, 0.3, 1.0)
+		highlights = false
+	elif mood == FruitFace.Mood.FEAR:
+		eye_scale = Vector3(1.25, 1.3, 1.0)
+	var ex := 0.33
+	var ey := 0.15
+	var ez := sqrt(1.0 - ex * ex - ey * ey) - 1.0
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for side in [-1.0, 1.0]:
+		var eye_xf := Transform3D(Basis.from_scale(eye_scale), Vector3(ex * side, ey, ez))
+		_append(st, eye_mesh(cfg.eye_color), eye_xf, cfg.eye_color)
+		if highlights:
+			_append(st, eye_highlight_mesh(cfg.eye_highlight_color),
+				eye_xf * Transform3D(Basis.IDENTITY, Vector3(0.035, 0.045, 0.1)), cfg.eye_highlight_color)
+	_append(st, mouth_mesh(mood, cfg.mouth_color), Transform3D(Basis.IDENTITY, Vector3(0, -0.28, 0)),
+		cfg.mouth_color)
+	var m := st.commit()
+	m.surface_set_material(0, _face_material())
+	return m
+
+
+## Ajoute les triangles de `src` (surface 0) transformés, en couleur unie.
+static func _append(st: SurfaceTool, src: Mesh, xf: Transform3D, color: Color) -> void:
+	var arrays := src.surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var idx = arrays[Mesh.ARRAY_INDEX]
+	st.set_color(color)
+	if idx != null and idx.size() > 0:
+		for i in idx:
+			st.add_vertex(xf * verts[i])
+	else:
+		for v in verts:
+			st.add_vertex(xf * v)
+
+
+static func _face_material() -> StandardMaterial3D:
+	return _cached("face_mat", func() -> StandardMaterial3D:
+		var mat := unshaded(Color.WHITE, true)
+		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		return mat)
+
+
 ## Bouches (plan XY, visage de rayon 1) : polyline épaisse ou forme pleine.
 static func mouth_mesh(mood: int, color: Color) -> ArrayMesh:
 	return _cached("mouth_%d" % mood, _build_mouth.bind(mood, color))

@@ -1,11 +1,14 @@
 class_name FruitVisual
 extends Node3D
-## Rendu d'un fruit (placeholder) : sphère + visage procédural + animations
-## squash & stretch. N'agit QUE sur les nœuds visuels, jamais sur la collision.
+## Rendu d'un fruit : modèle 3D toon (M3, repli sphère M2) + visage procédural
+## + animations squash & stretch. N'agit QUE sur les nœuds visuels, jamais sur
+## la collision.
 ##
 ## Hiérarchie : FruitVisual (taille, pilotée par Fruit)
 ##   └ _anim (squash/stretch/respiration/tremblement, axes monde)
-##       └ _body (échelle = rayon) : sphère, yeux, bouche, numéro
+##       └ _body (échelle = rayon, unités normalisées)
+##           ├ _mesh (modèle en mètres, échelle 1/rayon) · _halo
+##           └ _face (ancre « face_anchor » du modèle) : yeux, bouche, numéro
 
 var config: JuiceConfig
 var face := FruitFace.new()
@@ -19,9 +22,14 @@ var radius: float = 0.3
 var _anim: Node3D
 var _body: Node3D
 var _mesh: MeshInstance3D
-var _eyes: Array[MeshInstance3D] = []
-var _highlights: Array[MeshInstance3D] = []
-var _mouth: MeshInstance3D
+var _face: Node3D
+var _halo: MeshInstance3D
+## Ombre « tache » (qualité Bas) : hors hiérarchie animée, posée sur le fond.
+var _blob: MeshInstance3D
+## Rendu regroupé (partie) : visage et ombre dessinés par FruitBatcher.
+var _batcher: FruitBatcher
+## Visage complet (yeux + reflets + bouche) en un seul mesh par expression.
+var _face_mesh: MeshInstance3D
 var _number: Label3D
 
 var _time: float = 0.0
@@ -54,25 +62,14 @@ func _build() -> void:
 	_anim.add_child(_body)
 	_mesh = MeshInstance3D.new()
 	_body.add_child(_mesh)
+	_face = Node3D.new()
+	_body.add_child(_face)
 
-	var ex := 0.33
-	var ey := 0.15
-	var ez := sqrt(1.0 - ex * ex - ey * ey)
-	for side in [-1.0, 1.0]:
-		var eye := MeshInstance3D.new()
-		eye.mesh = FxMeshes.eye_mesh(config.eye_color)
-		eye.position = Vector3(ex * side, ey, ez)
-		_body.add_child(eye)
-		_eyes.append(eye)
-		var hl := MeshInstance3D.new()
-		hl.mesh = FxMeshes.eye_highlight_mesh(config.eye_highlight_color)
-		hl.position = Vector3(0.035, 0.045, 0.1)
-		eye.add_child(hl)
-		_highlights.append(hl)
-
-	_mouth = MeshInstance3D.new()
-	_mouth.position = Vector3(0, -0.28, 1.0)
-	_body.add_child(_mouth)
+	# Repère du visage : origine = point de surface avant (z = 0), comme sur
+	# une sphère unité dont le visage est centré en (0, 0, 1). 1 draw call.
+	_face_mesh = MeshInstance3D.new()
+	_face_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_face.add_child(_face_mesh)
 
 	if config.show_rank_numbers:
 		_number = Label3D.new()
@@ -80,8 +77,8 @@ func _build() -> void:
 		_number.font_size = 48
 		_number.outline_size = 10
 		_number.modulate = Color(1, 1, 1, 0.85)
-		_number.position = Vector3(0, -0.62, 1.0)
-		_body.add_child(_number)
+		_number.position = Vector3(0, -0.62, 0.0)
+		_face.add_child(_number)
 	_refresh_face()
 
 
@@ -89,10 +86,98 @@ func _build() -> void:
 func apply_def(p_rank: int, def: FruitDef) -> void:
 	rank = p_rank
 	radius = def.radius
-	_mesh.mesh = FxMeshes.fruit_mesh(p_rank, def.color)
 	_body.scale = Vector3.ONE * radius
+	var model := FruitModels.get_model(def.id)
+	if model:
+		_mesh.mesh = model.mesh
+		_mesh.material_override = FruitModels.fruit_material()
+		_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_mesh.scale = Vector3.ONE / radius
+		_face.position = model.face_position / radius
+		_face.scale = Vector3.ONE * model.face_scale
+		_mesh.set_instance_shader_parameter(&"outline_radial", FruitModels.outline_radial_for(def.id))
+	else:
+		_mesh.mesh = FxMeshes.fruit_mesh(p_rank, def.color)
+		_mesh.material_override = null
+		_mesh.scale = Vector3.ONE
+		_face.position = Vector3(0, 0, 1)
+		_face.scale = Vector3.ONE
+	_apply_halo(p_rank)
+	_update_blob_visibility()
 	if _number:
 		_number.text = str(p_rank + 1)
+
+
+## Halo additif derrière les fruits précieux (data/visual.tres).
+func _apply_halo(p_rank: int) -> void:
+	var on := FruitModels.is_halo_rank(p_rank)
+	if on and _halo == null:
+		var vc := FruitModels.get_config()
+		_halo = MeshInstance3D.new()
+		var q := QuadMesh.new()
+		q.size = Vector2.ONE * vc.halo_size
+		q.material = FxMeshes.additive_material(vc.halo_color, 2)
+		_halo.mesh = q
+		_halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_body.add_child(_halo)
+	if _halo:
+		_halo.visible = on
+		# Derrière le fruit mais devant le fond du panier (z monde ≈ -0,95).
+		_halo.position = Vector3(0, 0, -minf(0.95 / maxf(radius, 0.01), 1.0))
+
+
+## Matériau courant (après changement de qualité).
+func refresh_material() -> void:
+	if _mesh.material_override:
+		_mesh.material_override = FruitModels.fruit_material()
+	_update_blob_visibility()
+
+
+## Visage + ombre rendus en MultiMesh par `batcher` (1 draw call pour tous).
+func use_batcher(batcher: FruitBatcher) -> void:
+	_batcher = batcher
+	_face_mesh.visible = false
+	if _blob:
+		_blob.queue_free()
+		_blob = null
+	batcher.register(self)
+
+
+func batched_face_key() -> Vector2i:
+	return Vector2i(face.mood, int(_eyes_closed))
+
+
+func batched_face_mesh() -> Mesh:
+	return FxMeshes.face_mesh(face.mood, _eyes_closed, config)
+
+
+func batched_face_transform() -> Transform3D:
+	return _face_mesh.global_transform
+
+
+func batched_blob_visible() -> bool:
+	return body != null and FruitModels.blob_shadows()
+
+
+## Ombre sur le fond du panier, décalée selon la lumière, à la taille du fruit.
+func batched_blob_transform() -> Transform3D:
+	var vc := FruitModels.get_config()
+	var r := radius * scale.x
+	var p := body.global_position
+	return Transform3D(Basis.from_scale(Vector3.ONE * r * vc.blob_shadow_scale),
+		Vector3(p.x + vc.blob_shadow_offset.x * r, p.y + vc.blob_shadow_offset.y * r, -0.97))
+
+
+func _update_blob_visibility() -> void:
+	var want := body != null and FruitModels.blob_shadows() and _batcher == null
+	if want and _blob == null:
+		_blob = MeshInstance3D.new()
+		_blob.mesh = FruitModels.blob_mesh()
+		_blob.top_level = true
+		_blob.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(_blob)
+	if _blob:
+		_blob.visible = want
 
 
 # ---------------------------------------------------------------- Événements
@@ -144,6 +229,11 @@ func anim_scale() -> Vector3:
 
 func _process(delta: float) -> void:
 	_time += delta
+	if _blob and _blob.visible and body:
+		_blob.global_transform = batched_blob_transform()
+	if _halo and _halo.visible:
+		var vc := FruitModels.get_config()
+		_halo.scale = Vector3.ONE * (1.0 + sin(_time * vc.halo_pulse_speed) * vc.halo_pulse_amplitude)
 	if _squash_t < 1.0:
 		_squash_t = minf(_squash_t + delta / config.impact_recover_time, 1.0)
 	if _pop_t < 1.0:
@@ -224,21 +314,7 @@ static func _spring_remaining(p: float) -> float:
 
 
 func _refresh_face() -> void:
-	if _mouth == null:
+	if _face_mesh == null:
 		return
-	var e := face.mood
 	_eyes_closed = face.eyes_closed()
-	_mouth.mesh = FxMeshes.mouth_mesh(e, config.mouth_color)
-	var eye_scale := Vector3.ONE
-	var hl_visible := true
-	if _eyes_closed:
-		eye_scale = Vector3(1.2, 0.15, 1.0)
-		hl_visible = false
-	elif e == FruitFace.Mood.SQUASHED:
-		eye_scale = Vector3(1.15, 0.3, 1.0)
-		hl_visible = false
-	elif e == FruitFace.Mood.FEAR:
-		eye_scale = Vector3(1.25, 1.3, 1.0)
-	for i in _eyes.size():
-		_eyes[i].scale = eye_scale
-		_highlights[i].visible = hl_visible
+	_face_mesh.mesh = FxMeshes.face_mesh(face.mood, _eyes_closed, config)

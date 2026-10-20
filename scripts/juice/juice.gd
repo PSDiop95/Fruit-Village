@@ -10,6 +10,8 @@ const FX_Z := 2.6  # plan des effets, devant les fruits et le panier
 var config: JuiceConfig
 var game: Game
 var reduced: bool = false
+## Baisse auto de qualité sur FPS faibles : seulement si le joueur est en « Auto ».
+var auto_quality_allowed: bool = true
 var show_fps: bool = false
 var quality: int = JuiceConfig.Quality.HIGH
 
@@ -456,7 +458,7 @@ func _process(delta: float) -> void:
 	# Temps réel = delta non ralenti (compatible Movie Maker, à pas fixe).
 	var real_dt := clampf(delta / maxf(Engine.time_scale, 0.0001), 0.0, 0.1)
 
-	Engine.time_scale = time_scaler.update(real_dt)
+	Engine.time_scale = time_scaler.update(minf(real_dt, config.time_scale_max_step))
 
 	var off := shake.update(real_dt)
 	_camera.h_offset = off.x
@@ -553,14 +555,14 @@ func _update_freeze(dt: float) -> void:
 
 
 func _update_fps(real_dt: float) -> void:
-	if config.auto_quality and quality > JuiceConfig.Quality.LOW:
+	if config.auto_quality and auto_quality_allowed and quality > JuiceConfig.Quality.LOW:
 		_q_warmup -= real_dt
 		if _q_warmup <= 0.0:
 			_q_time += real_dt
 			_q_frames += 1
 			if _q_time >= config.auto_quality_window:
 				if _q_frames / _q_time < config.auto_quality_min_fps:
-					set_quality(quality - 1)
+					game.set_quality(quality - 1)
 				_q_time = 0.0
 				_q_frames = 0
 	if not show_fps:

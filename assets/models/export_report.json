@@ -1,0 +1,109 @@
+[
+ {
+  "asset": "fruit_sidem",
+  "tris": 460,
+  "radius": 0.26,
+  "target": 0.26,
+  "path": "D:\\Merge\\assets\\models\\_staging\\fruit_sidem.glb"
+ },
+ {
+  "asset": "fruit_bissap",
+  "tris": 590,
+  "radius": 0.34,
+  "target": 0.34,
+  "path": "D:\\Merge\\assets\\models\\_staging\\fruit_bissap.glb"
+ },
+ {
+  "asset": "fruit_tamarin",
+  "tris": 760,
+  "radius": 0.44,
+  "target": 0.44,
+  "path": "D:\\Merge\\assets\\models\\_staging\\fruit_tamarin.glb"
+ },
+ {
+  "asset": "fruit_ditakh",
+  "tris": 644,
+  "radius": 0.54,
+  "target": 0.54,
+  "path": "D:\\Merge\\assets\\models\\_staging\\fruit_ditakh.glb"
+ },
+ {
+  "asset": "fruit_madd",
+  "tris": 644,
+  "radius": 0.66,
+  "target": 0.66,
+  "path": "D:\\Merge\\assets\\models\\_staging\\fruit_madd.glb"
+ },
+ {
+  "asset": "fruit_goyave",
+  "tris": 670,
+  "radius": 0.8,
+  "target": 0.8,
+  "path": "D:\\Merge\\assets\\models\\_staging\\fruit_goyave.glb"
+ },
+ {
+  "asset": "fruit_mangue",
+  "tris": 661,
+  "radius": 0.95,
+  "target": 0.95,
+  "path": "D:\\Merge\\assets\\models\\_staging\\fruit_mangue.glb"
+ },
+ {
+  "asset": "fruit_papaye",
+  "tris": 666,
+  "radius": 1.1,
+  "target": 1.1,
+  "path": "D:\\Merge\\assets\\models\\_staging\\fruit_papaye.glb"
+ },
+ {
+  "asset": "fruit_ananas",
+  "tris": 537,
+  "radius": 1.27,
+  "target": 1.27,
+  "path": "D:\\Merge\\assets\\models\\_staging\\fruit_ananas.glb"
+ },
+ {
+  "asset": "fruit_coco",
+  "tris": 752,
+  "radius": 1.46,
+  "target": 1.46,
+  "path": "D:\\Merge\\assets\\models\\_staging\\fruit_coco.glb"
+ },
+ {
+  "asset": "fruit_pain_de_singe",
+  "tris": 664,
+  "radius": 1.68,
+  "target": 1.68,
+  "path": "D:\\Merge\\assets\\models\\_staging\\fruit_pain_de_singe.glb"
+ },
+ {
+  "asset": "basket_calebasse",
+  "tris": 978,
+  "path": "D:\\Merge\\assets\\models\\_staging\\basket_calebasse.glb"
+ },
+ {
+  "asset": "stall_sandaga",
+  "tris": 104,
+  "path": "D:\\Merge\\assets\\models\\_staging\\stall_sandaga.glb"
+ },
+ {
+  "asset": "decor_far",
+  "tris": 186,
+  "path": "D:\\Merge\\assets\\models\\_staging\\decor_far.glb"
+ },
+ {
+  "asset": "decor_mid",
+  "tris": 3192,
+  "path": "D:\\Merge\\assets\\models\\_staging\\decor_mid.glb"
+ },
+ {
+  "asset": "decor_near",
+  "tris": 86,
+  "path": "D:\\Merge\\assets\\models\\_staging\\decor_near.glb"
+ },
+ {
+  "asset": "decor_passant",
+  "tris": 272,
+  "path": "D:\\Merge\\assets\\models\\_staging\\decor_passant.glb"
+ }
+]
