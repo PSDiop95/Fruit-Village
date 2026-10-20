@@ -14,13 +14,13 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Merge Marché"
+config/name="Fruit Village"
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://assets/ui/icon.png"
 boot_splash/image="res://assets/ui/splash.png"
 boot_splash/fullsize=true
-boot_splash/bg_color=Color(0.949, 0.549, 0.157, 1)
+boot_splash/bg_color=Color(0.369, 0.678, 0.918, 1)
 
 [autoload]
 
@@ -48,4 +48,8 @@ enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 [rendering]
 
 renderer/rendering_method="mobile"
+anti_aliasing/quality/msaa_3d=1
+scaling_3d/mode=1
+scaling_3d/scale=0.8
+scaling_3d/fsr_sharpness=0.15
 textures/vram_compression/import_etc2_astc=true

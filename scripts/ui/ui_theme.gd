@@ -1,6 +1,6 @@
 class_name UiTheme
 extends RefCounted
-## Thème Godot unique de Merge Marché (assets/ui/theme.tres, généré par
+## Thème Godot unique de Fruit Village (assets/ui/theme.tres, généré par
 ## tools/make_theme.gd) : boutons ronds épais à ombre portée, panneaux crème
 ## cerclés de brun, palette wax. Lisible au soleil : texte brun sur crème,
 ## blanc cerné de brun sur les boutons. Cibles tactiles ≥ 48 dp.
@@ -16,9 +16,13 @@ const CREAM := Color("fff3df")
 const INK := Color("3a2414")
 const INK_SOFT := Color("6d4c2f")
 
-## Polices candidates (Fredoka / Baloo 2 à fournir dans assets/fonts/). En
-## attendant : police système arrondie et grasse (placeholder).
-const FONT_FILES := ["res://assets/fonts/Fredoka-SemiBold.ttf", "res://assets/fonts/Baloo2-Bold.ttf"]
+## Polices (OFL) : Fredoka pour titres et boutons, Baloo 2 pour les textes.
+## Polices variables : la graisse est réglée par FontVariation (axe « wght »).
+const DISPLAY_FONT := "res://assets/fonts/Fredoka-VariableFont_wdth,wght.ttf"
+const TEXT_FONT := "res://assets/fonts/Baloo2-VariableFont_wght.ttf"
+const DISPLAY_WEIGHT := 650
+const TEXT_WEIGHT := 700
+## Repli si les fichiers manquent : police système arrondie et grasse.
 const SYSTEM_FONTS := ["Fredoka", "Baloo 2", "Nunito", "Arial Rounded MT Bold", "Segoe UI", "Roboto"]
 
 static var _theme: Theme
@@ -28,16 +32,30 @@ static var _theme: Theme
 static func get_theme() -> Theme:
 	if _theme == null:
 		_theme = load(PATH) if ResourceLoader.exists(PATH) else build()
+		# Textes 3D (combos, points flottants) : même police que l'UI.
+		ThemeDB.fallback_font = display_font()
 	return _theme
 
 
+## Police des textes (Baloo 2).
 static func font() -> Font:
-	for p in FONT_FILES:
-		if ResourceLoader.exists(p):
-			return load(p)
+	return _variable(TEXT_FONT, TEXT_WEIGHT)
+
+
+## Police des titres et boutons (Fredoka).
+static func display_font() -> Font:
+	return _variable(DISPLAY_FONT, DISPLAY_WEIGHT)
+
+
+static func _variable(path: String, weight: int) -> Font:
+	if ResourceLoader.exists(path):
+		var fv := FontVariation.new()
+		fv.base_font = load(path)
+		fv.variation_opentype = {TextServerManager.get_primary_interface().name_to_tag("wght"): weight}
+		return fv
 	var f := SystemFont.new()
 	f.font_names = PackedStringArray(SYSTEM_FONTS)
-	f.font_weight = 700
+	f.font_weight = weight
 	return f
 
 
@@ -45,6 +63,9 @@ static func build() -> Theme:
 	var t := Theme.new()
 	t.default_font = font()
 	t.default_font_size = 44
+	var display := display_font()
+	for type in ["Button", "LabelTitle", "LabelBig"]:
+		t.set_font("font", type, display)
 
 	# Boutons : orange wax par défaut, ombre portée brune, enfoncement au clic.
 	_button_styles(t, "Button", WAX_ORANGE)

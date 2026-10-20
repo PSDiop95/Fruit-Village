@@ -77,7 +77,7 @@ COLORS = [
 	("wax_red", "d6382f", MATTE),
 	("calabash", "d9a35b", SATIN),
 	("calabash_dark", "a8743a", SATIN),
-	("calabash_inner", "9a6236", MATTE),
+	("calabash_inner", "eccb94", MATTE),
 	("calabash_rim", "e8c07a", SATIN),
 	("wood", "8b5a2b", MATTE),
 	("wood_dark", "5e3a1a", MATTE),
@@ -90,15 +90,40 @@ COLORS = [
 	("madd_speck", "a8661e", MATTE),
 	("coco_light", "b07a4c", MATTE),
 	("wood_stem", "b8875a", MATTE),
+	# --- Décor 3D lumineux (village au bord de la baie) + passants ----------
+	("cloud", "ffffff", MATTE),
+	("hill", "4f9d4a", MATTE),
+	("hill_far", "86b8c8", MATTE),
+	("sea", "1fa3dc", SATIN),
+	("sea_light", "8fdcf5", SATIN),
+	("sand", "eccb8e", MATTE),
+	("straw", "e9b44c", MATTE),
+	("straw_dark", "c48a2c", MATTE),
+	("palm_leaf", "3fa83a", SATIN),
+	("palm_leaf_light", "86cf4c", SATIN),
+	("palm_trunk", "9a6a3a", MATTE),
+	("skin", "8a5634", SATIN),
+	("skin_dark", "5e3a22", SATIN),
+	("hair", "1e1612", MATTE),
+	("indigo", "2b3f8c", MATTE),
+	("indigo_light", "4f6cc4", MATTE),
+	("boubou_white", "f4f1e8", MATTE),
+	("gold", "f2c040", GLOSSY),
+	("fuchsia", "d63a8a", MATTE),
+	("turquoise", "26b3a6", MATTE),
+	("terracotta", "c8643a", MATTE),
+	("wall_ochre", "e9c27e", MATTE),
+	("door_blue", "2f6fb0", MATTE),
 ]
 
 # Dégradés : (nom, [(t, hex), ...], gloss) — ligne RAMP_FIRST_ROW + index.
 RAMPS = [
 	("ramp_mangue", [(0.0, "f2c62a"), (0.45, "f5962a"), (1.0, "e04a2c")], SATIN),
-	("ramp_ananas", [(0.0, "a8601a"), (0.5, "e09a2c"), (1.0, "f7cf50")], SATIN),
+	("ramp_ananas", [(0.0, "a8601a"), (0.5, "e09a2c"), (1.0, "f7cf50")], MATTE),
 	("ramp_crown", [(0.0, "3a6a2a"), (1.0, "86b450")], SATIN),
 	("ramp_goyave", [(0.0, "a8d058"), (0.55, "c8d870"), (1.0, "ec8a80")], SATIN),
 	("ramp_papaye", [(0.0, "e8701c"), (0.7, "f59a2c"), (1.0, "9ab03a")], SATIN),
+	("ramp_sky", [(0.0, "2a86dc"), (0.6, "6cc0f2"), (1.0, "c9ecfb")], MATTE),
 ]
 
 assert len(COLORS) <= RAMP_FIRST_ROW * GRID, "trop de couleurs unies"

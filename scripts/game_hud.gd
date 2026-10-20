@@ -88,7 +88,8 @@ func _build() -> void:
 	top.add_child(spacer)
 
 	_pause_button = Button.new()
-	_pause_button.text = "II"
+	_pause_button.icon = _pause_icon()
+	_pause_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_pause_button.theme_type_variation = &"ButtonRound"
 	_pause_button.custom_minimum_size = Vector2(120, 120)
 	_pause_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
@@ -157,6 +158,22 @@ func _build() -> void:
 
 	# Pause et fin de partie : construits à la première ouverture (partie plus
 	# rapide à lancer, aucun SubViewport inutile pendant le jeu).
+
+
+## Icône pause dessinée (deux barres arrondies) : indépendante de la police.
+static func _pause_icon() -> ImageTexture:
+	var s := 56
+	var img := Image.create(s, s, false, Image.FORMAT_RGBA8)
+	for y in s:
+		for x in s:
+			var in_bar := false
+			for bx in [12, 32]:
+				var cx := clampf(x, bx + 6, bx + 6)
+				var cy := clampf(y, 14, s - 14)
+				if Vector2(x, y).distance_to(Vector2(cx, cy)) <= 6.5:
+					in_bar = true
+			img.set_pixel(x, y, UiTheme.INK if in_bar else Color(0, 0, 0, 0))
+	return ImageTexture.create_from_image(img)
 
 
 func _dim() -> ColorRect:

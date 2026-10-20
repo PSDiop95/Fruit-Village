@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dqxjk43dmgph5"
-path="res://.godot/imported/decor_passant.glb-366e08868167ab33ee17da3f1b08c5db.scn"
+uid="uid://dvftbwxx5spa3"
+path="res://.godot/imported/decor_femme_bassine.glb-5f2b8ffe63ab66f2b5a6d3e4a0a2360e.scn"
 
 [deps]
 
-source_file="res://assets/models/decor_passant.glb"
-dest_files=["res://.godot/imported/decor_passant.glb-366e08868167ab33ee17da3f1b08c5db.scn"]
+source_file="res://assets/models/decor_femme_bassine.glb"
+dest_files=["res://.godot/imported/decor_femme_bassine.glb-5f2b8ffe63ab66f2b5a6d3e4a0a2360e.scn"]
 
 [params]
 

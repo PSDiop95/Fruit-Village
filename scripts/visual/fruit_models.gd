@@ -9,6 +9,7 @@ extends RefCounted
 const CONFIG_PATH := "res://data/visual.tres"
 const TOON_SHADER := preload("res://assets/shaders/toon.gdshader")
 const TOON_LOW_SHADER := preload("res://assets/shaders/toon_low.gdshader")
+const TOON_PROP_SHADER := preload("res://assets/shaders/toon_prop.gdshader")
 const OUTLINE_SHADER := preload("res://assets/shaders/outline.gdshader")
 
 ## Données extraites d'un .glb.
@@ -24,6 +25,7 @@ static var _models: Dictionary = {}
 static var _material: ShaderMaterial
 static var _material_low: ShaderMaterial
 static var _outline: ShaderMaterial
+static var _prop_material: ShaderMaterial
 
 
 static func get_config() -> VisualConfig:
@@ -98,6 +100,12 @@ static func fruit_material() -> ShaderMaterial:
 	return _material if quality >= get_config().rim_min_quality else _material_low
 
 
+## Matériau des grands props (panier, étal) : sans grain ni contour.
+static func prop_material() -> ShaderMaterial:
+	_ensure_materials()
+	return _prop_material
+
+
 static func set_quality(level: int) -> void:
 	quality = level
 	_ensure_materials()
@@ -118,6 +126,8 @@ static func _ensure_materials() -> void:
 	_material.shader = TOON_SHADER
 	_material_low = ShaderMaterial.new()
 	_material_low.shader = TOON_LOW_SHADER
+	_prop_material = ShaderMaterial.new()
+	_prop_material.shader = TOON_PROP_SHADER
 	apply_config(cfg)
 	set_quality(quality)
 
@@ -127,6 +137,7 @@ static func apply_config(cfg: VisualConfig) -> void:
 	config = cfg
 	if _material == null:
 		return
+	_apply_prop_config(cfg)
 	for mat in [_material, _material_low]:
 		mat.set_shader_parameter("palette", cfg.palette)
 		mat.set_shader_parameter("shadow_threshold", cfg.shadow_threshold)
@@ -141,6 +152,10 @@ static func apply_config(cfg: VisualConfig) -> void:
 		mat.set_shader_parameter("specular_softness", cfg.specular_softness)
 		mat.set_shader_parameter("cast_shadow_tone", cfg.cast_shadow_tone)
 		mat.set_shader_parameter("grain_strength", cfg.grain_strength)
+		mat.set_shader_parameter("saturation", cfg.saturation)
+		mat.set_shader_parameter("edge_darken", cfg.edge_darken)
+		mat.set_shader_parameter("edge_power", cfg.edge_power)
+		mat.set_shader_parameter("top_light", cfg.top_light)
 		mat.set_shader_parameter("grain_scale", cfg.grain_scale)
 		mat.set_shader_parameter("mottle_strength", cfg.mottle_strength)
 		mat.set_shader_parameter("mottle_scale", cfg.mottle_scale)
@@ -177,6 +192,21 @@ static func blob_mesh() -> QuadMesh:
 		mat.set_shader_parameter("color", get_config().blob_shadow_color)
 		_blob_mesh.material = mat
 	return _blob_mesh
+
+
+## Paramètres du shader « éclairage intégré » des props (même lumière que la scène).
+static func _apply_prop_config(cfg: VisualConfig) -> void:
+	var m := _prop_material
+	var dir := Basis.from_euler(cfg.sun_rotation_degrees * PI / 180.0) * Vector3.FORWARD
+	m.set_shader_parameter("palette", cfg.palette)
+	m.set_shader_parameter("sun_direction", dir)
+	m.set_shader_parameter("sun_color", cfg.sun_color)
+	m.set_shader_parameter("sun_energy", cfg.sun_energy)
+	m.set_shader_parameter("ambient_color", cfg.ambient_color)
+	m.set_shader_parameter("ambient_energy", cfg.ambient_energy)
+	for p in ["shadow_threshold", "light_threshold", "shadow_tone", "mid_tone", "tone_softness", "saturation"]:
+		m.set_shader_parameter(p, cfg.get(p))
+	m.set_shader_parameter("shadow_tint", cfg.shadow_tint)
 
 
 static func is_halo_rank(rank: int) -> bool:

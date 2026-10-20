@@ -92,6 +92,10 @@ func _ready() -> void:
 	set_quality(VisualQuality.resolve(q_setting))
 	SaveManager.setting_changed.connect(_on_setting_changed)
 	_refresh_preview()
+	if PerfProbe.enabled():
+		var probe := PerfProbe.new()
+		add_child(probe)
+		probe.run(self)
 
 
 # ---------------------------------------------------------------- Construction
@@ -100,13 +104,13 @@ func _build_environment() -> void:
 	# Lumière, panier calebasse, étal et décor : purement visuel (M3).
 	_market = MarketScene.new()
 	add_child(_market)
-	_market.setup(visual_config)
+	_market.setup(visual_config, config)
 
 	_camera = Camera3D.new()
 	_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	_camera.keep_aspect = Camera3D.KEEP_WIDTH
 	_camera.size = config.basket_inner_width + config.wall_thickness * 2.0 		+ config.camera_side_margin
-	_camera.position = Vector3(0, config.basket_height * 0.5 + config.camera_y_offset, 20)
+	_camera.position = Vector3(0, camera_center_y(config, _viewport_aspect()), 20)
 	_camera.current = true
 	add_child(_camera)
 
@@ -450,6 +454,20 @@ func all_fruits() -> Array[Fruit]:
 
 func juice() -> Juice:
 	return _juice
+
+
+## Centre vertical de la caméra. Cadrage de référence 9:16 ; sur un écran plus
+## allongé, le bas reste calé (panier + étal) et la hauteur en plus va au ciel.
+static func camera_center_y(cfg: GameConfig, aspect_hw: float) -> float:
+	var w := cfg.basket_inner_width + cfg.wall_thickness * 2.0 + cfg.camera_side_margin
+	var ref_center := cfg.basket_height * 0.5 + cfg.camera_y_offset
+	var bottom := ref_center - w * 16.0 / 9.0 * 0.5
+	return bottom + w * maxf(aspect_hw, 16.0 / 9.0) * 0.5
+
+
+func _viewport_aspect() -> float:
+	var s := get_viewport().get_visible_rect().size if is_inside_tree() else Vector2(9, 16)
+	return s.y / maxf(s.x, 1.0)
 
 
 func market() -> MarketScene:

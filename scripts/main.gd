@@ -51,12 +51,13 @@ func _make_backdrop() -> Node3D:
 	var cfg: GameConfig = load("res://data/game_config.tres")
 	var market := MarketScene.new()
 	root.add_child(market)
-	market.setup(load("res://data/visual.tres"))
+	market.setup(load("res://data/visual.tres"), cfg)
 	var cam := Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 	cam.keep_aspect = Camera3D.KEEP_WIDTH
 	cam.size = cfg.basket_inner_width + cfg.wall_thickness * 2.0 + cfg.camera_side_margin
-	cam.position = Vector3(0, cfg.basket_height * 0.5 + cfg.camera_y_offset, 20)
+	var vs := get_viewport().get_visible_rect().size
+	cam.position = Vector3(0, Game.camera_center_y(cfg, vs.y / maxf(vs.x, 1.0)), 20)
 	root.add_child(cam)
 	cam.current = true
 	return root

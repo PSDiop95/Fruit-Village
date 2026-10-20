@@ -30,6 +30,11 @@ uniform float grain_strength = 0.0;
 uniform float grain_scale = 14.0;
 uniform float mottle_strength = 0.0;
 uniform float mottle_scale = 2.5;
+// Style « fruit peint » (logo) : saturation, bord intérieur assombri, haut éclairci.
+uniform float saturation = 1.0;
+uniform float edge_darken = 0.0;
+uniform float edge_power = 2.5;
+uniform float top_light = 0.0;
 
 // Paramètres par instance (M2) : aucun matériau dupliqué par fruit.
 instance uniform float flash : hint_range(0.0, 1.0) = 0.0;
@@ -61,10 +66,19 @@ void vertex() {
 void fragment() {
 	vec4 p = texture(palette, UV);
 	vec3 c = p.rgb;
-	// Marbrures douces + mouchetures sombres éparses (peau peinte).
+#ifdef TOON_GRAIN
+	// Marbrures douces + mouchetures sombres éparses (peau peinte des fruits).
 	float mottle = noise3(v_obj * mottle_scale) - 0.5;
 	float speck = smoothstep(0.72, 0.9, noise3(v_obj * grain_scale + 7.3));
 	c *= 1.0 + mottle * mottle_strength - speck * grain_strength;
+#endif
+	float lum = dot(c, vec3(0.299, 0.587, 0.114));
+	c = clamp(mix(vec3(lum), c, saturation), 0.0, 1.0);
+	// Volume peint : bord intérieur plus sombre, haut plus lumineux (repère vue).
+	float edge = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), edge_power);
+	c *= 1.0 - edge_darken * edge;
+	vec3 n_world = (INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz;
+	c *= 1.0 + top_light * n_world.y;
 	v_gloss = clamp((p.a - 0.25) / 0.75, 0.0, 1.0);
 	float l = dot(c, vec3(0.299, 0.587, 0.114));
 	c = mix(c, vec3(l) * 0.85, gray);

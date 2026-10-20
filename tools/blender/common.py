@@ -29,7 +29,10 @@ import palette_def as P  # noqa: E402
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 PALETTE_PNG = os.path.join(ROOT, "assets", "textures", "palette.png")
 FRUITS_TRES = os.path.join(ROOT, "data", "fruits.tres")
-MAX_TRIS = 800
+# Budget par fruit (qualité visuelle prioritaire, décision du 20/10/2026).
+MAX_TRIS = 2500
+# Finesse des fruits : multiplie segments et anneaux des sphères paramétriques.
+FRUIT_DETAIL = 1.6
 
 
 # ---------------------------------------------------------------- Données jeu
@@ -88,7 +91,8 @@ def smoothstep(a, b, x):
 class MeshBuilder:
 	"""Collecte sommets + faces avec UV par coin (couleur de palette)."""
 
-	def __init__(self):
+	def __init__(self, detail=1.0):
+		self.detail = detail
 		self.verts = []
 		self.faces = []  # (indices, uvs, smooth)
 		# Faces de pièces ouvertes (éclats, patchs) à orienter vers l'extérieur.
@@ -117,7 +121,10 @@ class MeshBuilder:
 
 	def lat_long(self, seg, rings, pos_fn, color_fn, smooth=True, twist=0.0):
 		"""Sphère paramétrique. pos_fn(theta, phi) -> Vector (theta 0 = pôle haut).
-		color_fn(theta_c, phi_c, ring, i) -> nom | (rampe, [t par coin])."""
+		color_fn(theta_c, phi_c, ring, i) -> nom | (rampe, [t par coin]).
+		`self.detail` multiplie segments et anneaux (fruits haute définition)."""
+		seg = max(3, int(round(seg * self.detail)))
+		rings = max(2, int(round(rings * self.detail)))
 		top = self.v(pos_fn(0.0, 0.0))
 		grid = []
 		for j in range(1, rings):
@@ -398,7 +405,7 @@ def build_asset(module, out_dir):
 	"""Construit + exporte un asset. Retourne un rapport (dict)."""
 	reset_scene()
 	radius = fruit_radius(module.FRUIT_ID)
-	mb = MeshBuilder()
+	mb = MeshBuilder(FRUIT_DETAIL)
 	module.build(mb)
 	name = "fruit_%s" % module.FRUIT_ID
 	obj = to_object(mb, name, radius)
@@ -438,7 +445,7 @@ def preview(module, location=(0.0, 0.0, 0.0)):
 		if me and me.users == 0:
 			bpy.data.meshes.remove(me)
 	radius = fruit_radius(module.FRUIT_ID)
-	mb = MeshBuilder()
+	mb = MeshBuilder(FRUIT_DETAIL)
 	module.build(mb)
 	obj = to_object(mb, name, radius)
 	scene.collection.objects.unlink(obj)
@@ -494,6 +501,63 @@ def preview_prop(module, location=(0.0, 0.0, 0.0)):
 	col.objects.link(obj)
 	obj.location = location
 	return obj
+
+
+def _parts_objects(parts, name):
+	"""Objets articulés : une racine vide `name` + un mesh par pièce, origine
+	au pivot (épaule, hanche…) pour que Godot puisse faire pivoter la pièce."""
+	root = bpy.data.objects.new(name, None)
+	bpy.context.scene.collection.objects.link(root)
+	objs = [root]
+	for part, (fn, pivot) in parts.items():
+		mb = MeshBuilder()
+		fn(mb)
+		pv = Vector(pivot)
+		mb.verts = [v - pv for v in mb.verts]
+		obj = to_object(mb, part)
+		obj.location = pv
+		obj.parent = root
+		objs.append(obj)
+	return root, objs
+
+
+def build_character(name, parts, out_dir):
+	"""Exporte un personnage articulé (<name>.glb). Retourne un rapport."""
+	reset_scene()
+	root, objs = _parts_objects(parts, name)
+	os.makedirs(out_dir, exist_ok=True)
+	path = os.path.join(out_dir, name + ".glb")
+	bpy.ops.object.select_all(action="DESELECT")
+	for o in objs:
+		o.select_set(True)
+	bpy.context.view_layer.objects.active = root
+	bpy.ops.export_scene.gltf(filepath=path, export_format="GLB", use_selection=True, export_yup=True,
+		export_apply=True, export_texcoords=True, export_normals=True, export_materials="EXPORT",
+		export_image_format="NONE", export_animations=False, export_cameras=False, export_lights=False)
+	tris = sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in objs if o.type == "MESH")
+	print("ASSET %s tris=%d parts=%d" % (name, tris, len(objs) - 1))
+	return {"asset": name, "tris": tris, "path": path}
+
+
+def preview_character(name, parts, location=(0.0, 0.0, 0.0)):
+	"""Aperçu live d'un personnage dans la collection MergeFruits (Blender MCP)."""
+	scene = bpy.context.scene
+	col = bpy.data.collections.get(PREVIEW_COLLECTION)
+	if col is None:
+		col = bpy.data.collections.new(PREVIEW_COLLECTION)
+		scene.collection.children.link(col)
+	old = bpy.data.objects.get(name)
+	if old:
+		for c in list(old.children):
+			bpy.data.objects.remove(c, do_unlink=True)
+		bpy.data.objects.remove(old, do_unlink=True)
+	root, objs = _parts_objects(parts, name)
+	for o in objs:
+		for c in list(o.users_collection):
+			c.objects.unlink(o)
+		col.objects.link(o)
+	root.location = location
+	return root
 
 
 def out_dir_from_argv():

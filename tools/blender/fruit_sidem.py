@@ -19,7 +19,7 @@ def build(mb):
 		return Vector((d.x * 0.8, d.y * 0.8, d.z * 0.93)) * dimple
 
 	def col(th, ph, j, i):
-		return "stem_dark" if j == 0 else "sidem"
+		return "stem_dark" if th < 0.18 else "sidem"
 
 	mb.lat_long(20, 12, pos, col)
 	mb.cylinder((0, 0, 0.84), (0.05, 0.0, 1.06), 0.06, 0.045, 6, "stem_brown")

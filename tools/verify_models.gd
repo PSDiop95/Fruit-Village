@@ -3,11 +3,11 @@ extends SceneTree
 ## Usage : Godot --headless --path . -s tools/verify_models.gd -- <dossier res://>
 ## Code de sortie 0 = tout est conforme, 1 = export refusé.
 ##
-## Règles : fruit_<id>.glb pour chaque fruit de data/fruits.tres, < 800
+## Règles : fruit_<id>.glb pour chaque fruit de data/fruits.tres, < 2500
 ## triangles, rayon du mesh = rayon de collision à ±3 %, matériau « palette »,
 ## ancre « face_anchor » présente.
 
-const MAX_TRIS := 800
+const MAX_TRIS := 2500
 const RADIUS_TOLERANCE := 0.03
 
 

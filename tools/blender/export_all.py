@@ -44,6 +44,9 @@ def main():
 	decor = importlib.import_module("decor_sandaga")
 	for asset, fn, limit in decor.DECOR_ASSETS:
 		reports.append(common.build_prop(_Prop(asset, fn, limit), out_dir))
+	people = importlib.import_module("decor_people")
+	for name, parts in people.PEOPLE:
+		reports.append(common.build_character(name, parts, out_dir))
 	with open(os.path.join(out_dir, "export_report.json"), "w", encoding="utf-8") as f:
 		json.dump(reports, f, indent=1)
 	print("EXPORT_OK %d assets -> %s" % (len(reports), out_dir))

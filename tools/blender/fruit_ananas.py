@@ -11,8 +11,8 @@ from common import run  # noqa: E402
 
 FRUIT_ID = "ananas"
 FACE = {"height": -0.34, "size": 0.72}
-S = 12  # losanges par tour
-R = 10  # anneaux
+S = 16  # losanges par tour
+R = 13  # anneaux
 Z0, RX, RZ = -0.31, 0.8, 0.69  # corps : bas à -1, haut à 0,38
 BUMP = 1.06
 # Couronne : (nombre, élévation en degrés, largeur, décalage azimut)

@@ -24,7 +24,7 @@ def build(mb):
 		return smoothstep(0.45, 0.95, sph(th, ph).dot(BLUSH))
 
 	def col(th, ph, j, i):
-		if j >= 13:
+		if th > math.pi * 0.93:  # calotte basse (indépendant de la finesse)
 			return "crown_dry"
 		return ("ramp_goyave", blush)
 

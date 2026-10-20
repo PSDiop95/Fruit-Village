@@ -1,9 +1,11 @@
 class_name TitleScreen
 extends CanvasLayer
-## Écran titre : logo (placeholder texte « Merge Marché »), bouton Jouer,
+## Écran titre : logo Fruit Village, bouton Jouer,
 ## plus gros fruit atteint (miniature 3D), réglages.
 
 signal play_pressed
+
+const LOGO := "res://assets/ui/logo.png"
 
 var play_button: Button
 var settings_button: Button
@@ -21,29 +23,20 @@ func _ready() -> void:
 	col.set_anchors_preset(Control.PRESET_FULL_RECT)
 	col.offset_left = 60
 	col.offset_right = -60
-	col.offset_top = 260
+	col.offset_top = 120
 	col.offset_bottom = -160
 	col.alignment = BoxContainer.ALIGNMENT_BEGIN
 	col.add_theme_constant_override("separation", 34)
 	_root.add_child(col)
 
-	# Logo placeholder : titre en deux lignes sur un cartouche crème + frise wax.
-	var logo := PanelContainer.new()
-	logo.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	# Logo final (assets/ui/logo.png, 1024²).
+	var logo := TextureRect.new()
+	logo.texture = load(LOGO)
+	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	logo.custom_minimum_size = Vector2(0, 720)
+	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(logo)
-	var lbox := VBoxContainer.new()
-	lbox.add_theme_constant_override("separation", -24)
-	logo.add_child(lbox)
-	for word in ["Merge", "Marché"]:
-		var l := Label.new()
-		l.text = word
-		l.theme_type_variation = &"LabelTitle"
-		l.add_theme_font_size_override("font_size", 150)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lbox.add_child(l)
-	var band := WaxBand.new()
-	band.custom_minimum_size = Vector2(560, 40)
-	lbox.add_child(band)
 
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL

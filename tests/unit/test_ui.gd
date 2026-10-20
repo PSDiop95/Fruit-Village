@@ -113,3 +113,4 @@ func test_auto_quality_rules() -> void:
 	assert_eq(VisualQuality.level_for(8.0, "Adreno (TM) 740"), JuiceConfig.Quality.HIGH)
 	assert_eq(VisualQuality.level_for(8.0, "Mali-G52 MC2"), JuiceConfig.Quality.LOW, "GPU faible")
 	assert_eq(VisualQuality.resolve(JuiceConfig.Quality.MEDIUM), JuiceConfig.Quality.MEDIUM)
+	assert_eq(VisualQuality.resolve(VisualQuality.AUTO), JuiceConfig.Quality.HIGH, "Auto = haut de gamme")

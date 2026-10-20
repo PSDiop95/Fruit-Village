@@ -32,9 +32,11 @@ static func level_for(ram_gb: float, gpu_name: String) -> int:
 	return JuiceConfig.Quality.HIGH
 
 
-## Réglage joueur (AUTO ou niveau) → niveau effectif.
+## Réglage joueur (AUTO ou niveau) → niveau effectif. Fruit Village vise un
+## rendu haut de gamme : AUTO = Haut sur tous les appareils (detect() reste
+## disponible comme indicateur, il ne dégrade plus le rendu).
 static func resolve(setting: int) -> int:
-	return detect() if setting == AUTO else clampi(setting, JuiceConfig.Quality.LOW, JuiceConfig.Quality.HIGH)
+	return JuiceConfig.Quality.HIGH if setting == AUTO else clampi(setting, JuiceConfig.Quality.LOW, JuiceConfig.Quality.HIGH)
 
 
 static func label(setting: int) -> String:
