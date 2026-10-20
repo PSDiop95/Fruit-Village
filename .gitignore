@@ -1,0 +1,17 @@
+# Godot
+.godot/
+*.translation
+export_presets.cfg
+*.apk
+*.aab
+
+# Captures lourdes (vidéos de démo)
+*.avi
+*.mp4
+
+# Réglages locaux
+.claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db

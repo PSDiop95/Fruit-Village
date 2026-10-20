@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="GameConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/game_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+basket_inner_width = 6.4
+basket_height = 8.6
+wall_thickness = 0.4
+danger_line_y = 7.6
+spawn_y = 9.4
+camera_side_margin = 1.2
+camera_y_offset = 1.8
+gravity_scale = 1.6
+bounce = 0.08
+friction = 0.45
+linear_damp = 0.15
+angular_damp = 0.6
+mass_per_area = 1.0
+max_contacts = 8
+drop_cooldown = 0.4
+preview_count = 1
+merge_grow_start_scale = 0.7
+merge_grow_time = 0.15
+merge_up_impulse = 1.2
+danger_grace_time = 1.0
+danger_warn_time = 1.0
+danger_game_over_time = 2.0
+combo_window = 1.5
+combo_max_multiplier = 8
+combo_reset_on_drop = true

@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="SoundBank" load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/sound_bank.gd" id="1"]
+[ext_resource type="AudioStream" path="res://assets/sfx/drop.wav" id="drop"]
+[ext_resource type="AudioStream" path="res://assets/sfx/impact.wav" id="impact"]
+[ext_resource type="AudioStream" path="res://assets/sfx/combo_chord.wav" id="combo_chord"]
+[ext_resource type="AudioStream" path="res://assets/sfx/discover.wav" id="discover"]
+[ext_resource type="AudioStream" path="res://assets/sfx/baobab.wav" id="baobab"]
+[ext_resource type="AudioStream" path="res://assets/sfx/heartbeat.wav" id="heartbeat"]
+[ext_resource type="AudioStream" path="res://assets/sfx/game_over.wav" id="game_over"]
+[ext_resource type="AudioStream" path="res://assets/sfx/merge_00.wav" id="m00"]
+[ext_resource type="AudioStream" path="res://assets/sfx/merge_01.wav" id="m01"]
+[ext_resource type="AudioStream" path="res://assets/sfx/merge_02.wav" id="m02"]
+[ext_resource type="AudioStream" path="res://assets/sfx/merge_03.wav" id="m03"]
+[ext_resource type="AudioStream" path="res://assets/sfx/merge_04.wav" id="m04"]
+[ext_resource type="AudioStream" path="res://assets/sfx/merge_05.wav" id="m05"]
+[ext_resource type="AudioStream" path="res://assets/sfx/merge_06.wav" id="m06"]
+[ext_resource type="AudioStream" path="res://assets/sfx/merge_07.wav" id="m07"]
+[ext_resource type="AudioStream" path="res://assets/sfx/merge_08.wav" id="m08"]
+[ext_resource type="AudioStream" path="res://assets/sfx/merge_09.wav" id="m09"]
+[ext_resource type="AudioStream" path="res://assets/sfx/merge_10.wav" id="m10"]
+[ext_resource type="AudioStream" path="res://assets/music/market_loop.wav" id="music"]
+
+[resource]
+script = ExtResource("1")
+drop = ExtResource("drop")
+impact = ExtResource("impact")
+merge_notes = Array[AudioStream]([ExtResource("m00"), ExtResource("m01"), ExtResource("m02"), ExtResource("m03"), ExtResource("m04"), ExtResource("m05"), ExtResource("m06"), ExtResource("m07"), ExtResource("m08"), ExtResource("m09"), ExtResource("m10")])
+combo_chord = ExtResource("combo_chord")
+discover = ExtResource("discover")
+baobab = ExtResource("baobab")
+danger_heartbeat = ExtResource("heartbeat")
+game_over = ExtResource("game_over")
+music = ExtResource("music")
