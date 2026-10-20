@@ -21,3 +21,6 @@ assets/models/_staging/
 
 # Caches Python (scripts Blender)
 __pycache__/
+
+# Exports (APK/AAB)
+build/
