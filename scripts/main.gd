@@ -8,9 +8,11 @@ const GAME_SCENE := "res://scenes/Game.tscn"
 var title: TitleScreen
 var game: Game
 var _backdrop: Node3D
+var curtain := UiJuice.Curtain.new()
 
 
 func _ready() -> void:
+	add_child(curtain)
 	show_title()
 
 
@@ -21,6 +23,7 @@ func show_title() -> void:
 	title = TitleScreen.new()
 	add_child(title)
 	title.play_pressed.connect(start_game)
+	curtain.reveal()
 
 
 func start_game() -> void:
@@ -35,6 +38,7 @@ func start_game() -> void:
 	game.restart_requested.connect(start_game, CONNECT_DEFERRED)
 	game.menu_requested.connect(show_title, CONNECT_DEFERRED)
 	add_child(game)
+	curtain.reveal()
 
 
 func _free_game() -> void:

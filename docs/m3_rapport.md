@@ -100,3 +100,17 @@ Regénérer : `Godot --path . --resolution 720x1280 -s tools/capture_m3.gd -- do
 - Perf PC (540x1200, qualité Haut, 12 fruits) : 55–58 draw calls 3D au repos (dont mascotte ≈ 15 avec contour),
   65–77 pendant un combo. Contour de la mascotte seulement en Haut (`mascot_outline_min_quality`).
   **À mesurer sur le Galaxy A23.**
+
+### Passe « motion » (2)
+
+- **Panier qui réagit** : le cadre s'écrase sur les gros impacts et les grosses fusions (ressort amorti,
+  le bas reste posé), la mascotte assise suit. `juice.tres` → groupe « Panier qui réagit ».
+- **Regards** : les fruits voisins (≤ `look_radius`) tournent les yeux vers chaque fusion.
+- **Lâcher** : le fruit en visée penche dans le sens du doigt (ressort), traînée lumineuse pendant la
+  chute, petites gouttes à l'impact, le fruit suivant tombe dans la visée avec un rebond.
+- **Score** : des étoiles volent en arc du point de fusion jusqu'à l'étoile du score (poolées).
+- **Interface** : rebond d'appui sur tous les boutons, panneaux qui apparaissent en pop, bouton Jouer
+  qui respire, rideau entre titre et partie (`scripts/ui/ui_juice.gd`).
+- **Fin de partie** : le plus gros fruit fait un pop ; nouveau record = bannière dorée + confettis.
+- **« Le savais-tu ? »** : carte non bloquante au premier fruit découvert (`fun_fact` dans `fruits.tres`).
+- Aucun nœud créé pendant la partie (étoiles volantes et carte préchauffées).

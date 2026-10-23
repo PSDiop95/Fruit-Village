@@ -44,6 +44,14 @@ var _flash_t: float = 1.0
 var _flash_time: float = 0.1
 var _eyes_closed: bool = false
 var _trembling: bool = false
+## Regard (yeux + bouche décalés vers une cible, puis retour au centre).
+var _look := Vector2.ZERO
+var _look_target := Vector2.ZERO
+var _look_left: float = 0.0
+## Arrivée de l'aperçu : tombe de `_drop_h` m et rebondit.
+var _drop_h: float = 0.0
+var _drop_t: float = 1.0
+var _drop_time: float = 0.25
 
 
 func setup(cfg: JuiceConfig, seed_value: int) -> void:
@@ -208,6 +216,25 @@ func flash(duration: float) -> void:
 	_mesh.set_instance_shader_parameter(&"flash", 1.0)
 
 
+## Arrive d'en haut (`height` m) avec un petit rebond, en `duration` s.
+func drop_in(height: float, duration: float) -> void:
+	_drop_h = height
+	_drop_time = maxf(duration, 0.01)
+	_drop_t = 0.0
+	_apply_transform()
+
+
+## Tourne le regard vers un point monde pendant `duration` s.
+func look_toward(world_pos: Vector3, duration: float) -> void:
+	var d := Vector2(world_pos.x - global_position.x, world_pos.y - global_position.y)
+	_look_target = d.normalized() if d.length() > 0.01 else Vector2.ZERO
+	_look_left = duration
+
+
+func look_amount() -> Vector2:
+	return _look
+
+
 func set_gray(v: float) -> void:
 	_mesh.set_instance_shader_parameter(&"gray", v)
 
@@ -238,6 +265,8 @@ func _process(delta: float) -> void:
 		_squash_t = minf(_squash_t + delta / config.impact_recover_time, 1.0)
 	if _pop_t < 1.0:
 		_pop_t = minf(_pop_t + delta / _pop_time, 1.0)
+	if _drop_t < 1.0:
+		_drop_t = minf(_drop_t + delta / _drop_time, 1.0)
 	if _flash_t < 1.0:
 		_flash_t = minf(_flash_t + delta / _flash_time, 1.0)
 		_mesh.set_instance_shader_parameter(&"flash", 1.0 - _flash_t)
@@ -247,6 +276,10 @@ func _process(delta: float) -> void:
 	if fruit and not fruit.merging and not fruit.freeze:
 		_trembling = fruit.age >= danger_grace_time and fruit.top_y() > danger_line_y
 		face.set_above_line(_trembling)
+	_look_left -= delta
+	var look_to := _look_target if _look_left > 0.0 else Vector2.ZERO
+	_look = _look.lerp(look_to, 1.0 - exp(-12.0 * delta))
+	_face_mesh.position = Vector3(_look.x, _look.y, 0.0) * config.look_offset
 	face.update(delta)
 	var closed := face.eyes_closed()
 	if closed != _eyes_closed:
@@ -290,6 +323,25 @@ func _apply_transform() -> void:
 		_anim.position = inv * off / maxf(scale.x, 0.01)
 	else:
 		_anim.position = Vector3.ZERO
+	if _drop_t < 1.0:
+		var off_y := _drop_h * (1.0 - _bounce_out(_drop_t))
+		_anim.position += inv * Vector3(0, off_y, 0) / maxf(scale.x, 0.01)
+
+
+## Chute avec rebonds (0 → 1).
+static func _bounce_out(p: float) -> float:
+	var n := 7.5625
+	var d := 2.75
+	if p < 1.0 / d:
+		return n * p * p
+	if p < 2.0 / d:
+		p -= 1.5 / d
+		return n * p * p + 0.75
+	if p < 2.5 / d:
+		p -= 2.25 / d
+		return n * p * p + 0.9375
+	p -= 2.625 / d
+	return n * p * p + 0.984375
 
 
 func _pop_scale() -> float:

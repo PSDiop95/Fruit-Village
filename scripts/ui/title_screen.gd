@@ -74,12 +74,17 @@ func _ready() -> void:
 	settings_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	settings_button.pressed.connect(open_settings)
 	col.add_child(settings_button)
+	# Jouer respire (invite à toucher) : pas de rebond d'appui sur ce bouton.
+	play_button.set_meta(UiJuice.META, true)
+	UiJuice.bounce_all(_root)
+	UiJuice.breathe(play_button)
 
 
 func open_settings() -> SettingsPanel:
 	if _settings == null:
 		_settings = SettingsPanel.new()
 		_root.add_child(SettingsPanel.centered(_settings))
+		UiJuice.pop_in(_settings)
 		_settings.closed.connect(func() -> void: _settings = null)
 	return _settings
 

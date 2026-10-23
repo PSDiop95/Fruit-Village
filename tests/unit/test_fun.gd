@@ -218,3 +218,80 @@ func test_combo_banner_hides_after_play() -> void:
 	await wait_seconds(0.9)
 	assert_false(b.is_playing())
 	assert_false(b.visible)
+
+
+# ---------------------------------------------------------------- Motion (passe 2)
+
+func test_neighbours_look_at_merge() -> void:
+	var g := await _new_game()
+	var f := g.spawn_fruit(2, Vector3(-1.5, 2.0, 0))
+	await wait_physics_frames(2)
+	f.visual().look_toward(Vector3(1.5, 2.0, 0), 1.0)
+	await wait_process_frames(20)
+	assert_gt(f.visual().look_amount().x, 0.5, "les yeux vont vers la droite")
+
+
+func test_basket_bump_squashes_then_settles() -> void:
+	var g := await _new_game()
+	var j := g.juice()
+	j.bump_basket(1.0)
+	assert_almost_eq(j.basket_squash(), cfg.basket_bump_max, 0.0001, "plafonné")
+	await wait_process_frames(2)
+	assert_ne(g.market().frame.scale, Vector3.ONE, "le cadre s'écrase")
+	await wait_seconds(1.5)
+	assert_almost_eq(j.basket_squash(), 0.0, 0.002, "revient au repos")
+
+
+func test_trail_follows_drop_then_ends() -> void:
+	var g := await _new_game()
+	var f := g.drop(0.0)
+	await wait_physics_frames(2)
+	assert_gt(g.juice().trail_pool.active_count(), 0)
+	f.queue_free()
+	await wait_process_frames(3)
+	assert_eq(g.juice().trail_pool.active_count(), 0, "s'arrête si le fruit disparaît")
+
+
+func test_stars_fly_to_score_from_pool() -> void:
+	var g := await _new_game()
+	var hud := g.hud()
+	var nodes := Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
+	hud.fly_points(Vector2(540, 1400), 4)
+	await wait_seconds(0.3)
+	assert_gt(hud.flyers_visible(), 0)
+	await wait_seconds(cfg.fly_time + 0.6)
+	assert_eq(hud.flyers_visible(), 0, "toutes arrivées")
+	assert_eq(Performance.get_monitor(Performance.OBJECT_NODE_COUNT), nodes, "poolées")
+
+
+func test_every_fruit_has_a_fun_fact() -> void:
+	var cat: FruitCatalog = load("res://data/fruits.tres")
+	for r in cat.count():
+		assert_false(cat.get_def(r).fun_fact.is_empty(), cat.get_def(r).display_name)
+
+
+func test_fact_card_shows_then_leaves() -> void:
+	var g := await _new_game()
+	var hud := g.hud()
+	hud.show_fact(6)
+	assert_true(hud.fact_visible())
+	assert_string_contains(hud._fact_text.text, "mangue")
+	await wait_seconds(cfg.fact_card_time + 1.0)
+	assert_false(hud.fact_visible())
+
+
+func test_ui_bounce_is_attached_once() -> void:
+	var b := Button.new()
+	add_child_autofree(b)
+	UiJuice.bounce(b)
+	UiJuice.bounce(b)
+	assert_eq(b.button_down.get_connections().size(), 1)
+
+
+func test_curtain_reveals() -> void:
+	var c := UiJuice.Curtain.new()
+	add_child_autofree(c)
+	c.reveal(0.1)
+	assert_true(c.is_covering())
+	await wait_seconds(0.3)
+	assert_false(c.is_covering())

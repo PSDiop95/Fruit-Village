@@ -4,6 +4,8 @@ extends Resource
 
 @export var id: StringName
 @export var display_name: String
+## Carte « Le savais-tu ? » (premier fruit découvert) : une phrase courte.
+@export_multiline var fun_fact: String = ""
 @export var radius: float = 0.3
 @export var color: Color = Color.WHITE
 ## Points gagnés quand ce fruit est CRÉÉ par une fusion.

@@ -209,6 +209,9 @@ func _target_pose(m: Mood) -> Dictionary:
 
 func _apply_pose() -> void:
 	_model.position = Vector3(_pose.x, _pose.y, 0)
+	# Assis sur le cadre : suit son écrasement (unités du modèle).
+	if _game and is_instance_valid(_game) and _game.market():
+		_model.position.y -= _game.market().frame_top_drop() / maxf(scale.y, 0.01)
 	_model.rotation = Vector3(_pose.lean, _pose.spin, 0)
 	_model.scale = Vector3(1.0 - _pose.breath * 0.5, 1.0 + _pose.breath, 1.0)
 	_rot("head", Vector3(_pose.head_x, _pose.head_y, _pose.head_z))

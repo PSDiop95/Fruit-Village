@@ -13,6 +13,8 @@ var basket: MeshInstance3D
 var frame: MeshInstance3D
 var ambiance: AmbianceDef
 var lights: FestiveLights
+var _squash: float = 0.0
+var _frame_base_y: float = 0.0
 var stall: MeshInstance3D
 var layers: Array[MeshInstance3D] = []
 var passants: Array[Node3D] = []
@@ -70,6 +72,24 @@ func apply_ambiance(amb: AmbianceDef) -> void:
 	lights.build(config, amb)
 
 
+## Écrasement du cadre (ressort piloté par Juice) : le bas reste posé, le
+## haut descend de `x` × hauteur, la largeur gonfle de moitié. Visuel seulement.
+func set_frame_squash(x: float) -> void:
+	_squash = x
+	if frame == null:
+		return
+	var h := (frame.mesh as QuadMesh).size.y
+	frame.scale = Vector3(1.0 + x * 0.5, 1.0 - x, 1.0)
+	frame.position.y = _frame_base_y - h * 0.5 * x
+
+
+## Descente (m) du bord haut du cadre : la mascotte assise suit.
+func frame_top_drop() -> float:
+	if frame == null:
+		return 0.0
+	return (frame.mesh as QuadMesh).size.y * _squash
+
+
 ## Applique l'ambiance du réglage joueur et la suit quand il change
 ## (connexion à une méthode : libérée avec la scène).
 func follow_ambiance_setting() -> void:
@@ -96,6 +116,7 @@ func _build_frame(gc: GameConfig) -> void:
 	frame = _flat_quad(size, Vector3(0, gc.basket_height * 0.5, config.basket_frame_z),
 		config.basket_frame, Color.WHITE)
 	frame.name = "BasketFrame"
+	_frame_base_y = frame.position.y
 	var mat := frame.mesh.material as StandardMaterial3D
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
 	mat.alpha_scissor_threshold = 0.5

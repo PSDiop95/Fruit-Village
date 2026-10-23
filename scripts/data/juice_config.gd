@@ -35,6 +35,25 @@ enum Quality { LOW, MEDIUM, HIGH }
 @export var danger_tremble_amplitude: float = 0.035
 @export var danger_tremble_speed: float = 38.0
 
+@export_group("Lâcher")
+## Le fruit en visée penche dans le sens du doigt (ressort) : gain (rad par m/s), max (rad).
+@export var aim_tilt_gain: float = 0.05
+@export var aim_tilt_max: float = 0.4
+@export var aim_tilt_stiffness: float = 180.0
+@export var aim_tilt_damping: float = 9.0
+## Traînée lumineuse derrière le fruit qui tombe : longueur (s × vitesse), max (m), opacité.
+@export var trail_length_per_speed: float = 0.13
+@export var trail_max_length: float = 2.4
+@export var trail_alpha: float = 0.45
+@export var trail_pool_size: int = 3
+## Petites gouttes à l'impact (vitesse normalisée minimale 0..1).
+@export var puff: ParticleSettings
+@export var puff_pool_size: int = 4
+@export_range(0.0, 1.0) var puff_min_impact: float = 0.45
+## Le fruit suivant tombe dans la visée depuis cette hauteur (m) en ce temps (s).
+@export var preview_drop_height: float = 0.9
+@export var preview_drop_time: float = 0.28
+
 @export_group("Visages")
 ## Vitesse d'impact (m/s) qui déclenche la grimace.
 @export var face_squashed_min_speed: float = 6.0
@@ -47,6 +66,11 @@ enum Quality { LOW, MEDIUM, HIGH }
 @export var mouth_color: Color = Color(0.25, 0.06, 0.05)
 ## Petit numéro de rang sous la bouche (aide M1 / daltonisme).
 @export var show_rank_numbers: bool = true
+## Regard : les fruits voisins tournent les yeux vers une fusion.
+## Rayon (m), durée (s), décalage du visage (fraction du rayon).
+@export var look_radius: float = 3.5
+@export var look_time: float = 0.9
+@export var look_offset: float = 0.12
 
 @export_group("Fusion : jus, onde, texte")
 @export var splash: ParticleSettings
@@ -118,6 +142,15 @@ enum Quality { LOW, MEDIUM, HIGH }
 @export var confetti: ParticleSettings
 @export var confetti_pool_size: int = 2
 
+@export_group("Panier qui réagit")
+## Le cadre s'écrase sur les gros impacts / grosses fusions (ressort amorti).
+## Écrasement par impact = vitesse normalisée × rayon × ce gain, plafonné.
+@export var basket_bump_gain: float = 0.02
+@export var basket_bump_max: float = 0.025
+@export var basket_bump_merge: float = 0.02
+@export var basket_spring_stiffness: float = 320.0
+@export var basket_spring_damping: float = 12.0
+
 @export_group("Screen shake")
 @export var shake_max_offset: float = 0.35
 ## Trauma perdu par seconde.
@@ -169,12 +202,23 @@ enum Quality { LOW, MEDIUM, HIGH }
 @export var game_over_panel_slide_time: float = 0.45
 @export var game_over_panel_delay: float = 0.5
 @export var game_over_score_roll_time: float = 1.0
+## Taille du texte « NOUVEAU RECORD ! ».
+@export var record_text_font_size: int = 110
 
 @export_group("HUD")
 ## Temps (s) pour que le compteur rattrape le score.
 @export var score_roll_time: float = 0.35
 @export var score_pulse_scale: float = 1.18
 @export var score_pulse_time: float = 0.15
+## Étoiles qui volent vers le score : durée du vol, décalage entre étoiles, pool.
+@export var fly_time: float = 0.55
+@export var fly_stagger: float = 0.06
+@export var fly_pool_size: int = 14
+## Étoiles par fusion : 1 + rang / ce diviseur (+1 en combo), plafonné.
+@export var fly_rank_divisor: int = 3
+@export var fly_max: int = 5
+## Carte « Le savais-tu ? » : durée d'affichage (s, temps réel).
+@export var fact_card_time: float = 4.5
 
 @export_group("Haptique (ms)")
 @export var vibrate_drop_ms: int = 8

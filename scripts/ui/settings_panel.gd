@@ -73,6 +73,7 @@ func _ready() -> void:
 	close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	close_button.pressed.connect(close)
 	box.add_child(close_button)
+	UiJuice.bounce_all(self)
 
 
 ## Ambiance du marché : Auto (heure locale), puis chaque ambiance de data/ambiances.tres.
