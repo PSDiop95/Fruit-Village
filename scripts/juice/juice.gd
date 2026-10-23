@@ -23,6 +23,9 @@ var confetti_pool: NodePool
 var leaves_pool: NodePool
 var coins_pool: NodePool
 var ring_pool: NodePool
+var drop_pool: NodePool
+var star_pool: NodePool
+var flash_pool: NodePool
 var text_pool: NodePool
 
 var _fx_root: Node3D
@@ -61,8 +64,7 @@ var _over: bool = false
 var _overlay: CanvasLayer
 var _vignette: ColorRect
 var _vignette_mat: ShaderMaterial
-var _big_text: Label
-var _big_tween: Tween
+var _big_text: ComboBanner
 var _banner: PanelContainer
 var _banner_label: Label
 var _banner_tween: Tween
@@ -133,6 +135,13 @@ func _build_pools() -> void:
 	confetti_pool = NodePool.new(_fx_root, burst_factory.call(config.confetti), config.confetti_pool_size)
 	leaves_pool = NodePool.new(_fx_root, burst_factory.call(config.leaves), 1)
 	coins_pool = NodePool.new(_fx_root, burst_factory.call(config.coins), 1)
+	drop_pool = NodePool.new(_fx_root, burst_factory.call(config.drops), config.drop_pool_size)
+	star_pool = NodePool.new(_fx_root, burst_factory.call(config.stars), config.star_pool_size)
+	flash_pool = NodePool.new(_fx_root, func() -> Node:
+		var f := FxItems.Flash.new(config.flash_color)
+		f.duration = config.flash_time
+		f.max_scale = config.flash_scale
+		return f, config.flash_pool_size)
 	ring_pool = NodePool.new(_fx_root, func() -> Node:
 		var r := FxItems.Ring.new(config.ring_color)
 		r.duration = config.ring_time
@@ -252,14 +261,10 @@ func _build_overlay() -> void:
 	_vignette.material = _vignette_mat
 	root.add_child(_vignette)
 
-	_big_text = _make_label(config.combo_text_font_size, config.combo_text_color)
-	_big_text.set_anchors_preset(Control.PRESET_CENTER)
-	_big_text.offset_left = -540
-	_big_text.offset_right = 540
-	_big_text.offset_top = -330
-	_big_text.offset_bottom = -70
-	_big_text.pivot_offset = Vector2(540, 130)
-	_big_text.modulate.a = 0.0
+	_big_text = ComboBanner.new()
+	_big_text.setup(config)
+	# Centré horizontalement, au-dessus du milieu de l'écran de référence 1080x1920.
+	_big_text.home = Vector2(0, 960 - 420 - ComboBanner.H * 0.5)
 	root.add_child(_big_text)
 
 	_banner = PanelContainer.new()
@@ -318,13 +323,14 @@ func particle_multiplier() -> float:
 ## Réalloue les gerbes à la bonne quantité (uniquement au changement de réglage).
 func apply_particle_amounts() -> void:
 	var k := particle_multiplier()
-	for pool in [splash_pool, confetti_pool, leaves_pool, coins_pool]:
+	for pool in [splash_pool, confetti_pool, leaves_pool, coins_pool, drop_pool, star_pool]:
 		for b in pool.all():
 			(b as ParticleBurst).set_amount_scale(k)
 
 
 func pools() -> Array[NodePool]:
-	return [splash_pool, confetti_pool, leaves_pool, coins_pool, ring_pool, text_pool]
+	return [splash_pool, confetti_pool, leaves_pool, coins_pool, ring_pool, text_pool,
+		drop_pool, star_pool, flash_pool]
 
 
 func active_fx_count() -> int:
@@ -379,17 +385,28 @@ func _on_merged(rank_created: int, pos: Vector3, points: int, combo: int) -> voi
 	var def := game.catalog.get_def(shown_rank)
 	var fx_pos := Vector3(pos.x, pos.y, FX_Z)
 
+	(flash_pool.acquire() as FxItems.Flash).start(fx_pos + Vector3(0, 0, -0.2), def.radius)
 	(splash_pool.acquire() as ParticleBurst).burst(fx_pos, def.color)
+	# Gouttes de jus et étoiles : doublées pour les gros fruits.
+	var bursts := 2 if shown_rank >= config.big_burst_min_rank else 1
+	for i in bursts:
+		var off := Vector3(def.radius * 0.35 * (i * 2 - 1), 0, 0) if bursts > 1 else Vector3.ZERO
+		(drop_pool.acquire() as ParticleBurst).burst(fx_pos + off, def.color.lightened(0.1))
+		(star_pool.acquire() as ParticleBurst).burst(fx_pos + off)
 	(ring_pool.acquire() as FxItems.Ring).start(fx_pos, def.radius, config.ring_color)
 	var size_mult := 1.0 + 0.12 * minf(combo - 1, 4)
+	var txt_color := config.float_text_color.lerp(def.color.lightened(0.25), config.float_text_tint)
 	(text_pool.acquire() as FxItems.FloatText).start(fx_pos + Vector3(0, def.radius * 0.6, 0.1),
-		"+%d" % points, config.float_text_color, size_mult)
+		"+%d" % points, txt_color, size_mult)
 	if not top:
 		Audio.play(config.sounds.note_for_rank(rank_created), config.merge_volume_db)
 	vibrate(config.vibrate_merge_ms)
 
 	if combo >= config.combo_min:
-		_show_big_text("COMBO x%d !" % combo, config.combo_text_color, config.combo_text_font_size)
+		_show_big_text("COMBO x%d !" % combo, config.combo_fill_bottom, config.combo_text_font_size, 0.6,
+			combo - config.combo_min, config.combo_fill_top)
+		for i in mini(combo - config.combo_min, 3) * config.combo_extra_star_bursts:
+			(star_pool.acquire() as ParticleBurst).burst(fx_pos + Vector3(0, def.radius * 0.5 * i, 0))
 		hit_stop()
 		_zoom_t = 0.0
 		Audio.play(config.sounds.combo_chord, config.combo_volume_db,
@@ -578,19 +595,12 @@ func _update_fps(real_dt: float) -> void:
 
 # ---------------------------------------------------------------- UI animée
 
-func _show_big_text(txt: String, color: Color, font_size: int, hold: float = 0.6) -> void:
-	_big_text.text = txt
-	_big_text.label_settings.font_color = color
-	_big_text.label_settings.font_size = font_size
-	if _big_tween:
-		_big_tween.kill()
-	_big_text.modulate.a = 1.0
-	_big_text.scale = Vector2.ONE * 0.4
-	_big_tween = create_tween().set_ignore_time_scale(true)
-	_big_tween.tween_property(_big_text, "scale", Vector2.ONE, 0.25) \
-		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	_big_tween.tween_interval(maxf(config.combo_text_time - 0.55, 0.0) + hold * 0.5)
-	_big_tween.tween_property(_big_text, "modulate:a", 0.0, 0.3)
+## Bannière animée. `level` : niveau de combo au-delà du minimum (0 = premier).
+## `color` = bas du dégradé (le haut est sa version claire).
+func _show_big_text(txt: String, color: Color, font_size: int, hold: float = 0.6, level: int = 0,
+		top: Color = Color(0, 0, 0, 0)) -> void:
+	var t := top if top.a > 0.0 else color.lightened(0.55)
+	_big_text.play(txt, font_size, level, maxf(config.combo_text_time - 0.55, 0.0) + hold * 0.5, t, color)
 
 
 func _show_banner(txt: String, color: Color) -> void:

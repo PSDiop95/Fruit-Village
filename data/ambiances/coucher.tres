@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="AmbianceDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/ambiance_def.gd" id="1_ru41m"]
+
+[resource]
+script = ExtResource("1_ru41m")
+id = &"coucher"
+display_name = "Coucher de soleil"
+short_name = "Soir"
+sky_override = true
+sky_top = Color(0.24313726, 0.29803923, 0.5568628, 1)
+sky_mid = Color(0.8156863, 0.47058824, 0.6039216, 1)
+sky_horizon = Color(1, 0.7019608, 0.43137255, 1)
+background_color = Color(0.24313726, 0.29803923, 0.5568628, 1)
+decor_mul = Color(0.98, 0.76, 0.7, 1)
+decor_add = Color(0.06, 0, 0.03, 1)
+haze_color = Color(0.9411765, 0.627451, 0.49411765, 1)
+sun_color = Color(1, 0.69803923, 0.47843137, 1)
+sun_rotation_degrees = Vector3(-14, -40, 0)
+ambient_color = Color(1, 0.7372549, 0.6431373, 1)
+ambient_energy = 0.35
+rim_color = Color(1, 0.6039216, 0.2509804, 1)
+glow_intensity = 0.6
+frame_tint = Color(1, 0.94, 0.88, 1)
+garlands = true
+bulb_colors = PackedColorArray(1, 0.8235294, 0.47843137, 1, 1, 0.9019608, 0.627451, 1, 1, 0.7529412, 0.3764706, 1)

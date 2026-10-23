@@ -211,3 +211,10 @@ static func _apply_prop_config(cfg: VisualConfig) -> void:
 
 static func is_halo_rank(rank: int) -> bool:
 	return get_config().halo_ranks.has(rank)
+
+
+## Couleur du liseré lumineux des fruits (ambiance : soleil couchant, guirlandes).
+static func set_rim_color(c: Color) -> void:
+	_ensure_materials()
+	for mat in [_material, _material_low]:
+		mat.set_shader_parameter("rim_color", c)

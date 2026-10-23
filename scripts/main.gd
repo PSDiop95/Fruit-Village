@@ -52,6 +52,7 @@ func _make_backdrop() -> Node3D:
 	var market := MarketScene.new()
 	root.add_child(market)
 	market.setup(load("res://data/visual.tres"), cfg)
+	market.follow_ambiance_setting()
 	var cam := Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 	cam.keep_aspect = Camera3D.KEEP_WIDTH

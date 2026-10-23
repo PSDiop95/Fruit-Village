@@ -1,6 +1,6 @@
 class_name SettingsPanel
 extends PanelContainer
-## Réglages : musique, sons, vibrations, effets réduits, qualité visuelle.
+## Réglages : musique, sons, vibrations, effets réduits, qualité visuelle, ambiance.
 ## Chaque changement est sauvegardé tout de suite (SaveManager.set_setting).
 
 signal closed
@@ -18,6 +18,7 @@ const QUALITY_CHOICES := [VisualQuality.AUTO, JuiceConfig.Quality.LOW, JuiceConf
 
 var toggles: Dictionary = {}  # clé -> CheckButton
 var quality_buttons: Array[Button] = []
+var ambiance_buttons: Array[Button] = []
 var close_button: Button
 
 
@@ -64,6 +65,7 @@ func _ready() -> void:
 		row.add_child(b)
 		quality_buttons.append(b)
 	_refresh_quality_style()
+	_build_ambiance_row(box)
 	close_button = Button.new()
 	close_button.text = "OK"
 	close_button.theme_type_variation = &"ButtonGreen"
@@ -71,6 +73,46 @@ func _ready() -> void:
 	close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	close_button.pressed.connect(close)
 	box.add_child(close_button)
+
+
+## Ambiance du marché : Auto (heure locale), puis chaque ambiance de data/ambiances.tres.
+func _build_ambiance_row(box: VBoxContainer) -> void:
+	var al := Label.new()
+	al.text = "Ambiance"
+	box.add_child(al)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	box.add_child(row)
+	var labels := ["Auto"]
+	var values := [Ambiances.AUTO]
+	var amb := Ambiances.load_default()
+	for i in amb.list.size():
+		labels.append(amb.list[i].short_name)
+		values.append(i)
+	var group := ButtonGroup.new()
+	for i in labels.size():
+		var b := Button.new()
+		b.text = labels[i]
+		b.toggle_mode = true
+		b.button_group = group
+		b.add_theme_font_size_override("font_size", 36)
+		b.custom_minimum_size = Vector2(0, 110)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var v: int = values[i]
+		b.set_meta(&"value", v)
+		b.button_pressed = int(SaveManager.get_setting(&"ambiance")) == v
+		b.pressed.connect(func() -> void:
+			SaveManager.set_setting(&"ambiance", v)
+			_refresh_ambiance_style())
+		row.add_child(b)
+		ambiance_buttons.append(b)
+	_refresh_ambiance_style()
+
+
+func _refresh_ambiance_style() -> void:
+	var cur := int(SaveManager.get_setting(&"ambiance"))
+	for b in ambiance_buttons:
+		b.theme_type_variation = &"Button" if int(b.get_meta(&"value")) == cur else &"ButtonBlue"
 
 
 func _set_quality(setting: int) -> void:

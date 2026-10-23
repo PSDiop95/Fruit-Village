@@ -47,6 +47,9 @@ def main():
 	people = importlib.import_module("decor_people")
 	for name, parts in people.PEOPLE:
 		reports.append(common.build_character(name, parts, out_dir))
+	mascots = importlib.import_module("mascot_singe")
+	for name, parts in mascots.MASCOTS:
+		reports.append(common.build_character(name, parts, out_dir))
 	with open(os.path.join(out_dir, "export_report.json"), "w", encoding="utf-8") as f:
 		json.dump(reports, f, indent=1)
 	print("EXPORT_OK %d assets -> %s" % (len(reports), out_dir))

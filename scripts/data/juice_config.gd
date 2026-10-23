@@ -61,12 +61,46 @@ enum Quality { LOW, MEDIUM, HIGH }
 @export var float_text_font_size: int = 110
 @export var float_text_color: Color = Color(1, 1, 1)
 @export var float_text_outline_color: Color = Color(0.23, 0.14, 0.08)
+## Texte « +28 » teinté par la couleur du fruit (0 = blanc, 1 = couleur pure).
+@export_range(0.0, 1.0) var float_text_tint: float = 0.45
+
+@export_group("Fusion : gouttes, étoiles, éclair")
+## Grosses gouttes de jus (couleur du fruit), allongées dans le sens de la vitesse.
+@export var drops: ParticleSettings
+@export var drop_pool_size: int = 8
+## Étoiles dorées additives (brillent avec le glow).
+@export var stars: ParticleSettings
+@export var star_pool_size: int = 8
+## Étoiles supplémentaires par niveau de combo au-delà de combo_min (gerbes).
+@export var combo_extra_star_bursts: int = 1
+## Éclair radial additif au point de fusion : durée, taille (× rayon), couleur.
+@export var flash_pool_size: int = 8
+@export var flash_time: float = 0.22
+@export var flash_scale: float = 3.2
+@export var flash_color: Color = Color(1.0, 0.92, 0.6, 0.9)
+## Gerbes multipliées par la taille du fruit créé : rang ≥ ce seuil = double gerbe.
+@export var big_burst_min_rank: int = 5
 
 @export_group("Combo")
 @export var combo_min: int = 2
 @export var combo_text_time: float = 0.9
 @export var combo_text_font_size: int = 130
 @export var combo_text_color: Color = Color("e65100")
+## Bannière : dégradé du texte (haut → bas), contours, rayons et halo.
+@export var combo_fill_top: Color = Color("fff27a")
+@export var combo_fill_bottom: Color = Color("ff8a00")
+## Niveau « chaud » (combo ≥ combo_hot_level) : texte plus rouge, rayons plus vifs.
+@export var combo_hot_level: int = 5
+@export var combo_hot_fill_bottom: Color = Color("ff3d00")
+@export var combo_inner_outline: Color = Color("fff6dc")
+@export var combo_outer_outline: Color = Color("6b2a06")
+@export var combo_ray_color: Color = Color(1.0, 0.7, 0.15, 0.85)
+@export var combo_glow_color: Color = Color(1.0, 0.75, 0.2, 0.75)
+@export var combo_ray_count: int = 14
+## Croissance de la taille du texte par niveau de combo (fraction).
+@export var combo_level_growth: float = 0.08
+## Tremblement du texte (px) à partir du niveau chaud.
+@export var combo_hot_shake: float = 6.0
 ## Hit-stop : temps réel figé et échelle de temps pendant ce gel.
 @export var hitstop_time: float = 0.04
 @export var hitstop_time_scale: float = 0.05

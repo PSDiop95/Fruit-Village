@@ -10,6 +10,9 @@ var config: VisualConfig
 var sun: DirectionalLight3D
 var environment: Environment
 var basket: MeshInstance3D
+var frame: MeshInstance3D
+var ambiance: AmbianceDef
+var lights: FestiveLights
 var stall: MeshInstance3D
 var layers: Array[MeshInstance3D] = []
 var passants: Array[Node3D] = []
@@ -26,13 +29,76 @@ func setup(cfg: VisualConfig, game_cfg: GameConfig = null) -> void:
 	config = cfg
 	name = "Market"
 	_build_light()
-	basket = _model_instance(cfg.basket_model, "BasketVisual")
+	var gc: GameConfig = game_cfg if game_cfg else load("res://data/game_config.tres")
+	if cfg.basket_frame:
+		_build_frame(gc)
+	else:
+		basket = _model_instance(cfg.basket_model, "BasketVisual")
 	stall = _model_instance(cfg.stall_model, "StallVisual")
 	if cfg.backdrop:
 		_build_backdrop(game_cfg if game_cfg else load("res://data/game_config.tres"))
 	else:
 		_build_decor()
 	apply_quality(FruitModels.quality)
+
+
+## Applique une ambiance (ciel, étalonnage du décor, lumière, guirlandes).
+## Réappelable à chaud (changement de réglage en partie).
+func apply_ambiance(amb: AmbianceDef) -> void:
+	ambiance = amb
+	environment.background_color = amb.background_color
+	environment.ambient_light_color = amb.ambient_color
+	environment.ambient_light_energy = amb.ambient_energy
+	environment.glow_intensity = amb.glow_intensity
+	sun.light_color = amb.sun_color
+	sun.light_energy = amb.sun_energy
+	sun.rotation_degrees = amb.sun_rotation_degrees
+	FruitModels.set_rim_color(amb.rim_color)
+	if _decor_mat:
+		_decor_mat.set_shader_parameter("sky_override", amb.sky_override)
+		_decor_mat.set_shader_parameter("sky_top", amb.sky_top)
+		_decor_mat.set_shader_parameter("sky_mid", amb.sky_mid)
+		_decor_mat.set_shader_parameter("sky_horizon", amb.sky_horizon)
+		_decor_mat.set_shader_parameter("grade_mul", Vector3(amb.decor_mul.r, amb.decor_mul.g, amb.decor_mul.b))
+		_decor_mat.set_shader_parameter("grade_add", Vector3(amb.decor_add.r, amb.decor_add.g, amb.decor_add.b))
+		_decor_mat.set_shader_parameter("haze_color", amb.haze_color)
+	if frame:
+		(frame.mesh.material as StandardMaterial3D).albedo_color = amb.frame_tint
+	if lights == null:
+		lights = FestiveLights.new()
+		add_child(lights)
+	lights.build(config, amb)
+
+
+## Applique l'ambiance du réglage joueur et la suit quand il change
+## (connexion à une méthode : libérée avec la scène).
+func follow_ambiance_setting() -> void:
+	apply_ambiance(Ambiances.load_default().current())
+	SaveManager.setting_changed.connect(_on_setting_changed)
+
+
+func _on_setting_changed(key: StringName, _value: Variant) -> void:
+	if key == &"ambiance":
+		apply_ambiance(Ambiances.load_default().current())
+
+
+## Le panier a un habillage (cadre peint ou modèle) : pas de boîtes placeholder.
+func has_basket() -> bool:
+	return basket != null or frame != null
+
+
+## Cadre bois peint (une texture, un quad) derrière les fruits : l'intérieur
+## couvre exactement le panier M1, le bois déborde de basket_frame_border.
+## Non éclairé : reste lisible quelle que soit l'ambiance.
+func _build_frame(gc: GameConfig) -> void:
+	var b := config.basket_frame_border
+	var size := Vector2(gc.basket_inner_width + b * 2.0, gc.basket_height + b * 2.0)
+	frame = _flat_quad(size, Vector3(0, gc.basket_height * 0.5, config.basket_frame_z),
+		config.basket_frame, Color.WHITE)
+	frame.name = "BasketFrame"
+	var mat := frame.mesh.material as StandardMaterial3D
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	mat.alpha_scissor_threshold = 0.5
 
 
 ## Fond peint : l'illustration occupe toute la largeur visible, son bord haut

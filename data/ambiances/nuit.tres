@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AmbianceDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/ambiance_def.gd" id="1_mdd4c"]
+
+[resource]
+script = ExtResource("1_mdd4c")
+id = &"nuit"
+display_name = "Nuit festive"
+short_name = "Nuit"
+sky_override = true
+sky_top = Color(0.043137256, 0.07058824, 0.21176471, 1)
+sky_mid = Color(0.11764706, 0.17254902, 0.38431373, 1)
+sky_horizon = Color(0.2901961, 0.28235295, 0.53333336, 1)
+background_color = Color(0.043137256, 0.07058824, 0.21176471, 1)
+decor_mul = Color(0.36, 0.4, 0.62, 1)
+decor_add = Color(0.02, 0.02, 0.06, 1)
+haze_color = Color(0.1254902, 0.16470589, 0.34509805, 1)
+sun_color = Color(0.7529412, 0.78431374, 1, 1)
+sun_energy = 0.75
+sun_rotation_degrees = Vector3(-30, 30, 0)
+ambient_color = Color(1, 0.8392157, 0.627451, 1)
+ambient_energy = 0.5
+rim_color = Color(1, 0.78431374, 0.3764706, 1)
+glow_intensity = 0.8
+frame_tint = Color(0.9, 0.82, 0.74, 1)
+garlands = true
+bulb_colors = PackedColorArray(1, 0.8156863, 0.3764706, 1, 1, 0.47843137, 0.22745098, 1, 1, 0.2901961, 0.41568628, 1, 0.41568628, 0.8784314, 0.4392157, 1, 0.3764706, 0.6901961, 1, 1, 1, 0.8156863, 0.3764706, 1)
+bulb_energy = 3.2
+night_stars = true
+moon = true

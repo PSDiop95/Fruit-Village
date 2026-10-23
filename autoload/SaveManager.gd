@@ -11,6 +11,8 @@ const DEFAULT_SETTINGS := {
 	&"vibration_on": true,
 	## -1 = automatique (VisualQuality.detect), sinon JuiceConfig.Quality.
 	&"quality": -1,
+	## -1 = selon l'heure locale (Ambiances.resolve), sinon index dans data/ambiances.
+	&"ambiance": -1,
 }
 
 ## Surchargeable (tests) pour ne jamais toucher la vraie sauvegarde joueur.

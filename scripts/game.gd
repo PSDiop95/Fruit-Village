@@ -55,6 +55,7 @@ var _time: float = 0.0
 var _hud: GameHud
 var _juice: Juice
 var _market: MarketScene
+var _mascot: Mascot
 var _batcher: FruitBatcher
 var _last_danger_ratio: float = -1.0
 var _last_danger_state: DangerMonitor.State = DangerMonitor.State.SAFE
@@ -85,6 +86,10 @@ func _ready() -> void:
 		_juice.name = "Juice"
 		add_child(_juice)
 		_juice.bind(self)
+		_mascot = Mascot.create(visual_config, juice_config)
+		if _mascot:
+			add_child(_mascot)
+			_mascot.bind(self)
 	_hud.menu_requested.connect(go_to_menu)
 	var q_setting := int(SaveManager.get_setting(&"quality"))
 	if _juice:
@@ -105,6 +110,7 @@ func _build_environment() -> void:
 	_market = MarketScene.new()
 	add_child(_market)
 	_market.setup(visual_config, config)
+	_market.follow_ambiance_setting()
 
 	_camera = Camera3D.new()
 	_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
@@ -129,7 +135,7 @@ func _build_basket() -> void:
 	var t := config.wall_thickness
 	var color := Color("a0522d")
 	# Collision M1 inchangée. Boîtes visibles seulement sans modèle de panier.
-	var placeholder := _market == null or _market.basket == null
+	var placeholder := _market == null or not _market.has_basket()
 	# sol
 	_add_box(body, Vector3(w + t * 2.0, t, 2.0), Vector3(0, -t * 0.5, 0), color, placeholder)
 	# murs
@@ -274,6 +280,15 @@ func _aim_at(screen_pos: Vector2) -> void:
 	_aim_x = _clamp_x(world.x, catalog.get_def(spawner.current()).radius)
 	_preview.position.x = _aim_x
 	_guide.position.x = _aim_x
+
+
+## Position x visée (m), pour les regards de la mascotte.
+func aim_x() -> float:
+	return _aim_x
+
+
+func mascot() -> Mascot:
+	return _mascot
 
 
 func _clamp_x(x: float, r: float) -> float:
@@ -479,6 +494,8 @@ func set_quality(level: int) -> void:
 	FruitModels.set_quality(level)
 	if _market:
 		_market.apply_quality(level)
+	if _mascot:
+		_mascot.apply_quality(level)
 	for f in _fruits:
 		f.visual().refresh_material()
 	_preview.refresh_material()

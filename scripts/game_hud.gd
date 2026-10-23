@@ -8,17 +8,21 @@ extends CanvasLayer
 ## L'écran de fin ou la pause demande le retour au titre.
 signal menu_requested
 
+const HUD_DIR := "res://assets/ui/hud/"
+const SCORE_GOLD := Color("ffc93a")
+
 var _game: Game
 var _cfg: JuiceConfig
 var _root: Control
 var _score: Label
 var _best: Label
+var _star: TextureRect
 var _next: Label
 var _next_thumb: FruitThumb
 var _goal_label: Label
 var _goal_bar: ProgressBar
 var _danger: ProgressBar
-var _pause_button: Button
+var _pause_button: TextureButton
 var _pause_dim: ColorRect
 var _pause_panel: PanelContainer
 var _settings: SettingsPanel
@@ -57,85 +61,65 @@ func _build() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
 
-	# --- Bandeau haut : score | pause | suivant
-	var top := HBoxContainer.new()
-	top.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	top.offset_left = 36
-	top.offset_right = -36
-	top.offset_top = 40
-	top.add_theme_constant_override("separation", 20)
-	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(top)
+	# --- Bandeau haut : planche du score | bouton pause | anneau « Suivant »
+	# (éléments peints : assets/ui/hud/, découpés par tools/prepare_ui_art.gd)
+	var plank := _texture_rect(HUD_DIR + "score_plank.png", Rect2(14, 28, 500, 254))
+	_root.add_child(plank)
+	var star := _texture_rect(HUD_DIR + "star.png", Rect2(46, 52, 146, 146))
+	star.pivot_offset = Vector2(73, 73)
+	plank.add_child(star)
+	_star = star
+	_score = _wood_label(104, SCORE_GOLD, 22)
+	_score.position = Vector2(196, 34)
+	_score.size = Vector2(290, 130)
+	plank.add_child(_score)
+	_best = _wood_label(40, UiTheme.CREAM, 12)
+	_best.position = Vector2(150, 166)
+	_best.size = Vector2(340, 56)
+	plank.add_child(_best)
 
-	var score_pill := PanelContainer.new()
-	score_pill.theme_type_variation = &"Pill"
-	score_pill.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	score_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top.add_child(score_pill)
-	var sbox := VBoxContainer.new()
-	sbox.add_theme_constant_override("separation", -10)
-	score_pill.add_child(sbox)
-	_score = Label.new()
-	_score.theme_type_variation = &"LabelBig"
-	sbox.add_child(_score)
-	_best = Label.new()
-	_best.theme_type_variation = &"LabelSmall"
-	sbox.add_child(_best)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top.add_child(spacer)
-
-	_pause_button = Button.new()
-	_pause_button.icon = _pause_icon()
-	_pause_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_pause_button.theme_type_variation = &"ButtonRound"
-	_pause_button.custom_minimum_size = Vector2(120, 120)
-	_pause_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_pause_button = TextureButton.new()
+	_pause_button.texture_normal = load(HUD_DIR + "pause.png")
+	_pause_button.ignore_texture_size = true
+	_pause_button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	_pause_button.position = Vector2(1080 - 432, 46)
+	_pause_button.size = Vector2(150, 150)
+	_pause_button.pivot_offset = Vector2(75, 75)
+	_pause_button.button_down.connect(func() -> void: _press_bounce(_pause_button, 0.88))
+	_pause_button.button_up.connect(func() -> void: _press_bounce(_pause_button, 1.0))
 	_pause_button.pressed.connect(open_pause)
-	top.add_child(_pause_button)
+	_root.add_child(_pause_button)
 
-	var next_box := VBoxContainer.new()
-	next_box.add_theme_constant_override("separation", 0)
-	next_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top.add_child(next_box)
-	var bubble := PanelContainer.new()
-	bubble.theme_type_variation = &"Pill"
-	bubble.custom_minimum_size = Vector2(180, 180)
-	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	next_box.add_child(bubble)
-	var bstack := VBoxContainer.new()
-	bstack.add_theme_constant_override("separation", -6)
-	bubble.add_child(bstack)
-	var nt := Label.new()
-	nt.text = "Suivant"
-	nt.theme_type_variation = &"LabelSmall"
-	nt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	bstack.add_child(nt)
+	var ring := _texture_rect(HUD_DIR + "next_ring.png", Rect2(1080 - 262, 58, 236, 215))
+	_root.add_child(ring)
 	_next_thumb = FruitThumb.new()
-	_next_thumb.custom_minimum_size = Vector2(120, 120)
-	_next_thumb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	bstack.add_child(_next_thumb)
-	_next = Label.new()
-	_next.theme_type_variation = &"LabelSmall"
-	_next.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	next_box.add_child(_next)
+	_next_thumb.position = Vector2(48, 38)
+	_next_thumb.size = Vector2(140, 140)
+	ring.add_child(_next_thumb)
+	var nt := _wood_label(42, UiTheme.CREAM, 12)
+	nt.text = "Suivant"
+	nt.position = Vector2(-20, -54)
+	nt.size = Vector2(276, 60)
+	ring.add_child(nt)
+	_next = _wood_label(40, Color.WHITE, 12)
+	_next.position = Vector2(-20, 200)
+	_next.size = Vector2(276, 56)
+	ring.add_child(_next)
 
 	# --- Objectif : prochain fruit jamais atteint
 	var goal := VBoxContainer.new()
 	goal.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	goal.offset_top = 300
-	goal.offset_left = 150
+	goal.offset_top = 322
+	goal.offset_left = 250
 	goal.offset_right = -150
 	goal.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(goal)
 	_goal_label = Label.new()
 	_goal_label.theme_type_variation = &"LabelSmall"
 	_goal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_goal_label.add_theme_color_override("font_color", UiTheme.INK)
-	_goal_label.add_theme_color_override("font_outline_color", UiTheme.CREAM)
-	_goal_label.add_theme_constant_override("outline_size", 10)
+	_goal_label.add_theme_color_override("font_color", UiTheme.CREAM)
+	_goal_label.add_theme_color_override("font_outline_color", UiTheme.INK)
+	_goal_label.add_theme_constant_override("outline_size", 14)
 	goal.add_child(_goal_label)
 	_goal_bar = ProgressBar.new()
 	_goal_bar.show_percentage = false
@@ -145,8 +129,8 @@ func _build() -> void:
 
 	_danger = ProgressBar.new()
 	_danger.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_danger.offset_top = 380
-	_danger.offset_bottom = 396
+	_danger.offset_top = 402
+	_danger.offset_bottom = 418
 	_danger.offset_left = 150
 	_danger.offset_right = -150
 	_danger.show_percentage = false
@@ -160,20 +144,44 @@ func _build() -> void:
 	# rapide à lancer, aucun SubViewport inutile pendant le jeu).
 
 
-## Icône pause dessinée (deux barres arrondies) : indépendante de la police.
-static func _pause_icon() -> ImageTexture:
-	var s := 56
-	var img := Image.create(s, s, false, Image.FORMAT_RGBA8)
-	for y in s:
-		for x in s:
-			var in_bar := false
-			for bx in [12, 32]:
-				var cx := clampf(x, bx + 6, bx + 6)
-				var cy := clampf(y, 14, s - 14)
-				if Vector2(x, y).distance_to(Vector2(cx, cy)) <= 6.5:
-					in_bar = true
-			img.set_pixel(x, y, UiTheme.INK if in_bar else Color(0, 0, 0, 0))
-	return ImageTexture.create_from_image(img)
+func _texture_rect(path: String, r: Rect2) -> TextureRect:
+	var t := TextureRect.new()
+	t.texture = load(path)
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.position = r.position
+	t.size = r.size
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return t
+
+
+## Texte « bois » : police d'affichage, contour brun épais, ombre portée.
+static func _wood_label(font_size: int, color: Color, outline: int) -> Label:
+	var l := Label.new()
+	var ls := LabelSettings.new()
+	ls.font = UiTheme.display_font()
+	ls.font_size = font_size
+	ls.font_color = color
+	ls.outline_size = outline
+	ls.outline_color = UiTheme.INK
+	ls.shadow_size = 0
+	ls.shadow_color = Color(0.1, 0.05, 0.02, 0.45)
+	ls.shadow_offset = Vector2(0, font_size * 0.06)
+	l.label_settings = ls
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return l
+
+
+## Bouton qui s'enfonce puis rebondit (élastique).
+func _press_bounce(c: Control, target: float) -> void:
+	var tw := create_tween().set_ignore_time_scale(true)
+	if target < 1.0:
+		tw.tween_property(c, "scale", Vector2.ONE * target, 0.06)
+	else:
+		tw.tween_property(c, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_ELASTIC) \
+			.set_ease(Tween.EASE_OUT)
 
 
 func _dim() -> ColorRect:
@@ -351,11 +359,17 @@ func _on_score(s: int) -> void:
 	# Pulse à chaque gain
 	if _pulse_tween:
 		_pulse_tween.kill()
-	_score.pivot_offset = Vector2(0, _score.size.y * 0.5)
+	_score.pivot_offset = _score.size * 0.5
 	_score.scale = Vector2.ONE * _cfg.score_pulse_scale
-	_pulse_tween = create_tween().set_ignore_time_scale(true)
+	_star.scale = Vector2.ONE * (_cfg.score_pulse_scale + 0.1)
+	_star.rotation = -0.35
+	_pulse_tween = create_tween().set_ignore_time_scale(true).set_parallel()
 	_pulse_tween.tween_property(_score, "scale", Vector2.ONE, _cfg.score_pulse_time) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_pulse_tween.tween_property(_star, "scale", Vector2.ONE, _cfg.score_pulse_time * 2.5) \
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	_pulse_tween.tween_property(_star, "rotation", 0.0, _cfg.score_pulse_time * 2.5) \
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
 func _process(delta: float) -> void:

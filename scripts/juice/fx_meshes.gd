@@ -206,11 +206,25 @@ static func transformed(src: PrimitiveMesh, xform: Transform3D) -> ArrayMesh:
 
 
 ## Mesh d'une particule selon sa forme (taille 1 → mis à l'échelle par mesh_size).
-static func particle_mesh(shape: int, size: float) -> Mesh:
+static func particle_mesh(shape: int, size: float, additive := false) -> Mesh:
 	var mat := unshaded(Color.WHITE, true)
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	if additive:
+		mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		mat.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
+		mat.no_depth_test = true
 	var mesh: Mesh
 	match shape:
+		ParticleSettings.Shape.STAR:
+			mesh = star_mesh(size)
+		ParticleSettings.Shape.DROP:
+			var d := SphereMesh.new()
+			d.radius = size
+			d.height = size * 2.0
+			d.radial_segments = 8
+			d.rings = 4
+			# Goutte : allongée sur Y (axe aligné sur la vitesse), pointe en haut.
+			mesh = transformed(d, Transform3D(Basis.from_scale(Vector3(0.7, 1.5, 0.7)), Vector3.ZERO))
 		ParticleSettings.Shape.LEAF:
 			var s := SphereMesh.new()
 			s.radius = size
@@ -236,6 +250,23 @@ static func particle_mesh(shape: int, size: float) -> Mesh:
 			mesh = sp
 	mesh.surface_set_material(0, mat)
 	return mesh
+
+
+## Étoile plate à 5 branches (plan XY, face caméra), rayon `size`.
+static func star_mesh(size: float) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3.BACK)
+	var pts: Array[Vector3] = []
+	for i in 10:
+		var a := PI * 0.5 + PI * i / 5.0
+		var r := size if i % 2 == 0 else size * 0.45
+		pts.append(Vector3(cos(a) * r, sin(a) * r, 0))
+	for i in 10:
+		st.add_vertex(Vector3.ZERO)
+		st.add_vertex(pts[i])
+		st.add_vertex(pts[(i + 1) % 10])
+	return st.commit()
 
 
 static func additive_material(color: Color, falloff: int = 0) -> ShaderMaterial:

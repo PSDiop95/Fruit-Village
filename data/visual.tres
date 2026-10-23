@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="VisualConfig" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="VisualConfig" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/visual_config.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/textures/palette.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/ui/hud/basket_frame.png" id="3"]
 
 [resource]
 script = ExtResource("1")
@@ -45,6 +46,7 @@ rim_min_quality = 1
 cast_shadow_tone = 0.55
 background_color = Color(0.165, 0.525, 0.863, 1)
 basket_model = "res://assets/models/basket_calebasse.glb"
+basket_frame = ExtResource("3")
 stall_model = "res://assets/models/stall_sandaga.glb"
 decor_haze_color = Color(0.79, 0.92, 0.98, 1)
 passant_depth = 13.0

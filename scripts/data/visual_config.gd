@@ -73,6 +73,65 @@ extends Resource
 @export var halo_pulse_amplitude: float = 0.08
 @export var halo_pulse_speed: float = 2.0
 
+@export_group("Cadre du panier")
+## Cadre bois + frise wax peint (tools/prepare_ui_art.gd), au format du panier :
+## remplace le modèle de calebasse quand il est défini. Purement visuel.
+@export var basket_frame: Texture2D
+## Épaisseur du bois autour de l'intérieur du panier (m).
+@export var basket_frame_border: float = 0.75
+## Profondeur du cadre (derrière les plus gros fruits, rayon 1,68).
+@export var basket_frame_z: float = -1.8
+
+@export_group("Mascotte")
+## Singe articulé (tools/blender/mascot_singe.py) assis sur le coin du cadre.
+## Vide = pas de mascotte.
+@export var mascot_model: String = "res://assets/models/mascot_singe.glb"
+## Position de l'assise (m, plan du jeu) et échelle.
+@export var mascot_position: Vector3 = Vector3(-3.25, 9.35, -1.2)
+@export var mascot_scale: float = 1.45
+## Visage (yeux + bouche du jeu) : centre relatif au cou et rayon de la tête.
+@export var mascot_face_offset: Vector3 = Vector3(0, 0.25, 0.33)
+@export var mascot_face_scale: float = 0.36
+## Combo (ou rang créé) à partir duquel la mascotte fait la fête.
+@export var mascot_cheer_combo: int = 3
+@export var mascot_cheer_rank: int = 6
+## Durées des réactions (s, temps réel).
+@export var mascot_cheer_time: float = 1.3
+@export var mascot_party_time: float = 3.0
+@export var mascot_surprise_time: float = 1.0
+@export var mascot_nod_time: float = 0.25
+## Amplitudes : saut (m), bras levés (rad), regard vers la visée (rad/m).
+@export var mascot_jump: float = 0.28
+@export var mascot_arm_raise: float = 2.4
+@export var mascot_look: float = 0.1
+## Vitesse de lissage des poses (1/s).
+@export var mascot_smoothing: float = 14.0
+## Contour de la mascotte à partir de ce niveau de qualité (7 draw calls de plus).
+@export var mascot_outline_min_quality: int = 2
+
+@export_group("Guirlandes et ciel de nuit")
+## Fils de guirlande (ambiances du soir) : (x0, y0, x1, y1) en m, plan du décor proche.
+@export var garland_lines: Array[Vector4] = [Vector4(-4.7, 11.3, 0.5, 11.0), Vector4(-0.3, 11.2, 4.7, 11.45)]
+## Flèche du fil au milieu (m), espacement et rayon des ampoules (m).
+@export var garland_sag: float = 0.7
+@export var garland_bulb_spacing: float = 0.46
+@export var garland_bulb_radius: float = 0.1
+@export var garland_wire_width: float = 0.03
+@export var garland_wire_color: Color = Color("2a1a10")
+@export var garland_z: float = -2.2
+## Scintillement des ampoules : amplitude relative et vitesse (rad/s).
+@export var garland_twinkle: float = 0.25
+@export var garland_twinkle_speed: float = 3.0
+## Étoiles du ciel de nuit : nombre, zone (x0, y0, x1, y1), taille (m), profondeur.
+@export var night_star_count: int = 70
+@export var night_star_area: Vector4 = Vector4(-4.5, 10.2, 4.5, 18.0)
+@export var night_star_size: Vector2 = Vector2(0.02, 0.05)
+@export var night_sky_z: float = -29.0
+## Lune : position (plan du ciel), rayon, couleur.
+@export var moon_position: Vector2 = Vector2(0.32, 12.35)
+@export var moon_radius: float = 0.45
+@export var moon_color: Color = Color("fff4cf")
+
 @export_group("Fond peint")
 ## Illustration du décor (pleine largeur de l'écran, collée en haut), avec le
 ## ciel prolongé au-dessus et le sol en dessous (couleurs prélevées dans l'image).

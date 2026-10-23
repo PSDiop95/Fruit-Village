@@ -82,3 +82,21 @@ Voir `docs/perf_m3.md` (mesuré sur PC, iGPU Intel UHD, 1080x1920, vsync coupé)
 `m3_partie_moitie`, `m3_baobab`, `m3_pause`, `m3_game_over`.
 Regénérer : `Godot --path . --resolution 720x1280 -s tools/capture_m3.gd -- docs/screens`
 (Linux CI : `xvfb-run -a godot ...`).
+
+## Passe « fun » (VFX, HUD bois, mascotte, ambiances)
+
+| Élément | Où | Régénérer |
+|---|---|---|
+| HUD bois (planche du score, pause, anneau « Suivant », étoile) + cadre du panier 9 zones | `assets/ui/hud/` (sources : `art_src/ui_refs/`) | `Godot --headless --path . -s tools/prepare_ui_art.gd` |
+| Mascotte singe articulée (body, head, bras, jambes, queue), 2 776 triangles | `assets/models/mascot_singe.glb`, `scripts/visual/mascot.gd` | `blender -b --factory-startup -P tools/blender/mascot_singe.py -- assets/models` (aussi dans `export_all.py`) |
+| Ambiances Jour / Coucher de soleil / Nuit festive (ciel, étalonnage, lumière, guirlandes, étoiles, lune) | `data/ambiances/*.tres`, `scripts/visual/festive_lights.gd`, `decor.gdshader` | `tools/make_ambiances.gd` (valeurs de départ) |
+| Fusion : éclair radial, gouttes de jus orientées, étoiles dorées ; « +28 » teinté | `data/juice.tres` (`drops`, `stars`, `flash_*`) | — |
+| Bannière COMBO : dégradé, double contour, halo, rayons, pop élastique, niveau « chaud » | `scripts/juice/combo_banner.gd`, `data/juice.tres` (groupe Combo) | — |
+
+- Réglages → **Ambiance** : Auto (heure locale : jour 7 h–17 h, soir 17 h–20 h, nuit sinon), Jour, Soir, Nuit.
+- Le cadre peint remplace la calebasse (`visual.tres` → `basket_frame`) ; la collision M1 ne change pas.
+- Captures de contrôle : `Godot --path . --resolution 540x1200 -s tools/capture_fun.gd -- <dossier> [0|1|2]`
+  (affiche aussi draw calls / triangles par capture).
+- Perf PC (540x1200, qualité Haut, 12 fruits) : 55–58 draw calls 3D au repos (dont mascotte ≈ 15 avec contour),
+  65–77 pendant un combo. Contour de la mascotte seulement en Haut (`mascot_outline_min_quality`).
+  **À mesurer sur le Galaxy A23.**
