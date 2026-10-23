@@ -679,12 +679,10 @@ func _update_fps(real_dt: float) -> void:
 
 # ---------------------------------------------------------------- UI animée
 
-## Nouveau record : bannière dorée + confettis au-dessus du panneau de fin.
+## Nouveau record : confettis au-dessus de l'écran de fin (ruban et tampon : GameOverScreen).
 func _celebrate_record() -> void:
 	if not is_inside_tree():
 		return
-	_show_big_text("NOUVEAU RECORD !", Color("ff9a00"), config.record_text_font_size, 1.2, 2,
-		Color("fff27a"))
 	var top := game.config.basket_height + 1.5
 	(confetti_pool.acquire() as ParticleBurst).burst(Vector3(-1.5, top, FX_Z))
 	(confetti_pool.acquire() as ParticleBurst).burst(Vector3(1.5, top, FX_Z))

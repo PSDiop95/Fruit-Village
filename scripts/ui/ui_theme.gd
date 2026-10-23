@@ -17,6 +17,9 @@ const INK := Color("3a2414")
 const INK_SOFT := Color("6d4c2f")
 ## Texte des boutons peints : crème cerné de brun (comme les références).
 const BUTTON_TEXT := Color("fff6dc")
+## Cartes modernes : fond et sections.
+const CARD := Color("fff8ec")
+const SECTION := Color("f5e6c8")
 const HUD_DIR := "res://assets/ui/hud/"
 const FRAME_TEX := "res://assets/ui/hud/basket_frame.png"
 ## Géométrie des boutons peints dans la source recomposée (px, hauteur 415) :
@@ -131,6 +134,64 @@ static func build() -> Theme:
 	best.content_margin_top = 20
 	best.content_margin_bottom = 34
 	t.set_stylebox("panel", "PillBest", best)
+	# Carte moderne (réglages, pause, fin de partie) : crème uni, très arrondie,
+	# fin liseré, grande ombre douce. Sections et pastilles internes un ton plus sombre.
+	t.set_type_variation("PanelCard", "PanelContainer")
+	var card := StyleBoxFlat.new()
+	card.bg_color = CARD
+	card.set_corner_radius_all(56)
+	card.set_border_width_all(5)
+	card.border_color = Color(INK, 0.85)
+	card.shadow_color = Color(0, 0, 0, 0.35)
+	card.shadow_size = 28
+	card.shadow_offset = Vector2(0, 16)
+	card.content_margin_left = 54
+	card.content_margin_right = 54
+	card.content_margin_top = 44
+	card.content_margin_bottom = 48
+	t.set_stylebox("panel", "PanelCard", card)
+	t.set_type_variation("PanelSection", "PanelContainer")
+	var sec := StyleBoxFlat.new()
+	sec.bg_color = SECTION
+	sec.set_corner_radius_all(32)
+	sec.content_margin_left = 30
+	sec.content_margin_right = 30
+	sec.content_margin_top = 16
+	sec.content_margin_bottom = 18
+	t.set_stylebox("panel", "PanelSection", sec)
+	# Ruban de titre (orange, cerné, ombré) posé à cheval sur le haut d'une carte.
+	t.set_type_variation("PanelRibbon", "PanelContainer")
+	var rib := StyleBoxFlat.new()
+	rib.bg_color = WAX_ORANGE
+	rib.set_corner_radius_all(999)
+	rib.set_border_width_all(6)
+	rib.border_color = INK
+	rib.shadow_color = Color(0, 0, 0, 0.3)
+	rib.shadow_size = 10
+	rib.shadow_offset = Vector2(0, 8)
+	rib.content_margin_left = 60
+	rib.content_margin_right = 60
+	rib.content_margin_top = 10
+	rib.content_margin_bottom = 16
+	t.set_stylebox("panel", "PanelRibbon", rib)
+	# Segment de choix non actif (contrôle segmenté) : texte seul, sans fond.
+	t.set_type_variation("ButtonSegment", "Button")
+	for state in ["normal", "hover", "focus", "pressed", "disabled"]:
+		var seg := StyleBoxFlat.new()
+		seg.bg_color = Color(INK, 0.07 if state in ["hover", "pressed"] else 0.0)
+		seg.set_corner_radius_all(999)
+		seg.content_margin_left = 16
+		seg.content_margin_right = 16
+		seg.content_margin_top = 10
+		seg.content_margin_bottom = 14
+		t.set_stylebox(state, "ButtonSegment", seg)
+	for c in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		t.set_color(c, "ButtonSegment", INK_SOFT)
+	t.set_constant("outline_size", "ButtonSegment", 0)
+	t.set_font_size("font_size", "ButtonSegment", 38)
+	t.set_type_variation("LabelCaption", "Label")
+	t.set_font_size("font_size", "LabelCaption", 32)
+	t.set_color("font_color", "LabelCaption", INK_SOFT)
 	var panel := StyleBoxFlat.new()
 	panel.bg_color = CREAM
 	panel.set_corner_radius_all(44)

@@ -127,3 +127,15 @@ Regénérer : `Godot --path . --resolution 720x1280 -s tools/capture_m3.gd -- do
   partie, `TitleScreen.basket_screen_rect`) ; le singe est assis sur le cadre et salue.
 - Réglages, pause et fin de partie dans le même style (cadre bois, boutons peints).
 - Captures : `Godot --path . --resolution 540x1200 -s tools/capture_title.gd -- <dossier> [ambiance]`.
+
+### Réglages, pause et fin de partie (cartes modernes + flou)
+
+- Voile flou réutilisable (`scripts/ui/blur_backdrop.gd`) : le jeu ou le menu derrière est flouté
+  et assombri, avec un fondu ; il bloque les touches.
+- Cartes simples (`PanelCard` : crème uni, très arrondie, liseré fin, ombre douce) au lieu du cadre bois.
+- Réglages : en-tête + bouton ×, sections « Son » et « Affichage », Qualité et Ambiance en contrôles
+  segmentés (choix actif = bouton orange peint).
+- Pause : carte simple, Reprendre / Réglages / Menu.
+- Fin de partie (`scripts/ui/game_over_screen.gd`) : ruban titre, plus gros fruit sur rayons tournants,
+  gros score qui défile, tampon « NOUVEAU RECORD ! », pastilles Fusions / Combo max / Durée,
+  Rejouer qui respire + Menu ; apparition en cascade.

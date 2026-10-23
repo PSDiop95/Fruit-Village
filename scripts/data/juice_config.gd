@@ -202,8 +202,6 @@ enum Quality { LOW, MEDIUM, HIGH }
 @export var game_over_panel_slide_time: float = 0.45
 @export var game_over_panel_delay: float = 0.5
 @export var game_over_score_roll_time: float = 1.0
-## Taille du texte « NOUVEAU RECORD ! ».
-@export var record_text_font_size: int = 110
 
 @export_group("HUD")
 ## Temps (s) pour que le compteur rattrape le score.

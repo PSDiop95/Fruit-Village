@@ -24,6 +24,25 @@ func _run() -> void:
 	main.title.open_settings()
 	await _frames(30)
 	await _shot(out_dir, "titre_reglages")
+	main.title.open_settings().close()
+	await _frames(5)
+	main.start_game()
+	await _frames(40)
+	var hud = main.game.hud()
+	hud.open_pause()
+	await _frames(30)
+	await _shot(out_dir, "pause")
+	hud.close_pause()
+	main.game.score = 2480
+	hud.merges = 37
+	hud.best_combo = 5
+	hud.play_time = 192.0
+	main.game.max_rank_reached = 7
+	main.game._end_game()
+	await _frames(150)
+	await _shot(out_dir, "fin_de_partie")
+	var o = hud._over
+	print("DBG over size=%s pos=%s card=%s/%s blur=%s amount=%s" % [o.size, o.position, o.card.position, o.card.size, o._blur.size, o._blur.amount()])
 	print("CAPTURE_TITLE ok -> %s" % out_dir)
 	quit()
 

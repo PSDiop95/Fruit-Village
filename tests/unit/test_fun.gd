@@ -331,3 +331,63 @@ func test_title_settings_dim_is_freed_on_close() -> void:
 	s.close()
 	await wait_process_frames(2)
 	assert_false(is_instance_valid(wrapper), "voile libéré avec le panneau")
+
+
+# ---------------------------------------------------------------- Réglages / pause / fin
+
+func test_settings_card_has_sections_and_close() -> void:
+	var s := SettingsPanel.new()
+	add_child_autofree(s)
+	await wait_process_frames(1)
+	assert_eq(s.theme_type_variation, &"PanelCard", "carte simple")
+	assert_eq(s.toggles.size(), 4)
+	assert_eq(s.quality_buttons.size(), 4)
+	var picked := 0
+	for b in s.ambiance_buttons:
+		picked += int(b.theme_type_variation == &"Button")
+	assert_eq(picked, 1, "un seul choix actif (orange)")
+	assert_not_null(s.x_button)
+
+
+func test_pause_blurs_the_game() -> void:
+	var g := await _new_game()
+	var hud := g.hud()
+	hud.open_pause()
+	# Arbre en pause : on vérifie le voile sans attendre (les attentes GUT sont figées).
+	assert_true(hud._pause_dim is BlurBackdrop)
+	assert_true(hud._pause_dim.visible)
+	hud.close_pause()
+	assert_false(get_tree().paused)
+
+
+func test_blur_fades_in() -> void:
+	var b := BlurBackdrop.new()
+	add_child_autofree(b)
+	b.fade_in(0.1)
+	await wait_seconds(0.3)
+	assert_almost_eq(b.amount(), 1.0, 0.01, "flou complet")
+	b.fade_out(0.1)
+	await wait_seconds(0.3)
+	assert_false(b.visible)
+
+
+func test_game_over_screen_shows_results_and_record_stamp() -> void:
+	var g := await _new_game()
+	var hud := g.hud()
+	hud.merges = 12
+	hud.best_combo = 4
+	hud.play_time = 75.0
+	g.score = 999999
+	g._end_game()
+	await wait_seconds(cfg.game_over_panel_delay + cfg.game_over_panel_slide_time
+		+ cfg.game_over_score_roll_time + 1.2)
+	var o: GameOverScreen = hud._over
+	assert_true(o.visible)
+	assert_eq(o.displayed_score(), 999999, "score défilé jusqu'au bout")
+	assert_true(o.stamp.visible, "tampon nouveau record")
+	assert_eq(o._chip_values[0].text, "12")
+	assert_eq(o._chip_values[1].text, "x4")
+	assert_eq(o._chip_values[2].text, "1:15")
+	var r := o.card.get_global_rect()
+	var w := o.get_viewport().get_visible_rect().size.x
+	assert_almost_eq(r.get_center().x, w * 0.5, 1.0, "carte centrée")
