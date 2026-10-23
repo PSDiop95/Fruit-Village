@@ -17,27 +17,33 @@ var _root: Control
 var _score: Label
 var _best: Label
 var _star: TextureRect
+var _star_tween: Tween
+var _flyers: Array[TextureRect] = []
+var _fact: PanelContainer
+var _fact_title: Label
+var _fact_text: Label
+var _fact_thumb: FruitThumb
+var _fact_tween: Tween
 var _next: Label
 var _next_thumb: FruitThumb
 var _goal_label: Label
 var _goal_bar: ProgressBar
 var _danger: ProgressBar
 var _pause_button: TextureButton
-var _pause_dim: ColorRect
+var _pause_dim: BlurBackdrop
 var _pause_panel: PanelContainer
 var _settings: SettingsPanel
-var _over_dim: ColorRect
+## Écran de fin (construit à la fin de la première partie) et sa carte.
+var _over: GameOverScreen
 var _over_panel: PanelContainer
-var _over_label: Label
-var _over_thumb: FruitThumb
+## Stats de la partie (écran de fin).
+var merges: int = 0
+var best_combo: int = 1
+var play_time: float = 0.0
 var _target_score: int = 0
 var _shown_score: float = 0.0
 var _roll_speed: float = 0.0
 var _pulse_tween: Tween
-var _over_title: String = ""
-var _over_biggest: String = ""
-var _over_roll: float = -1.0
-var _over_score: int = 0
 var _goal_rank: int = -1
 
 
@@ -48,6 +54,9 @@ func bind(game: Game) -> void:
 	_build()
 	game.score_changed.connect(_on_score)
 	game.game_over.connect(_on_game_over)
+	game.merged.connect(func(_r: int, _p: Vector3, _pts: int, combo: int) -> void:
+		merges += 1
+		best_combo = maxi(best_combo, combo))
 	game.fruit_discovered.connect(func(_r: int) -> void: _refresh_goal())
 	_score.text = "0"
 	_best.text = "Record : %d" % SaveManager.best_score
@@ -140,6 +149,12 @@ func _build() -> void:
 	_danger.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_danger)
 
+	# Préchauffés : aucune création de nœud pendant la partie (étoiles volantes,
+	# carte « Le savais-tu ? », dont la miniature ne rend que si elle est visible).
+	for i in maxi(_cfg.fly_pool_size, 1):
+		_new_flyer()
+	_build_fact_card()
+
 	# Pause et fin de partie : construits à la première ouverture (partie plus
 	# rapide à lancer, aucun SubViewport inutile pendant le jeu).
 
@@ -174,6 +189,145 @@ static func _wood_label(font_size: int, color: Color, outline: int) -> Label:
 	return l
 
 
+## Carte « Le savais-tu ? » (premier fruit découvert) : glisse depuis la
+## droite sous le bandeau, reste fact_card_time s, repart. Ne bloque pas le
+## jeu (aucune saisie interceptée, pas de pause).
+func show_fact(rank: int) -> void:
+	var def := _game.catalog.get_def(rank)
+	if _fact == null:
+		_build_fact_card()
+	_fact_title.text = "Nouveau : %s !" % def.display_name
+	_fact_text.text = def.fun_fact if not def.fun_fact.is_empty() else "Un nouveau fruit au marché !"
+	_fact_thumb.set_fruit(rank)
+	_fact_thumb.pop()
+	if _fact_tween:
+		_fact_tween.kill()
+	_fact.visible = true
+	_fact.position.x = 1100.0
+	_fact_tween = create_tween().set_ignore_time_scale(true)
+	_fact_tween.tween_property(_fact, "position:x", 40.0, 0.4).set_trans(Tween.TRANS_BACK) \
+		.set_ease(Tween.EASE_OUT)
+	_fact_tween.tween_interval(_cfg.fact_card_time)
+	_fact_tween.tween_property(_fact, "position:x", -1100.0, 0.3).set_trans(Tween.TRANS_BACK) \
+		.set_ease(Tween.EASE_IN)
+	_fact_tween.tween_callback(func() -> void: _fact.visible = false)
+
+
+func fact_visible() -> bool:
+	return _fact != null and _fact.visible
+
+
+func _build_fact_card() -> void:
+	_fact = PanelContainer.new()
+	_fact.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fact.position = Vector2(40, 440)
+	_fact.custom_minimum_size = Vector2(1000, 0)
+	_fact.size = Vector2(1000, 0)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = UiTheme.CREAM
+	sb.border_color = UiTheme.INK
+	sb.set_border_width_all(6)
+	sb.set_corner_radius_all(36)
+	sb.set_content_margin_all(22)
+	sb.shadow_color = Color(0, 0, 0, 0.3)
+	sb.shadow_size = 10
+	sb.shadow_offset = Vector2(0, 6)
+	_fact.add_theme_stylebox_override("panel", sb)
+	_root.add_child(_fact)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 20)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fact.add_child(row)
+	_fact_thumb = FruitThumb.new()
+	_fact_thumb.custom_minimum_size = Vector2(170, 170)
+	_fact_thumb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(_fact_thumb)
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", 4)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(col)
+	var head := Label.new()
+	head.text = "Le savais-tu ?"
+	head.add_theme_font_size_override("font_size", 34)
+	head.add_theme_color_override("font_color", UiTheme.INK_SOFT)
+	col.add_child(head)
+	_fact_title = Label.new()
+	_fact_title.add_theme_font_override("font", UiTheme.display_font())
+	_fact_title.add_theme_font_size_override("font_size", 52)
+	_fact_title.add_theme_color_override("font_color", UiTheme.WAX_ORANGE)
+	_fact_title.add_theme_color_override("font_outline_color", UiTheme.INK)
+	_fact_title.add_theme_constant_override("outline_size", 10)
+	col.add_child(_fact_title)
+	_fact_text = Label.new()
+	_fact_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_fact_text.custom_minimum_size = Vector2(760, 0)
+	_fact_text.add_theme_font_size_override("font_size", 36)
+	_fact_text.add_theme_color_override("font_color", UiTheme.INK)
+	col.add_child(_fact_text)
+	_fact.visible = false
+	# Préchauffe le halo du fruit précieux (créé à la première demande).
+	_fact_thumb.set_fruit(_game.catalog.max_rank())
+
+
+## Étoiles qui volent d'un point de l'écran (fusion) jusqu'à l'étoile du
+## score, en arc ; chaque arrivée fait sauter l'étoile. Poolées.
+func fly_points(from: Vector2, count: int) -> void:
+	var to := _star.global_position + _star.size * 0.5
+	for i in count:
+		var s := _free_flyer()
+		var start := from + Vector2(randf_range(-40, 40), randf_range(-40, 40))
+		# Point de contrôle : arc vers le haut et vers l'extérieur.
+		var ctrl := start.lerp(to, 0.3) + Vector2(randf_range(-180, 180), -260)
+		s.visible = true
+		s.position = start - s.size * 0.5
+		s.scale = Vector2.ZERO
+		var tw := create_tween().set_ignore_time_scale(true)
+		tw.tween_interval(i * _cfg.fly_stagger)
+		tw.tween_property(s, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_method(func(t: float) -> void:
+			var a := start.lerp(ctrl, t)
+			var b := ctrl.lerp(to, t)
+			s.position = a.lerp(b, t) - s.size * 0.5
+			s.rotation = t * TAU * 0.75
+			s.scale = Vector2.ONE * lerpf(1.0, 0.55, t), 0.0, 1.0, _cfg.fly_time) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		tw.tween_callback(func() -> void:
+			s.visible = false
+			_bump_star())
+
+
+func _free_flyer() -> TextureRect:
+	for f in _flyers:
+		if not f.visible:
+			return f
+	return _flyers[0]  # pool plein : on recycle la plus ancienne
+
+
+func _new_flyer() -> void:
+	var t := _texture_rect(HUD_DIR + "star.png", Rect2(0, 0, 64, 64))
+	t.pivot_offset = Vector2(32, 32)
+	t.visible = false
+	_root.add_child(t)
+	_flyers.append(t)
+
+
+func _bump_star() -> void:
+	if _star_tween:
+		_star_tween.kill()
+	_star.scale = Vector2.ONE * 1.35
+	_star_tween = create_tween().set_ignore_time_scale(true)
+	_star_tween.tween_property(_star, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_ELASTIC) \
+		.set_ease(Tween.EASE_OUT)
+
+
+func flyers_visible() -> int:
+	var n := 0
+	for f in _flyers:
+		n += int(f.visible)
+	return n
+
+
 ## Bouton qui s'enfonce puis rebondit (élastique).
 func _press_bounce(c: Control, target: float) -> void:
 	var tw := create_tween().set_ignore_time_scale(true)
@@ -184,10 +338,8 @@ func _press_bounce(c: Control, target: float) -> void:
 			.set_ease(Tween.EASE_OUT)
 
 
-func _dim() -> ColorRect:
-	var d := ColorRect.new()
-	d.set_anchors_preset(Control.PRESET_FULL_RECT)
-	d.color = Color(0.12, 0.07, 0.03, 0.6)
+func _dim() -> BlurBackdrop:
+	var d := BlurBackdrop.new()
 	d.visible = false
 	_root.add_child(d)
 	return d
@@ -200,6 +352,7 @@ func _centered_panel(width: float) -> PanelContainer:
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(center)
 	var p := PanelContainer.new()
+	p.theme_type_variation = &"PanelCard"
 	p.custom_minimum_size = Vector2(width, 0)
 	p.visible = false
 	center.add_child(p)
@@ -210,7 +363,7 @@ func _button(text: String, variation: StringName, cb: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.theme_type_variation = variation
-	b.custom_minimum_size = Vector2(520, 136)
+	b.custom_minimum_size = Vector2(560, 124)
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	b.pressed.connect(cb)
 	return b
@@ -220,44 +373,33 @@ func _build_pause() -> void:
 	if _pause_panel:
 		return
 	_pause_dim = _dim()
-	_pause_panel = _centered_panel(720)
+	_pause_panel = _centered_panel(760)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 30)
 	_pause_panel.add_child(box)
 	var t := Label.new()
 	t.text = "Pause"
 	t.theme_type_variation = &"LabelTitle"
+	t.add_theme_font_size_override("font_size", 80)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(t)
-	box.add_child(WaxBand.new())
 	box.add_child(_button("Reprendre", &"ButtonGreen", close_pause))
 	box.add_child(_button("Réglages", &"Button", open_settings))
-	box.add_child(_button("Menu", &"ButtonBlue", func() -> void:
+	box.add_child(_button("Menu", &"ButtonCream", func() -> void:
 		close_pause()
 		menu_requested.emit()))
+	UiJuice.bounce_all(_pause_panel)
 
 
 func _build_game_over() -> void:
-	if _over_panel:
+	if _over:
 		return
-	_over_dim = _dim()
-	_over_panel = _centered_panel(800)
-	var box := VBoxContainer.new()
-	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_theme_constant_override("separation", 26)
-	_over_panel.add_child(box)
-	box.add_child(WaxBand.new())
-	_over_label = Label.new()
-	_over_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_over_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_over_label.add_theme_font_size_override("font_size", 54)
-	box.add_child(_over_label)
-	_over_thumb = FruitThumb.new()
-	_over_thumb.custom_minimum_size = Vector2(220, 220)
-	_over_thumb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	box.add_child(_over_thumb)
-	box.add_child(_button("Rejouer", &"ButtonGreen", func() -> void: _game.restart()))
-	box.add_child(_button("Menu", &"ButtonBlue", func() -> void: menu_requested.emit()))
+	_over = GameOverScreen.new()
+	_root.add_child(_over)
+	_over.setup(_cfg)
+	_over_panel = _over.card
+	_over.replay_pressed.connect(func() -> void: _game.restart())
+	_over.menu_pressed.connect(func() -> void: menu_requested.emit())
 
 
 # ---------------------------------------------------------------- Pause / réglages
@@ -271,8 +413,9 @@ func open_pause() -> void:
 	if _game.is_over or _pause_panel.visible:
 		return
 	get_tree().paused = true
-	_pause_dim.visible = true
+	_pause_dim.fade_in(0.25)
 	_pause_panel.visible = true
+	UiJuice.pop_in(_pause_panel)
 
 
 func close_pause() -> void:
@@ -291,6 +434,7 @@ func open_settings() -> SettingsPanel:
 	_pause_panel.visible = false
 	_settings = SettingsPanel.new()
 	_root.add_child(SettingsPanel.centered(_settings))
+	UiJuice.pop_in(_settings)
 	_settings.quality_changed.connect(func(q: int) -> void: _game.set_quality(VisualQuality.resolve(q)))
 	_settings.closed.connect(func() -> void:
 		_settings = null
@@ -380,39 +524,16 @@ func _process(delta: float) -> void:
 	if _shown_score < _target_score:
 		_shown_score = minf(_shown_score + _roll_speed * dt, _target_score)
 		_score.text = str(displayed_score())
-	if _over_roll >= 0.0 and _over_roll < 1.0:
-		_over_roll = minf(_over_roll + dt / maxf(_cfg.game_over_score_roll_time, 0.01), 1.0)
-		var k := 1.0 - pow(1.0 - _over_roll, 3.0)
-		_set_over_text(int(round(_over_score * k)))
-
-
-func _set_over_text(shown: int) -> void:
-	_over_label.text = "%s\nScore : %d\nPlus gros fruit : %s" % [_over_title, shown, _over_biggest]
+	if not _game.is_over and not get_tree().paused:
+		play_time += delta
 
 
 func _on_game_over(score: int, max_rank: int, is_record: bool) -> void:
 	_build_game_over()
-	_over_biggest = _game.catalog.get_def(max_rank).display_name
-	_over_title = "NOUVEAU RECORD !" if is_record else "Le panier déborde !"
-	_over_score = score
 	_target_score = score
 	_shown_score = score
 	_score.text = str(score)
-	_over_thumb.set_fruit(max_rank)
-	_set_over_text(0)
-	_over_dim.visible = true
-	_over_panel.visible = true
 	_danger.visible = false
 	_pause_button.visible = false
-	# Le panneau glisse depuis le bas, puis le score défile.
-	await get_tree().process_frame
-	var slide := 1400.0
-	var rest := _over_panel.position.y
-	_over_panel.position.y = rest + slide
-	_over_dim.modulate.a = 0.0
-	var tw := create_tween().set_ignore_time_scale(true)
-	tw.tween_interval(_cfg.game_over_panel_delay)
-	tw.tween_property(_over_dim, "modulate:a", 1.0, 0.3)
-	tw.parallel().tween_property(_over_panel, "position:y", rest, _cfg.game_over_panel_slide_time) \
-		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_callback(func() -> void: _over_roll = 0.0)
+	_over.show_results(score, max_rank, _game.catalog.get_def(max_rank), is_record,
+		SaveManager.best_score, merges, best_combo, play_time)

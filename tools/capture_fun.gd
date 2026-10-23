@@ -59,6 +59,12 @@ func _run() -> void:
 	_game.danger_changed.emit(0.9, 1)  # DangerMonitor.State.WARNING
 	await _frames(30)
 	await _shot(out_dir, "fun_05_peur")
+
+	_game.danger_changed.emit(0.0, 0)
+	_game.hud().show_fact(6)
+	_game.drop(1.5)
+	await _frames(28)
+	await _shot(out_dir, "fun_06_carte_chute")
 	print("CAPTURE_FUN ok -> %s" % out_dir)
 	quit()
 

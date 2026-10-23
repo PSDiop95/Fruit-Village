@@ -100,3 +100,42 @@ Regénérer : `Godot --path . --resolution 720x1280 -s tools/capture_m3.gd -- do
 - Perf PC (540x1200, qualité Haut, 12 fruits) : 55–58 draw calls 3D au repos (dont mascotte ≈ 15 avec contour),
   65–77 pendant un combo. Contour de la mascotte seulement en Haut (`mascot_outline_min_quality`).
   **À mesurer sur le Galaxy A23.**
+
+### Passe « motion » (2)
+
+- **Panier qui réagit** : le cadre s'écrase sur les gros impacts et les grosses fusions (ressort amorti,
+  le bas reste posé), la mascotte assise suit. `juice.tres` → groupe « Panier qui réagit ».
+- **Regards** : les fruits voisins (≤ `look_radius`) tournent les yeux vers chaque fusion.
+- **Lâcher** : le fruit en visée penche dans le sens du doigt (ressort), traînée lumineuse pendant la
+  chute, petites gouttes à l'impact, le fruit suivant tombe dans la visée avec un rebond.
+- **Score** : des étoiles volent en arc du point de fusion jusqu'à l'étoile du score (poolées).
+- **Interface** : rebond d'appui sur tous les boutons, panneaux qui apparaissent en pop, bouton Jouer
+  qui respire, rideau entre titre et partie (`scripts/ui/ui_juice.gd`).
+- **Fin de partie** : le plus gros fruit fait un pop ; nouveau record = bannière dorée + confettis.
+- **« Le savais-tu ? »** : carte non bloquante au premier fruit découvert (`fun_fact` dans `fruits.tres`).
+- Aucun nœud créé pendant la partie (étoiles volantes et carte préchauffées).
+
+### Menu peint (boutons de la maquette)
+
+- Boutons peints sans texte, en 9 zones (`assets/ui/hud/btn_{green,orange,blue,cream}_{l,s}.png`,
+  `pill_best.png`), découpés de `art_src/ui_refs/boutons_menu.jpg` par `tools/prepare_ui_art.gd` ;
+  orange et bleu dérivés du vert (même géométrie). Thème : `Button` (orange), `ButtonGreen`,
+  `ButtonBlue`, `ButtonCream` (choix non actif), `ButtonGreenBig` / `ButtonOrangeBig` (titre),
+  `PillBest` ; panneaux (`PanelContainer`) = cadre bois du panier. Texte crème cerné de brun.
+- Écran titre (maquette `art_src/ui_refs/titre_reference.jpg`) : logo dans le ciel ; pastille
+  « Plus gros fruit », Jouer et Réglages centrés dans le cadre du panier (même cadrage que la
+  partie, `TitleScreen.basket_screen_rect`) ; le singe est assis sur le cadre et salue.
+- Réglages, pause et fin de partie dans le même style (cadre bois, boutons peints).
+- Captures : `Godot --path . --resolution 540x1200 -s tools/capture_title.gd -- <dossier> [ambiance]`.
+
+### Réglages, pause et fin de partie (cartes modernes + flou)
+
+- Voile flou réutilisable (`scripts/ui/blur_backdrop.gd`) : le jeu ou le menu derrière est flouté
+  et assombri, avec un fondu ; il bloque les touches.
+- Cartes simples (`PanelCard` : crème uni, très arrondie, liseré fin, ombre douce) au lieu du cadre bois.
+- Réglages : en-tête + bouton ×, sections « Son » et « Affichage », Qualité et Ambiance en contrôles
+  segmentés (choix actif = bouton orange peint).
+- Pause : carte simple, Reprendre / Réglages / Menu.
+- Fin de partie (`scripts/ui/game_over_screen.gd`) : ruban titre, plus gros fruit sur rayons tournants,
+  gros score qui défile, tampon « NOUVEAU RECORD ! », pastilles Fusions / Combo max / Durée,
+  Rejouer qui respire + Menu ; apparition en cascade.

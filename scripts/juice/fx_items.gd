@@ -101,6 +101,52 @@ class Flash extends Node3D:
 		return _t < 1.0
 
 
+## Traînée de chute : halo vertical additif au-dessus d'un fruit qui tombe,
+## longueur proportionnelle à la vitesse ; s'éteint quand le fruit ralentit.
+class Trail extends MeshInstance3D:
+	var length_per_speed: float = 0.13
+	var max_length: float = 2.4
+	var alpha: float = 0.45
+	var _target: Fruit
+	var _mat: ShaderMaterial
+	var _a: float = 0.0
+	var _life: float = 0.0
+
+	func _init() -> void:
+		var q := QuadMesh.new()
+		q.size = Vector2(1, 1)
+		mesh = q
+		_mat = FxMeshes.additive_material(Color.WHITE, 1)
+		material_override = _mat
+		cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		# Dégradé du shader : clair en haut du quad → retourné, clair près du fruit.
+		rotation.z = PI
+
+	func start(f: Fruit, color: Color) -> void:
+		_target = f
+		_life = 1.5
+		_a = 0.0
+		_mat.set_shader_parameter("color", Color(color.lightened(0.5), 1.0))
+		tick(0.0)
+
+	func tick(delta: float) -> bool:
+		_life -= delta
+		if _life <= 0.0 or not is_instance_valid(_target) or _target.merging:
+			return false
+		var vy := -_target.linear_velocity.y
+		var falling := vy > 2.0
+		_a = move_toward(_a, alpha if falling else 0.0, delta * (6.0 if falling else 4.0))
+		if not falling and _a <= 0.0 and _life < 1.4:
+			return false
+		var l := clampf(vy * length_per_speed, 0.05, max_length)
+		var r: float = _target.radius
+		var p := _target.global_position
+		global_position = Vector3(p.x, p.y + r * 0.3 + l * 0.5, p.z - 0.4)
+		scale = Vector3(r * 1.5, l, 1.0)
+		_mat.set_shader_parameter("alpha", _a)
+		return true
+
+
 ## Texte flottant « +28 » : monte, rebondit, s'efface.
 class FloatText extends Label3D:
 	var duration: float = 0.9

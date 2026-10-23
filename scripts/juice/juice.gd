@@ -26,6 +26,8 @@ var ring_pool: NodePool
 var drop_pool: NodePool
 var star_pool: NodePool
 var flash_pool: NodePool
+var trail_pool: NodePool
+var puff_pool: NodePool
 var text_pool: NodePool
 
 var _fx_root: Node3D
@@ -33,6 +35,13 @@ var _camera: Camera3D
 var _camera_base_size: float = 1.0
 var _zoom_t: float = 1.0
 var _last_merge_fruit: Fruit
+# Panier : ressort d'écrasement du cadre
+var _bump_x: float = 0.0
+var _bump_v: float = 0.0
+# Visée : inclinaison du fruit tenu
+var _aim_prev: float = 0.0
+var _tilt: float = 0.0
+var _tilt_v: float = 0.0
 
 # Projecteur (nouveau fruit)
 var _beam: MeshInstance3D
@@ -142,6 +151,13 @@ func _build_pools() -> void:
 		f.duration = config.flash_time
 		f.max_scale = config.flash_scale
 		return f, config.flash_pool_size)
+	puff_pool = NodePool.new(_fx_root, burst_factory.call(config.puff), config.puff_pool_size)
+	trail_pool = NodePool.new(_fx_root, func() -> Node:
+		var t := FxItems.Trail.new()
+		t.length_per_speed = config.trail_length_per_speed
+		t.max_length = config.trail_max_length
+		t.alpha = config.trail_alpha
+		return t, config.trail_pool_size)
 	ring_pool = NodePool.new(_fx_root, func() -> Node:
 		var r := FxItems.Ring.new(config.ring_color)
 		r.duration = config.ring_time
@@ -323,14 +339,14 @@ func particle_multiplier() -> float:
 ## Réalloue les gerbes à la bonne quantité (uniquement au changement de réglage).
 func apply_particle_amounts() -> void:
 	var k := particle_multiplier()
-	for pool in [splash_pool, confetti_pool, leaves_pool, coins_pool, drop_pool, star_pool]:
+	for pool in [splash_pool, confetti_pool, leaves_pool, coins_pool, drop_pool, star_pool, puff_pool]:
 		for b in pool.all():
 			(b as ParticleBurst).set_amount_scale(k)
 
 
 func pools() -> Array[NodePool]:
 	return [splash_pool, confetti_pool, leaves_pool, coins_pool, ring_pool, text_pool,
-		drop_pool, star_pool, flash_pool]
+		drop_pool, star_pool, flash_pool, trail_pool, puff_pool]
 
 
 func active_fx_count() -> int:
@@ -359,10 +375,13 @@ func _on_dropped(fruit: Fruit) -> void:
 	vibrate(config.vibrate_drop_ms)
 	if fruit:
 		fruit.visual().pop(0.9, 1.0, 0.1)
+		var def := game.catalog.get_def(fruit.rank)
+		(trail_pool.acquire() as FxItems.Trail).start(fruit, def.color)
 
 
 func _on_preview_shown(_rank: int) -> void:
 	game.preview_visual().pop(0.0, config.spawn_pop_overshoot, config.spawn_pop_time)
+	game.preview_visual().drop_in(config.preview_drop_height, config.preview_drop_time)
 
 
 func _on_fruit_spawned(fruit: Fruit, from_merge: bool) -> void:
@@ -375,6 +394,13 @@ func _on_fruit_spawned(fruit: Fruit, from_merge: bool) -> void:
 
 func _on_fruit_impact(_fruit: Fruit, speed: float) -> void:
 	var k := clampf(inverse_lerp(config.impact_min_speed, config.impact_full_speed, speed), 0.0, 1.0)
+	if _fruit and k > 0.3:
+		bump_basket(k * _fruit.radius * config.basket_bump_gain)
+	if _fruit and k >= config.puff_min_impact:
+		var d := game.catalog.get_def(_fruit.rank)
+		var p := _fruit.global_position
+		(puff_pool.acquire() as ParticleBurst).burst(Vector3(p.x, p.y - _fruit.radius * 0.8, FX_Z),
+			d.color.lightened(0.35))
 	Audio.play_limited(&"impact", config.impact_max_per_second, config.sounds.impact,
 		lerpf(config.impact_volume_min_db, config.impact_volume_max_db, k), 1.0, config.pitch_jitter)
 
@@ -412,7 +438,17 @@ func _on_merged(rank_created: int, pos: Vector3, points: int, combo: int) -> voi
 		Audio.play(config.sounds.combo_chord, config.combo_volume_db,
 			pow(2.0, minf(combo - 2, 6) / 12.0))
 
+	# Étoiles qui volent vers le score.
+	if game.hud():
+		var n := mini(1 + shown_rank / config.fly_rank_divisor + int(combo >= config.combo_min), config.fly_max)
+		game.hud().fly_points(_camera.unproject_position(pos), n)
+	# Les voisins tournent les yeux vers la fusion.
+	for f in game.fruits():
+		if f != _last_merge_fruit and f.global_position.distance_to(pos) < config.look_radius:
+			f.visual().look_toward(pos, config.look_time)
+
 	if not top and rank_created >= config.big_merge_min_rank:
+		bump_basket(config.basket_bump_merge)
 		shake.add(config.big_merge_trauma)
 		(confetti_pool.acquire() as ParticleBurst).burst(fx_pos + Vector3(0, 0.5, 0))
 		vibrate(config.vibrate_big_merge_ms)
@@ -424,7 +460,10 @@ func _on_discovered(rank: int) -> void:
 		return
 	var def := game.catalog.get_def(rank)
 	time_scaler.request(config.discover_slowmo_scale, config.discover_slowmo_time)
-	_show_banner("Nouveau : %s !" % def.display_name, def.color)
+	if game.hud():
+		game.hud().show_fact(rank)
+	else:
+		_show_banner("Nouveau : %s !" % def.display_name, def.color)
 	Audio.play(config.sounds.discover, config.discover_volume_db)
 	if _last_merge_fruit and is_instance_valid(_last_merge_fruit) and _last_merge_fruit.rank == rank:
 		_beam_target = _last_merge_fruit
@@ -456,6 +495,10 @@ func _on_danger_changed(ratio: float, state: DangerMonitor.State) -> void:
 
 func _on_game_over(_score: int, _max_rank: int, _is_record: bool) -> void:
 	_over = true
+	if _is_record and score_is_meaningful(_score):
+		# Fête du record une fois le panneau de fin arrivé.
+		var wait := config.game_over_panel_delay + config.game_over_panel_slide_time + 0.15
+		get_tree().create_timer(wait, true, false, true).timeout.connect(_celebrate_record)
 	_danger_ratio = 0.0
 	_danger_state = DangerMonitor.State.SAFE
 	time_scaler.request(config.game_over_slowmo_scale, config.game_over_slowmo_time)
@@ -488,12 +531,53 @@ func _process(delta: float) -> void:
 	for p in pools():
 		p.tick(delta)
 
+	_update_basket(real_dt)
+	_update_aim_tilt(real_dt)
 	_update_beam(real_dt)
 	if _baobab_t >= 0.0:
 		_update_baobab(real_dt)
 	_update_danger(real_dt)
 	_update_freeze(real_dt)
 	_update_fps(real_dt)
+
+
+## Le fruit en visée penche dans le sens du doigt, puis revient (ressort).
+func _update_aim_tilt(dt: float) -> void:
+	if dt <= 0.0:
+		return
+	var x := game.aim_x()
+	var vel := (x - _aim_prev) / dt
+	_aim_prev = x
+	var target := clampf(vel * config.aim_tilt_gain, -config.aim_tilt_max, config.aim_tilt_max)
+	_tilt_v += ((target - _tilt) * config.aim_tilt_stiffness - _tilt_v * config.aim_tilt_damping) * dt
+	_tilt += _tilt_v * dt
+	game.preview_visual().rotation.z = clampf(_tilt, -config.aim_tilt_max * 1.5, config.aim_tilt_max * 1.5)
+
+
+## Écrase le cadre du panier (ressort amorti, cumulable, plafonné).
+func bump_basket(amount: float) -> void:
+	if reduced:
+		amount *= 0.5
+	_bump_x = clampf(_bump_x + amount, -config.basket_bump_max, config.basket_bump_max)
+
+
+func basket_squash() -> float:
+	return _bump_x
+
+
+func _update_basket(dt: float) -> void:
+	if absf(_bump_x) < 0.0001 and absf(_bump_v) < 0.001:
+		return
+	var steps := 2
+	var h := dt / steps
+	for i in steps:
+		_bump_v += (-config.basket_spring_stiffness * _bump_x - config.basket_spring_damping * _bump_v) * h
+		_bump_x += _bump_v * h
+	if absf(_bump_x) < 0.0001 and absf(_bump_v) < 0.001:
+		_bump_x = 0.0
+		_bump_v = 0.0
+	if game.market():
+		game.market().set_frame_squash(_bump_x)
 
 
 func _update_beam(dt: float) -> void:
@@ -594,6 +678,20 @@ func _update_fps(real_dt: float) -> void:
 
 
 # ---------------------------------------------------------------- UI animée
+
+## Nouveau record : confettis au-dessus de l'écran de fin (ruban et tampon : GameOverScreen).
+func _celebrate_record() -> void:
+	if not is_inside_tree():
+		return
+	var top := game.config.basket_height + 1.5
+	(confetti_pool.acquire() as ParticleBurst).burst(Vector3(-1.5, top, FX_Z))
+	(confetti_pool.acquire() as ParticleBurst).burst(Vector3(1.5, top, FX_Z))
+	vibrate(config.vibrate_big_merge_ms)
+
+
+static func score_is_meaningful(s: int) -> bool:
+	return s > 0
+
 
 ## Bannière animée. `level` : niveau de combo au-delà du minimum (0 = premier).
 ## `color` = bas du dégradé (le haut est sa version claire).

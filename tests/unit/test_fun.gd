@@ -218,3 +218,176 @@ func test_combo_banner_hides_after_play() -> void:
 	await wait_seconds(0.9)
 	assert_false(b.is_playing())
 	assert_false(b.visible)
+
+
+# ---------------------------------------------------------------- Motion (passe 2)
+
+func test_neighbours_look_at_merge() -> void:
+	var g := await _new_game()
+	var f := g.spawn_fruit(2, Vector3(-1.5, 2.0, 0))
+	await wait_physics_frames(2)
+	f.visual().look_toward(Vector3(1.5, 2.0, 0), 1.0)
+	await wait_process_frames(20)
+	assert_gt(f.visual().look_amount().x, 0.5, "les yeux vont vers la droite")
+
+
+func test_basket_bump_squashes_then_settles() -> void:
+	var g := await _new_game()
+	var j := g.juice()
+	j.bump_basket(1.0)
+	assert_almost_eq(j.basket_squash(), cfg.basket_bump_max, 0.0001, "plafonné")
+	await wait_process_frames(2)
+	assert_ne(g.market().frame.scale, Vector3.ONE, "le cadre s'écrase")
+	await wait_seconds(1.5)
+	assert_almost_eq(j.basket_squash(), 0.0, 0.002, "revient au repos")
+
+
+func test_trail_follows_drop_then_ends() -> void:
+	var g := await _new_game()
+	var f := g.drop(0.0)
+	await wait_physics_frames(2)
+	assert_gt(g.juice().trail_pool.active_count(), 0)
+	f.queue_free()
+	await wait_process_frames(3)
+	assert_eq(g.juice().trail_pool.active_count(), 0, "s'arrête si le fruit disparaît")
+
+
+func test_stars_fly_to_score_from_pool() -> void:
+	var g := await _new_game()
+	var hud := g.hud()
+	var nodes := Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
+	hud.fly_points(Vector2(540, 1400), 4)
+	await wait_seconds(0.3)
+	assert_gt(hud.flyers_visible(), 0)
+	await wait_seconds(cfg.fly_time + 0.6)
+	assert_eq(hud.flyers_visible(), 0, "toutes arrivées")
+	assert_eq(Performance.get_monitor(Performance.OBJECT_NODE_COUNT), nodes, "poolées")
+
+
+func test_every_fruit_has_a_fun_fact() -> void:
+	var cat: FruitCatalog = load("res://data/fruits.tres")
+	for r in cat.count():
+		assert_false(cat.get_def(r).fun_fact.is_empty(), cat.get_def(r).display_name)
+
+
+func test_fact_card_shows_then_leaves() -> void:
+	var g := await _new_game()
+	var hud := g.hud()
+	hud.show_fact(6)
+	assert_true(hud.fact_visible())
+	assert_string_contains(hud._fact_text.text, "mangue")
+	await wait_seconds(cfg.fact_card_time + 1.0)
+	assert_false(hud.fact_visible())
+
+
+func test_ui_bounce_is_attached_once() -> void:
+	var b := Button.new()
+	add_child_autofree(b)
+	UiJuice.bounce(b)
+	UiJuice.bounce(b)
+	assert_eq(b.button_down.get_connections().size(), 1)
+
+
+func test_curtain_reveals() -> void:
+	var c := UiJuice.Curtain.new()
+	add_child_autofree(c)
+	c.reveal(0.1)
+	assert_true(c.is_covering())
+	await wait_seconds(0.3)
+	assert_false(c.is_covering())
+
+
+# ---------------------------------------------------------------- Menu peint
+
+func test_theme_buttons_are_painted() -> void:
+	var t := UiTheme.build()
+	for type in ["Button", "ButtonGreen", "ButtonBlue", "ButtonCream", "ButtonGreenBig", "ButtonOrangeBig"]:
+		assert_true(t.get_stylebox("normal", type) is StyleBoxTexture, type)
+	assert_true(t.get_stylebox("panel", "PanelContainer") is StyleBoxTexture, "panneaux en cadre bois")
+	assert_true(t.get_stylebox("panel", "PillBest") is StyleBoxTexture)
+
+
+func test_title_menu_is_centered_in_basket() -> void:
+	var title := TitleScreen.new()
+	add_child_autofree(title)
+	await wait_process_frames(3)
+	var canvas := title.get_viewport().get_visible_rect().size
+	var basket := TitleScreen.basket_screen_rect(canvas)
+	assert_almost_eq(basket.get_center().x, canvas.x * 0.5, 0.5, "panier centré")
+	var play := title.play_button.get_global_rect()
+	assert_almost_eq(play.get_center().x, canvas.x * 0.5, 1.0, "Jouer centré")
+	assert_true(basket.encloses(play), "Jouer dans le cadre")
+	assert_true(basket.encloses(title.settings_button.get_global_rect()), "Réglages dans le cadre")
+	assert_lt(title.logo.get_global_rect().end.y, basket.position.y, "logo au-dessus du cadre")
+
+
+func test_title_settings_dim_is_freed_on_close() -> void:
+	var title := TitleScreen.new()
+	add_child_autofree(title)
+	await wait_process_frames(2)
+	var s := title.open_settings()
+	var wrapper := s.get_parent().get_parent()
+	assert_true(wrapper.has_meta(&"settings_wrapper"))
+	s.close()
+	await wait_process_frames(2)
+	assert_false(is_instance_valid(wrapper), "voile libéré avec le panneau")
+
+
+# ---------------------------------------------------------------- Réglages / pause / fin
+
+func test_settings_card_has_sections_and_close() -> void:
+	var s := SettingsPanel.new()
+	add_child_autofree(s)
+	await wait_process_frames(1)
+	assert_eq(s.theme_type_variation, &"PanelCard", "carte simple")
+	assert_eq(s.toggles.size(), 4)
+	assert_eq(s.quality_buttons.size(), 4)
+	var picked := 0
+	for b in s.ambiance_buttons:
+		picked += int(b.theme_type_variation == &"Button")
+	assert_eq(picked, 1, "un seul choix actif (orange)")
+	assert_not_null(s.x_button)
+
+
+func test_pause_blurs_the_game() -> void:
+	var g := await _new_game()
+	var hud := g.hud()
+	hud.open_pause()
+	# Arbre en pause : on vérifie le voile sans attendre (les attentes GUT sont figées).
+	assert_true(hud._pause_dim is BlurBackdrop)
+	assert_true(hud._pause_dim.visible)
+	hud.close_pause()
+	assert_false(get_tree().paused)
+
+
+func test_blur_fades_in() -> void:
+	var b := BlurBackdrop.new()
+	add_child_autofree(b)
+	b.fade_in(0.1)
+	await wait_seconds(0.3)
+	assert_almost_eq(b.amount(), 1.0, 0.01, "flou complet")
+	b.fade_out(0.1)
+	await wait_seconds(0.3)
+	assert_false(b.visible)
+
+
+func test_game_over_screen_shows_results_and_record_stamp() -> void:
+	var g := await _new_game()
+	var hud := g.hud()
+	hud.merges = 12
+	hud.best_combo = 4
+	hud.play_time = 75.0
+	g.score = 999999
+	g._end_game()
+	await wait_seconds(cfg.game_over_panel_delay + cfg.game_over_panel_slide_time
+		+ cfg.game_over_score_roll_time + 1.2)
+	var o: GameOverScreen = hud._over
+	assert_true(o.visible)
+	assert_eq(o.displayed_score(), 999999, "score défilé jusqu'au bout")
+	assert_true(o.stamp.visible, "tampon nouveau record")
+	assert_eq(o._chip_values[0].text, "12")
+	assert_eq(o._chip_values[1].text, "x4")
+	assert_eq(o._chip_values[2].text, "1:15")
+	var r := o.card.get_global_rect()
+	var w := o.get_viewport().get_visible_rect().size.x
+	assert_almost_eq(r.get_center().x, w * 0.5, 1.0, "carte centrée")

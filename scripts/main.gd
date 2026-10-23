@@ -8,9 +8,11 @@ const GAME_SCENE := "res://scenes/Game.tscn"
 var title: TitleScreen
 var game: Game
 var _backdrop: Node3D
+var curtain := UiJuice.Curtain.new()
 
 
 func _ready() -> void:
+	add_child(curtain)
 	show_title()
 
 
@@ -21,6 +23,7 @@ func show_title() -> void:
 	title = TitleScreen.new()
 	add_child(title)
 	title.play_pressed.connect(start_game)
+	curtain.reveal()
 
 
 func start_game() -> void:
@@ -35,6 +38,7 @@ func start_game() -> void:
 	game.restart_requested.connect(start_game, CONNECT_DEFERRED)
 	game.menu_requested.connect(show_title, CONNECT_DEFERRED)
 	add_child(game)
+	curtain.reveal()
 
 
 func _free_game() -> void:
@@ -53,6 +57,12 @@ func _make_backdrop() -> Node3D:
 	root.add_child(market)
 	market.setup(load("res://data/visual.tres"), cfg)
 	market.follow_ambiance_setting()
+	# La mascotte attend sur le cadre et salue à l'arrivée.
+	var mascot := Mascot.create(load("res://data/visual.tres"), load("res://data/juice.tres"))
+	if mascot:
+		root.add_child(mascot)
+		# Méthode liée (pas de lambda) : déconnectée si la mascotte est libérée.
+		get_tree().create_timer(0.6).timeout.connect(mascot.react.bind(Mascot.Mood.CHEER, 1.0))
 	var cam := Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 	cam.keep_aspect = Camera3D.KEEP_WIDTH
