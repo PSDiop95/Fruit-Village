@@ -57,6 +57,12 @@ func _make_backdrop() -> Node3D:
 	root.add_child(market)
 	market.setup(load("res://data/visual.tres"), cfg)
 	market.follow_ambiance_setting()
+	# La mascotte attend sur le cadre et salue à l'arrivée.
+	var mascot := Mascot.create(load("res://data/visual.tres"), load("res://data/juice.tres"))
+	if mascot:
+		root.add_child(mascot)
+		# Méthode liée (pas de lambda) : déconnectée si la mascotte est libérée.
+		get_tree().create_timer(0.6).timeout.connect(mascot.react.bind(Mascot.Mood.CHEER, 1.0))
 	var cam := Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 	cam.keep_aspect = Camera3D.KEEP_WIDTH

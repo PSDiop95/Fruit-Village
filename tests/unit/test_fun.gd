@@ -295,3 +295,39 @@ func test_curtain_reveals() -> void:
 	assert_true(c.is_covering())
 	await wait_seconds(0.3)
 	assert_false(c.is_covering())
+
+
+# ---------------------------------------------------------------- Menu peint
+
+func test_theme_buttons_are_painted() -> void:
+	var t := UiTheme.build()
+	for type in ["Button", "ButtonGreen", "ButtonBlue", "ButtonCream", "ButtonGreenBig", "ButtonOrangeBig"]:
+		assert_true(t.get_stylebox("normal", type) is StyleBoxTexture, type)
+	assert_true(t.get_stylebox("panel", "PanelContainer") is StyleBoxTexture, "panneaux en cadre bois")
+	assert_true(t.get_stylebox("panel", "PillBest") is StyleBoxTexture)
+
+
+func test_title_menu_is_centered_in_basket() -> void:
+	var title := TitleScreen.new()
+	add_child_autofree(title)
+	await wait_process_frames(3)
+	var canvas := title.get_viewport().get_visible_rect().size
+	var basket := TitleScreen.basket_screen_rect(canvas)
+	assert_almost_eq(basket.get_center().x, canvas.x * 0.5, 0.5, "panier centré")
+	var play := title.play_button.get_global_rect()
+	assert_almost_eq(play.get_center().x, canvas.x * 0.5, 1.0, "Jouer centré")
+	assert_true(basket.encloses(play), "Jouer dans le cadre")
+	assert_true(basket.encloses(title.settings_button.get_global_rect()), "Réglages dans le cadre")
+	assert_lt(title.logo.get_global_rect().end.y, basket.position.y, "logo au-dessus du cadre")
+
+
+func test_title_settings_dim_is_freed_on_close() -> void:
+	var title := TitleScreen.new()
+	add_child_autofree(title)
+	await wait_process_frames(2)
+	var s := title.open_settings()
+	var wrapper := s.get_parent().get_parent()
+	assert_true(wrapper.has_meta(&"settings_wrapper"))
+	s.close()
+	await wait_process_frames(2)
+	assert_false(is_instance_valid(wrapper), "voile libéré avec le panneau")

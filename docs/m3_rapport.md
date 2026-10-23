@@ -114,3 +114,16 @@ Regénérer : `Godot --path . --resolution 720x1280 -s tools/capture_m3.gd -- do
 - **Fin de partie** : le plus gros fruit fait un pop ; nouveau record = bannière dorée + confettis.
 - **« Le savais-tu ? »** : carte non bloquante au premier fruit découvert (`fun_fact` dans `fruits.tres`).
 - Aucun nœud créé pendant la partie (étoiles volantes et carte préchauffées).
+
+### Menu peint (boutons de la maquette)
+
+- Boutons peints sans texte, en 9 zones (`assets/ui/hud/btn_{green,orange,blue,cream}_{l,s}.png`,
+  `pill_best.png`), découpés de `art_src/ui_refs/boutons_menu.jpg` par `tools/prepare_ui_art.gd` ;
+  orange et bleu dérivés du vert (même géométrie). Thème : `Button` (orange), `ButtonGreen`,
+  `ButtonBlue`, `ButtonCream` (choix non actif), `ButtonGreenBig` / `ButtonOrangeBig` (titre),
+  `PillBest` ; panneaux (`PanelContainer`) = cadre bois du panier. Texte crème cerné de brun.
+- Écran titre (maquette `art_src/ui_refs/titre_reference.jpg`) : logo dans le ciel ; pastille
+  « Plus gros fruit », Jouer et Réglages centrés dans le cadre du panier (même cadrage que la
+  partie, `TitleScreen.basket_screen_rect`) ; le singe est assis sur le cadre et salue.
+- Réglages, pause et fin de partie dans le même style (cadre bois, boutons peints).
+- Captures : `Godot --path . --resolution 540x1200 -s tools/capture_title.gd -- <dossier> [ambiance]`.

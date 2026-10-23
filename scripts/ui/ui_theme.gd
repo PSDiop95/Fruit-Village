@@ -15,6 +15,19 @@ const WAX_RED := Color("d6382f")
 const CREAM := Color("fff3df")
 const INK := Color("3a2414")
 const INK_SOFT := Color("6d4c2f")
+## Texte des boutons peints : crème cerné de brun (comme les références).
+const BUTTON_TEXT := Color("fff6dc")
+const HUD_DIR := "res://assets/ui/hud/"
+const FRAME_TEX := "res://assets/ui/hud/basket_frame.png"
+## Géométrie des boutons peints dans la source recomposée (px, hauteur 415) :
+## bords gauche / droit, coin haut, bas (socle 3D + ombre).
+const BUTTON_SRC := {"h": 415.0, "cap_l": 115.0, "cap_r": 105.0, "top": 80.0, "bottom": 165.0}
+const CREAM_SRC := {"h": 296.0, "cap_l": 140.0, "cap_r": 140.0, "top": 140.0, "bottom": 150.0}
+## Pastille « Plus gros fruit » (hauteur source 296, texture 200 px) ;
+## médaillon : centre (138, 142), rayon 95.
+const PILL_SRC := {"h": 296.0, "cap_l": 252.0, "cap_r": 140.0, "inset": Vector2(138, 142), "inset_r": 95.0}
+const PILL_K := 200.0 / 296.0
+const BUTTON_HEIGHTS := {"s": 112.0, "l": 200.0}
 
 ## Polices (OFL) : Fredoka pour titres et boutons, Baloo 2 pour les textes.
 ## Polices variables : la graisse est réglée par FontVariation (axe « wght »).
@@ -67,28 +80,57 @@ static func build() -> Theme:
 	for type in ["Button", "LabelTitle", "LabelBig"]:
 		t.set_font("font", type, display)
 
-	# Boutons : orange wax par défaut, ombre portée brune, enfoncement au clic.
-	_button_styles(t, "Button", WAX_ORANGE)
-	t.set_type_variation("ButtonGreen", "Button")
-	_button_styles(t, "ButtonGreen", WAX_GREEN)
-	t.set_type_variation("ButtonBlue", "Button")
-	_button_styles(t, "ButtonBlue", WAX_BLUE)
+	# Boutons peints (assets/ui/hud/btn_*.png, tools/prepare_ui_art.gd) en 9 zones :
+	# orange par défaut, vert (action principale), bleu, crème (choix non actif).
+	# « Big » = texture haute (écran titre).
+	_texture_button(t, "Button", "orange", "s")
+	for v in [["ButtonGreen", "green", "s"], ["ButtonBlue", "blue", "s"], ["ButtonCream", "cream", "s"],
+			["ButtonGreenBig", "green", "l"], ["ButtonOrangeBig", "orange", "l"]]:
+		t.set_type_variation(v[0], "Button")
+		_texture_button(t, v[0], v[1], v[2])
 	t.set_type_variation("ButtonRound", "Button")
 	_button_styles(t, "ButtonRound", CREAM, 999, INK)
-	for type in ["Button", "ButtonGreen", "ButtonBlue"]:
-		t.set_color("font_color", type, Color.WHITE)
-		t.set_color("font_hover_color", type, Color.WHITE)
-		t.set_color("font_pressed_color", type, Color.WHITE)
-		t.set_color("font_focus_color", type, Color.WHITE)
+	for type in ["Button", "ButtonGreen", "ButtonBlue", "ButtonGreenBig", "ButtonOrangeBig"]:
+		for c in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+			t.set_color(c, type, BUTTON_TEXT)
 		t.set_color("font_outline_color", type, INK)
-		t.set_constant("outline_size", type, 12)
+		t.set_constant("outline_size", type, 16)
 		t.set_font_size("font_size", type, 52)
+	for c in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		t.set_color(c, "ButtonCream", INK)
+	t.set_constant("outline_size", "ButtonCream", 0)
+	t.set_font_size("font_size", "ButtonCream", 44)
+	t.set_font_size("font_size", "ButtonGreenBig", 96)
+	t.set_font_size("font_size", "ButtonOrangeBig", 70)
+	t.set_constant("outline_size", "ButtonGreenBig", 22)
+	t.set_constant("outline_size", "ButtonOrangeBig", 18)
 	t.set_color("font_color", "ButtonRound", INK)
 	t.set_color("font_hover_color", "ButtonRound", INK)
 	t.set_color("font_pressed_color", "ButtonRound", INK)
 	t.set_font_size("font_size", "ButtonRound", 52)
 
-	# Panneaux : crème, bord brun épais, coins ronds, ombre.
+	# Panneaux : cadre bois + frise wax (même peinture que le panier).
+	var wood := StyleBoxTexture.new()
+	wood.texture = load(FRAME_TEX)
+	wood.set_texture_margin_all(110)
+	wood.content_margin_left = 110
+	wood.content_margin_right = 110
+	wood.content_margin_top = 100
+	wood.content_margin_bottom = 100
+	t.set_stylebox("panel", "PanelContainer", wood)
+	# Pastille crème à médaillon (« Plus gros fruit »).
+	t.set_type_variation("PillBest", "PanelContainer")
+	var best := StyleBoxTexture.new()
+	best.texture = load(HUD_DIR + "pill_best.png")
+	best.texture_margin_left = PILL_SRC.cap_l * PILL_K
+	best.texture_margin_right = PILL_SRC.cap_r * PILL_K
+	best.texture_margin_top = 99
+	best.texture_margin_bottom = 99
+	best.content_margin_left = PILL_SRC.cap_l * PILL_K + 6
+	best.content_margin_right = 40
+	best.content_margin_top = 20
+	best.content_margin_bottom = 34
+	t.set_stylebox("panel", "PillBest", best)
 	var panel := StyleBoxFlat.new()
 	panel.bg_color = CREAM
 	panel.set_corner_radius_all(44)
@@ -98,7 +140,6 @@ static func build() -> Theme:
 	panel.shadow_size = 0
 	panel.shadow_offset = Vector2(0, 14)
 	panel.set_content_margin_all(44)
-	t.set_stylebox("panel", "PanelContainer", panel)
 	# Pastille (score, bulle « Suivant ») : même style, marges plus serrées.
 	t.set_type_variation("Pill", "PanelContainer")
 	var pill := panel.duplicate() as StyleBoxFlat
@@ -128,6 +169,8 @@ static func build() -> Theme:
 
 	# Cases à cocher (réglages) : grande pastille verte / grise.
 	t.set_font_size("font_size", "CheckButton", 46)
+	t.set_constant("outline_size", "CheckButton", 0)
+	t.set_font("font", "CheckButton", font())
 	t.set_color("font_color", "CheckButton", INK)
 	t.set_color("font_hover_color", "CheckButton", INK)
 	t.set_color("font_pressed_color", "CheckButton", INK)
@@ -153,6 +196,34 @@ static func build() -> Theme:
 	t.set_stylebox("background", "ProgressBar", bg)
 	t.set_stylebox("fill", "ProgressBar", fill)
 	return t
+
+
+## Bouton peint en 9 zones ; enfoncé = plus sombre, texte descendu de 4 px.
+static func _texture_button(t: Theme, type: String, color: String, size: String) -> void:
+	var tex: Texture2D = load(HUD_DIR + "btn_%s_%s.png" % [color, size])
+	var src: Dictionary = CREAM_SRC if color == "cream" else BUTTON_SRC
+	var k: float = BUTTON_HEIGHTS[size] / src.h
+	for state in ["normal", "hover", "focus", "pressed", "disabled"]:
+		var sb := StyleBoxTexture.new()
+		sb.texture = tex
+		sb.texture_margin_left = src.cap_l * k
+		sb.texture_margin_right = src.cap_r * k
+		sb.texture_margin_top = src.top * k
+		sb.texture_margin_bottom = src.bottom * k
+		sb.content_margin_left = src.cap_l * k * 0.8
+		sb.content_margin_right = src.cap_r * k * 0.8
+		sb.content_margin_top = 10.0 * k / 0.27
+		sb.content_margin_bottom = src.bottom * k * 0.55
+		match state:
+			"hover", "focus":
+				sb.modulate_color = Color(1.06, 1.06, 1.06)
+			"pressed":
+				sb.modulate_color = Color(0.86, 0.86, 0.86)
+				sb.content_margin_top += 4
+				sb.content_margin_bottom -= 4
+			"disabled":
+				sb.modulate_color = Color(0.7, 0.7, 0.7, 0.8)
+		t.set_stylebox(state, type, sb)
 
 
 static func _button_styles(t: Theme, type: String, color: Color, radius := 60, border := INK) -> void:

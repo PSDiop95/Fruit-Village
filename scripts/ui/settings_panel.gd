@@ -24,7 +24,7 @@ var close_button: Button
 
 func _ready() -> void:
 	theme = UiTheme.get_theme()
-	custom_minimum_size = Vector2(860, 0)
+	custom_minimum_size = Vector2(960, 0)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 14)
 	add_child(box)
@@ -55,7 +55,7 @@ func _ready() -> void:
 		b.text = VisualQuality.label(q)
 		b.toggle_mode = true
 		b.button_group = group
-		b.theme_type_variation = &"ButtonBlue"
+		b.theme_type_variation = &"ButtonCream"
 		b.add_theme_font_size_override("font_size", 36)
 		b.custom_minimum_size = Vector2(0, 110)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -113,7 +113,7 @@ func _build_ambiance_row(box: VBoxContainer) -> void:
 func _refresh_ambiance_style() -> void:
 	var cur := int(SaveManager.get_setting(&"ambiance"))
 	for b in ambiance_buttons:
-		b.theme_type_variation = &"Button" if int(b.get_meta(&"value")) == cur else &"ButtonBlue"
+		b.theme_type_variation = &"Button" if int(b.get_meta(&"value")) == cur else &"ButtonCream"
 
 
 func _set_quality(setting: int) -> void:
@@ -126,21 +126,37 @@ func _set_quality(setting: int) -> void:
 func _refresh_quality_style() -> void:
 	var cur := int(SaveManager.get_setting(&"quality"))
 	for i in quality_buttons.size():
-		quality_buttons[i].theme_type_variation = &"Button" if QUALITY_CHOICES[i] == cur else &"ButtonBlue"
+		quality_buttons[i].theme_type_variation = &"Button" if QUALITY_CHOICES[i] == cur else &"ButtonCream"
 
 
 func close() -> void:
 	closed.emit()
-	# Le CenterContainer d'accueil part avec le panneau.
+	# Le CenterContainer d'accueil (et son voile éventuel) part avec le panneau.
 	if get_parent() is CenterContainer and get_parent().get_child_count() == 1:
-		get_parent().queue_free()
+		var wrapper := get_parent().get_parent()
+		if wrapper and wrapper.has_meta(&"settings_wrapper"):
+			wrapper.queue_free()
+		else:
+			get_parent().queue_free()
 	else:
 		queue_free()
 
 
-## Enveloppe le panneau dans un CenterContainer plein écran (à ajouter à l'UI).
-static func centered(panel: SettingsPanel) -> CenterContainer:
+## Enveloppe le panneau dans un CenterContainer plein écran (à ajouter à l'UI),
+## avec un voile sombre si `dim`.
+static func centered(panel: SettingsPanel, dim := false) -> Control:
 	var c := CenterContainer.new()
 	c.set_anchors_preset(Control.PRESET_FULL_RECT)
 	c.add_child(panel)
-	return c
+	if not dim:
+		return c
+	# Voile sombre derrière le panneau (écran titre).
+	var w := Control.new()
+	w.set_meta(&"settings_wrapper", true)
+	w.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var d := ColorRect.new()
+	d.color = Color(0.12, 0.07, 0.03, 0.6)
+	d.set_anchors_preset(Control.PRESET_FULL_RECT)
+	w.add_child(d)
+	w.add_child(c)
+	return w

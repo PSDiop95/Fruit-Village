@@ -23,6 +23,7 @@ func _initialize() -> void:
 	_plank()
 	_star()
 	_frame()
+	_menu_buttons()
 	print("UI_ART ok -> %s" % OUT)
 	quit()
 
@@ -190,6 +191,121 @@ func _paint_panel(img: Image, r: Rect2i, shade: int) -> void:
 			img.set_pixel(x, y, Color(col.r + g, col.g + g, col.b + g * 0.6, 1.0))
 
 
+## Boutons du menu (boutons_menu.jpg, 2000x1493) sans texte, en 9 zones :
+## bord gauche + milieu uni (moyenne par ligne d'une bande sans texte) + bord
+## droit. Vert d'origine ; orange et bleu par rotation de teinte du vert
+## (même géométrie). Deux hauteurs : _l (titre) et _s (panneaux).
+## Pastille crème « Plus gros fruit » (médaillon vidé) et bouton crème.
+## Géométrie source (px) : UiTheme.BUTTON_SRC / PILL_SRC.
+func _menu_buttons() -> void:
+	var src := _load("boutons_menu.jpg")
+	var bg := src.get_pixel(4, 4)
+	_remove_bg(src, _corners(src))
+	_soft_shadow(src, bg)
+	# Bouton vert : x 100..690, y 550..965 ; texte « Jouer » entre 180 et 620.
+	# Lignes du texte (y 650..800) : bande 628..650 ; ailleurs, bande au centre (x 300).
+	var green := _compose(src, Rect2i(100, 550, 590, 415), 115, 80, 105, 32, 300, Vector2i(95, 255))
+	# Teinte cible (orange, bleu) ; -1 = vert d'origine.
+	var variants := {"green": -1.0, "orange": 0.08, "blue": 0.58}
+	for key in variants:
+		var img := green.duplicate() as Image
+		if variants[key] >= 0.0:
+			_retint(img, variants[key], 0.3, 1.3 if key == "orange" else 1.0, 1.32 if key == "orange" else 1.05)
+		for size in [["l", 200], ["s", 112]]:
+			_save_h(img, "btn_%s_%s.png" % [key, size[0]], size[1])
+	# Pastille : x 1312..1928, y 604..900 ; médaillon centre (1450, 746) ;
+	# texte entre 1568 et 1876 ; bande propre 1552..1564.
+	var pill := src.get_region(Rect2i(1312, 604, 616, 296))
+	_paint_disc(pill, Vector2(1450 - 1312, 746 - 604), 95.0, Color("ecdfc4"), 10.0)
+	var pill_img := _compose(pill, Rect2i(0, 0, 616, 296), 252, 252, 140, 92, 1700 - 1312, Vector2i(74, 204))
+	_save_h(pill_img, "pill_best.png", 200)
+	# Bouton crème : bout arrondi droit de la pastille recomposée (140 px, sans
+	# texte) + son miroir à gauche + son milieu uni.
+	var pw := pill_img.get_width()
+	var right := pill_img.get_region(Rect2i(pw - 140, 0, 140, 296))
+	var left := right.duplicate() as Image
+	left.flip_x()
+	var cream := Image.create(140 + 40 + 140, 296, false, Image.FORMAT_RGBA8)
+	cream.blit_rect(left, Rect2i(0, 0, 140, 296), Vector2i(0, 0))
+	cream.blit_rect(pill_img, Rect2i(252, 0, 40, 296), Vector2i(140, 0))
+	cream.blit_rect(right, Rect2i(0, 0, 140, 296), Vector2i(180, 0))
+	for size in [["l", 200], ["s", 112]]:
+		_save_h(cream, "btn_cream_%s.png" % size[0], size[1])
+
+
+## Recompose une image : bord gauche (`cap_l` px), milieu uni de 40 px (moyenne
+## par ligne de la bande `clean` = (x, largeur), coordonnées de `src`), bord droit.
+## Recompose une image sans texte : bords d'origine (`cap_l`, `cap_r` px) +
+## milieu uni de 40 px. Couleur du milieu par ligne : moyenne de 16 px à
+## `center_x` (coordonnées de `src`) ; sur les lignes du texte (`band`, relatives
+## à `r`), interpolée entre la ligne au-dessus et celle en dessous. Sur ces
+## lignes, les colonnes des bords qui peuvent toucher le texte (au-delà de
+## `clean_l` à gauche, en deçà de `clean_r` à droite) prennent aussi cette couleur.
+func _compose(src: Image, r: Rect2i, cap_l: int, clean_l: int, cap_r: int, clean_r: int,
+		center_x: int, band: Vector2i) -> Image:
+	var mid_w := 40
+	var h := r.size.y
+	var mid: Array[Color] = []
+	for y in h:
+		var acc := Color(0, 0, 0, 0)
+		for x in range(center_x, center_x + 16):
+			acc += src.get_pixel(x, r.position.y + y)
+		mid.append(acc / 16.0)
+	var top := mid[maxi(band.x - 1, 0)]
+	var bot := mid[mini(band.y + 1, h - 1)]
+	for y in range(band.x, band.y + 1):
+		mid[y] = top.lerp(bot, float(y - band.x) / maxf(band.y - band.x, 1))
+	var out := Image.create(cap_l + mid_w + cap_r, h, false, Image.FORMAT_RGBA8)
+	out.blit_rect(src, Rect2i(r.position.x, r.position.y, cap_l, h), Vector2i.ZERO)
+	out.blit_rect(src, Rect2i(r.end.x - cap_r, r.position.y, cap_r, h), Vector2i(cap_l + mid_w, 0))
+	for y in h:
+		for x in mid_w:
+			out.set_pixel(cap_l + x, y, mid[y])
+		if y >= band.x and y <= band.y:
+			for x in range(clean_l, cap_l):
+				out.set_pixel(x, y, mid[y])
+			for x in range(0, clean_r):
+				out.set_pixel(cap_l + mid_w + x, y, mid[y])
+	return out
+
+
+## Ombre portée douce : pixels « fond assombri » (même teinte que le fond)
+## → brun transparent proportionnel à l'assombrissement.
+func _soft_shadow(img: Image, bg: Color) -> void:
+	for y in img.get_height():
+		for x in img.get_width():
+			var c := img.get_pixel(x, y)
+			if c.a < 0.01:
+				continue
+			var kr := c.r / maxf(bg.r, 0.01)
+			var kg := c.g / maxf(bg.g, 0.01)
+			var kb := c.b / maxf(bg.b, 0.01)
+			var k := (kr + kg + kb) / 3.0
+			if k > 0.55 and k < 1.02 and absf(kr - k) < 0.07 and absf(kg - k) < 0.07 and absf(kb - k) < 0.09:
+				img.set_pixel(x, y, Color(0.24, 0.13, 0.05, clampf((1.0 - k) * 1.6, 0.0, 0.5)))
+
+
+## Recolore les pixels saturés vers la teinte `hue` en gardant de petits écarts
+## de teinte (relief) ; le crème, l'ombre et le contour sombre ne bougent pas.
+func _retint(img: Image, hue: float, min_sat: float, sat_mul := 1.0, val_mul := 1.0) -> void:
+	for y in img.get_height():
+		for x in img.get_width():
+			var c := img.get_pixel(x, y)
+			if c.a < 0.6 or c.s < min_sat * 0.5:
+				continue
+			var k := clampf((c.s - min_sat * 0.5) / (min_sat * 0.5), 0.0, 1.0)
+			var h := fposmod(hue + (c.h - 0.3) * 0.35, 1.0)
+			img.set_pixel(x, y, c.lerp(Color.from_hsv(h, minf(c.s * sat_mul, 1.0), minf(c.v * val_mul, 1.0), c.a), k))
+
+
+func _save_h(img: Image, file: String, height: int) -> void:
+	var out := img.duplicate() as Image
+	var w := int(round(float(height) * out.get_width() / out.get_height()))
+	out.resize(w, height, Image.INTERPOLATE_LANCZOS)
+	out.save_png(OUT + file)
+	print("%s %dx%d" % [file, w, height])
+
+
 # ---------------------------------------------------------------- Outils
 
 func _load(file: String) -> Image:
@@ -264,14 +380,14 @@ func _crop_alpha(img: Image, pad: int) -> Image:
 	return img.get_region(r)
 
 
-func _paint_disc(img: Image, c: Vector2, r: float, col: Color) -> void:
+func _paint_disc(img: Image, c: Vector2, r: float, col: Color, feather := 60.0) -> void:
 	for y in range(int(c.y - r) - 1, int(c.y + r) + 2):
 		for x in range(int(c.x - r) - 1, int(c.x + r) + 2):
 			var d := Vector2(x, y).distance_to(c)
 			if d > r:
 				continue
 			# Bord fondu sur 60 px dans le fond d'origine.
-			var k := clampf((r - d) / 60.0, 0.0, 1.0)
+			var k := clampf((r - d) / feather, 0.0, 1.0)
 			img.set_pixel(x, y, img.get_pixel(x, y).lerp(Color(col, 1.0), k))
 
 
