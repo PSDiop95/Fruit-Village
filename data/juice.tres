@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="JuiceConfig" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="JuiceConfig" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/juice_config.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/data/particle_settings.gd" id="2"]
@@ -72,6 +72,41 @@ shape = 2
 emission_box = Vector3(4.0, 0.3, 0)
 colors = PackedColorArray(0.976, 0.78, 0.31, 1, 1, 0.835, 0.31, 1, 0.851, 0.627, 0.11, 1)
 
+[sub_resource type="Resource" id="drops"]
+script = ExtResource("2")
+amount = 16
+lifetime = 0.55
+explosiveness = 1.0
+direction = Vector3(0, 1, 0)
+spread_deg = 80.0
+speed_min = 4.5
+speed_max = 9.0
+gravity = Vector3(0, -24, 0)
+size_min = 0.7
+size_max = 1.3
+mesh_size = 0.19
+shape = 4
+emission_box = Vector3(0.15, 0.15, 0)
+colors = PackedColorArray()
+align_to_velocity = true
+
+[sub_resource type="Resource" id="stars"]
+script = ExtResource("2")
+amount = 10
+lifetime = 0.7
+explosiveness = 1.0
+direction = Vector3(0, 1, 0)
+spread_deg = 180.0
+speed_min = 2.5
+speed_max = 6.0
+gravity = Vector3(0, -5, 0)
+size_min = 0.7
+size_max = 1.3
+mesh_size = 0.24
+shape = 3
+emission_box = Vector3(0, 0, 0)
+colors = PackedColorArray(1, 0.86, 0.2, 1, 1, 0.72, 0.1, 1, 1, 0.95, 0.5, 1)
+
 [resource]
 script = ExtResource("1")
 spawn_pop_time = 0.2
@@ -101,8 +136,10 @@ blink_duration = 0.12
 eye_color = Color(0.08, 0.05, 0.04, 1)
 eye_highlight_color = Color(1, 1, 1, 1)
 mouth_color = Color(0.25, 0.06, 0.05, 1)
-show_rank_numbers = true
+show_rank_numbers = false
 splash = SubResource("splash")
+drops = SubResource("drops")
+stars = SubResource("stars")
 splash_pool_size = 10
 ring_pool_size = 6
 ring_time = 0.35
@@ -120,6 +157,7 @@ combo_text_font_size = 130
 combo_text_color = Color(0.902, 0.318, 0, 1)
 hitstop_time = 0.04
 hitstop_time_scale = 0.05
+time_scale_max_step = 0.034
 combo_zoom = 0.04
 combo_zoom_time = 0.25
 big_merge_min_rank = 6
@@ -172,7 +210,7 @@ vibrate_game_over_ms = 80
 quality = 2
 quality_particle_multipliers = PackedFloat32Array(0.35, 0.65, 1)
 reduced_particle_divisor = 3.0
-auto_quality = true
+auto_quality = false
 auto_quality_min_fps = 45.0
 auto_quality_window = 4.0
 sounds = ExtResource("3")

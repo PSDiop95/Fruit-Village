@@ -20,7 +20,7 @@ static func gpu_supported() -> bool:
 func build(s: ParticleSettings, gpu: bool) -> void:
 	settings = s
 	use_gpu = gpu
-	var mesh := FxMeshes.particle_mesh(s.shape, s.mesh_size)
+	var mesh := FxMeshes.particle_mesh(s.shape, s.mesh_size, s.additive)
 	if gpu:
 		_gpu = GPUParticles3D.new()
 		_gpu.one_shot = true
@@ -44,6 +44,12 @@ func build(s: ParticleSettings, gpu: bool) -> void:
 		_gpu_mat.angular_velocity_min = -360.0
 		_gpu_mat.angular_velocity_max = 360.0
 		_gpu_mat.particle_flag_rotate_y = false
+		if s.align_to_velocity:
+			_gpu_mat.particle_flag_align_y = true
+			_gpu_mat.angle_min = 0.0
+			_gpu_mat.angle_max = 0.0
+			_gpu_mat.angular_velocity_min = 0.0
+			_gpu_mat.angular_velocity_max = 0.0
 		_gpu_mat.scale_curve = _shrink_texture()
 		if s.emission_box != Vector3.ZERO:
 			_gpu_mat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
@@ -73,6 +79,10 @@ func build(s: ParticleSettings, gpu: bool) -> void:
 		_cpu.angle_min = -180.0
 		_cpu.angle_max = 180.0
 		_cpu.scale_amount_curve = _shrink_curve()
+		if s.align_to_velocity:
+			_cpu.particle_flag_align_y = true
+			_cpu.angle_min = 0.0
+			_cpu.angle_max = 0.0
 		if s.emission_box != Vector3.ZERO:
 			_cpu.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
 			_cpu.emission_box_extents = s.emission_box

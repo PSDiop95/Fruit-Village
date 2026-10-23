@@ -2,7 +2,7 @@ class_name ParticleSettings
 extends Resource
 ## Réglages d'une gerbe de particules (jus, confettis, feuilles, pièces).
 
-enum Shape { SPHERE, LEAF, COIN }
+enum Shape { SPHERE, LEAF, COIN, STAR, DROP }
 
 ## Nombre de particules au niveau de qualité Haut, effets normaux.
 @export var amount: int = 24
@@ -22,3 +22,7 @@ enum Shape { SPHERE, LEAF, COIN }
 @export var emission_box: Vector3 = Vector3.ZERO
 ## Vide = couleur fournie à chaque gerbe (ex. couleur du fruit), sinon tirage parmi ces couleurs.
 @export var colors: PackedColorArray = PackedColorArray()
+## Gouttes : la particule s'allonge dans le sens de sa vitesse.
+@export var align_to_velocity: bool = false
+## Mélange additif (étoiles, étincelles) : brille et déclenche le glow.
+@export var additive: bool = false

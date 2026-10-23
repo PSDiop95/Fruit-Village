@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Ambiances" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/ambiance_def.gd" id="1_5ue6u"]
+[ext_resource type="Resource" path="res://data/ambiances/jour.tres" id="2_jiy88"]
+[ext_resource type="Resource" path="res://data/ambiances/coucher.tres" id="3_kwk4h"]
+[ext_resource type="Resource" path="res://data/ambiances/nuit.tres" id="4_ivvuc"]
+[ext_resource type="Script" path="res://scripts/data/ambiances.gd" id="5_7x2d0"]
+
+[resource]
+script = ExtResource("5_7x2d0")
+list = Array[ExtResource("1_5ue6u")]([ExtResource("2_jiy88"), ExtResource("3_kwk4h"), ExtResource("4_ivvuc")])

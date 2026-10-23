@@ -1,7 +1,8 @@
 class_name Game
 extends Node3D
 ## Scène de jeu : panier, visée, lâcher, fusions, score, combos, game over.
-## Tout le décor est construit en code (placeholders) en attendant les assets M3.
+## Habillage M3 : MarketScene (panier calebasse, étal, décor, lumière). La
+## collision du panier reste les boîtes M1 construites ici.
 ## Aucun effet ici : Juice (M2) écoute les signaux ci-dessous.
 
 signal score_changed(score: int)
@@ -15,12 +16,16 @@ signal fruit_impact(fruit: Fruit, speed: float)
 ## Le fruit à lâcher réapparaît en haut (fin du cooldown).
 signal preview_shown(rank: int)
 signal danger_changed(ratio: float, state: DangerMonitor.State)
+## Rejouer / retour au titre : gérés par Main s'il écoute, sinon rechargement.
+signal restart_requested
+signal menu_requested
 
 const FRUIT_SCRIPT := preload("res://scripts/fruit.gd")
 
 @export var catalog: FruitCatalog = preload("res://data/fruits.tres")
 @export var config: GameConfig = preload("res://data/game_config.tres")
 @export var juice_config: JuiceConfig = preload("res://data/juice.tres")
+@export var visual_config: VisualConfig = preload("res://data/visual.tres")
 ## false : aucun effet (bancs de perf comparatifs).
 @export var juice_enabled: bool = true
 ## 0 = graine aléatoire. Valeur fixe = partie reproductible (tests, défi du jour).
@@ -49,6 +54,9 @@ var _cooldown: float = 0.0
 var _time: float = 0.0
 var _hud: GameHud
 var _juice: Juice
+var _market: MarketScene
+var _mascot: Mascot
+var _batcher: FruitBatcher
 var _last_danger_ratio: float = -1.0
 var _last_danger_state: DangerMonitor.State = DangerMonitor.State.SAFE
 
@@ -59,12 +67,15 @@ func _ready() -> void:
 		catalog.droppable_weights())
 	combo.configure(config.combo_window, config.combo_max_multiplier)
 	danger.configure(config.danger_warn_time, config.danger_game_over_time)
+	FruitModels.warm_up(catalog)
 
 	_build_environment()
 	_build_basket()
 	_fruits_root = Node3D.new()
 	_fruits_root.name = "Fruits"
 	add_child(_fruits_root)
+	_batcher = FruitBatcher.new()
+	add_child(_batcher)
 	_build_preview()
 
 	_hud = GameHud.new()
@@ -75,33 +86,37 @@ func _ready() -> void:
 		_juice.name = "Juice"
 		add_child(_juice)
 		_juice.bind(self)
+		_mascot = Mascot.create(visual_config, juice_config)
+		if _mascot:
+			add_child(_mascot)
+			_mascot.bind(self)
+	_hud.menu_requested.connect(go_to_menu)
+	var q_setting := int(SaveManager.get_setting(&"quality"))
+	if _juice:
+		_juice.auto_quality_allowed = q_setting == VisualQuality.AUTO
+	set_quality(VisualQuality.resolve(q_setting))
+	SaveManager.setting_changed.connect(_on_setting_changed)
 	_refresh_preview()
+	if PerfProbe.enabled():
+		var probe := PerfProbe.new()
+		add_child(probe)
+		probe.run(self)
 
 
 # ---------------------------------------------------------------- Construction
 
 func _build_environment() -> void:
-	var env := WorldEnvironment.new()
-	var e := Environment.new()
-	e.background_mode = Environment.BG_COLOR
-	e.background_color = Color("f6d9a8")
-	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color("fff1dc")
-	e.ambient_light_energy = 0.55
-	env.environment = e
-	add_child(env)
-
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-40, -25, 0)
-	sun.light_color = Color("ffe2b0")
-	sun.light_energy = 1.1
-	add_child(sun)
+	# Lumière, panier calebasse, étal et décor : purement visuel (M3).
+	_market = MarketScene.new()
+	add_child(_market)
+	_market.setup(visual_config, config)
+	_market.follow_ambiance_setting()
 
 	_camera = Camera3D.new()
 	_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	_camera.keep_aspect = Camera3D.KEEP_WIDTH
 	_camera.size = config.basket_inner_width + config.wall_thickness * 2.0 		+ config.camera_side_margin
-	_camera.position = Vector3(0, config.basket_height * 0.5 + config.camera_y_offset, 20)
+	_camera.position = Vector3(0, camera_center_y(config, _viewport_aspect()), 20)
 	_camera.current = true
 	add_child(_camera)
 
@@ -119,43 +134,86 @@ func _build_basket() -> void:
 	var h := config.basket_height
 	var t := config.wall_thickness
 	var color := Color("a0522d")
+	# Collision M1 inchangée. Boîtes visibles seulement sans modèle de panier.
+	var placeholder := _market == null or not _market.has_basket()
 	# sol
-	_add_box(body, Vector3(w + t * 2.0, t, 2.0), Vector3(0, -t * 0.5, 0), color)
+	_add_box(body, Vector3(w + t * 2.0, t, 2.0), Vector3(0, -t * 0.5, 0), color, placeholder)
 	# murs
-	_add_box(body, Vector3(t, h, 2.0), Vector3(-(w + t) * 0.5, h * 0.5, 0), color)
-	_add_box(body, Vector3(t, h, 2.0), Vector3((w + t) * 0.5, h * 0.5, 0), color)
-	# fond (visuel seulement)
-	var back := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = Vector3(w, h, 0.1)
-	var back_mat := StandardMaterial3D.new()
-	back_mat.albedo_color = Color("e9c48a")
-	bm.material = back_mat
-	back.mesh = bm
-	back.position = Vector3(0, h * 0.5, -1.0)
-	add_child(back)
+	_add_box(body, Vector3(t, h, 2.0), Vector3(-(w + t) * 0.5, h * 0.5, 0), color, placeholder)
+	_add_box(body, Vector3(t, h, 2.0), Vector3((w + t) * 0.5, h * 0.5, 0), color, placeholder)
+	if placeholder:
+		# fond (visuel seulement)
+		var back := MeshInstance3D.new()
+		var bm := BoxMesh.new()
+		bm.size = Vector3(w, h, 0.1)
+		var back_mat := StandardMaterial3D.new()
+		back_mat.albedo_color = Color("e9c48a")
+		bm.material = back_mat
+		back.mesh = bm
+		back.position = Vector3(0, h * 0.5, -1.0)
+		add_child(back)
 
-	# ligne de danger
+	# Ligne de danger : cordelette rouge tendue entre les bords + lueur pulsée (Juice).
+	_build_danger_cord(w)
 	_danger_line = MeshInstance3D.new()
-	var lm := BoxMesh.new()
-	lm.size = Vector3(w, 0.05, 0.05)
+	var lm := CylinderMesh.new()
+	lm.top_radius = visual_config.danger_cord_radius * 2.2
+	lm.bottom_radius = lm.top_radius
+	lm.height = w
+	lm.radial_segments = 8
+	lm.rings = 1
 	_danger_mat = StandardMaterial3D.new()
 	_danger_mat.albedo_color = Color(0.9, 0.1, 0.1, juice_config.line_alpha_safe)
 	_danger_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	_danger_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	lm.material = _danger_mat
 	_danger_line.mesh = lm
+	_danger_line.rotation.z = PI * 0.5
+	_danger_line.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_danger_line.position = Vector3(0, config.danger_line_y, 0.9)
 	add_child(_danger_line)
 
 
-func _add_box(parent: Node3D, size: Vector3, pos: Vector3, color: Color) -> void:
+## Cordelette (visuel) : corde rouge + nœuds aux deux bords du panier.
+func _build_danger_cord(w: float) -> void:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = visual_config.danger_cord_color
+	mat.roughness = 1.0
+	var rope := MeshInstance3D.new()
+	rope.name = "DangerCord"
+	var cm := CylinderMesh.new()
+	cm.top_radius = visual_config.danger_cord_radius
+	cm.bottom_radius = cm.top_radius
+	cm.height = w
+	cm.radial_segments = 6
+	cm.rings = 1
+	cm.material = mat
+	rope.mesh = cm
+	rope.rotation.z = PI * 0.5
+	rope.position = Vector3(0, config.danger_line_y, 0.95)
+	add_child(rope)
+	for side in [-1.0, 1.0]:
+		var knot := MeshInstance3D.new()
+		var sm := SphereMesh.new()
+		sm.radius = visual_config.danger_cord_radius * 2.4
+		sm.height = sm.radius * 2.0
+		sm.radial_segments = 8
+		sm.rings = 4
+		sm.material = mat
+		knot.mesh = sm
+		knot.position = Vector3(side * w * 0.5, config.danger_line_y, 0.95)
+		add_child(knot)
+
+
+func _add_box(parent: Node3D, size: Vector3, pos: Vector3, color: Color, visible_mesh := true) -> void:
 	var col := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = size
 	col.shape = shape
 	col.position = pos
 	parent.add_child(col)
+	if not visible_mesh:
+		return
 	var mesh := MeshInstance3D.new()
 	var bm := BoxMesh.new()
 	bm.size = size
@@ -224,6 +282,15 @@ func _aim_at(screen_pos: Vector2) -> void:
 	_guide.position.x = _aim_x
 
 
+## Position x visée (m), pour les regards de la mascotte.
+func aim_x() -> float:
+	return _aim_x
+
+
+func mascot() -> Mascot:
+	return _mascot
+
+
 func _clamp_x(x: float, r: float) -> float:
 	var half := config.basket_inner_width * 0.5 - r - 0.01
 	return clampf(x, -half, half)
@@ -256,6 +323,7 @@ func spawn_fruit(rank: int, pos: Vector3) -> Fruit:
 func _spawn_fruit(rank: int, pos: Vector3, from_merge := false) -> Fruit:
 	var f: Fruit = FRUIT_SCRIPT.new()
 	f.setup(rank, catalog.get_def(rank), config, juice_config)
+	f.visual().use_batcher(_batcher)
 	f.position = pos
 	f.touched.connect(_on_fruit_touched)
 	f.impacted.connect(func(fr: Fruit, speed: float) -> void: fruit_impact.emit(fr, speed))
@@ -403,5 +471,60 @@ func juice() -> Juice:
 	return _juice
 
 
+## Centre vertical de la caméra. Cadrage de référence 9:16 ; sur un écran plus
+## allongé, le bas reste calé (panier + étal) et la hauteur en plus va au ciel.
+static func camera_center_y(cfg: GameConfig, aspect_hw: float) -> float:
+	var w := cfg.basket_inner_width + cfg.wall_thickness * 2.0 + cfg.camera_side_margin
+	var ref_center := cfg.basket_height * 0.5 + cfg.camera_y_offset
+	var bottom := ref_center - w * 16.0 / 9.0 * 0.5
+	return bottom + w * maxf(aspect_hw, 16.0 / 9.0) * 0.5
+
+
+func _viewport_aspect() -> float:
+	var s := get_viewport().get_visible_rect().size if is_inside_tree() else Vector2(9, 16)
+	return s.y / maxf(s.x, 1.0)
+
+
+func market() -> MarketScene:
+	return _market
+
+
+## Qualité visuelle (Bas/Moyen/Haut) : matériaux, contour, ombres, particules.
+func set_quality(level: int) -> void:
+	FruitModels.set_quality(level)
+	if _market:
+		_market.apply_quality(level)
+	if _mascot:
+		_mascot.apply_quality(level)
+	for f in _fruits:
+		f.visual().refresh_material()
+	_preview.refresh_material()
+	if _juice:
+		_juice.set_quality(level)
+
+
 func restart() -> void:
-	get_tree().reload_current_scene()
+	get_tree().paused = false
+	if restart_requested.get_connections().is_empty():
+		get_tree().reload_current_scene()
+	else:
+		restart_requested.emit()
+
+
+func go_to_menu() -> void:
+	get_tree().paused = false
+	if menu_requested.get_connections().is_empty():
+		get_tree().reload_current_scene()
+	else:
+		menu_requested.emit()
+
+
+func hud() -> GameHud:
+	return _hud
+
+
+func _on_setting_changed(key: StringName, value: Variant) -> void:
+	if key == &"reduced_effects" and _juice and _juice.reduced != bool(value):
+		_juice.set_reduced(bool(value))
+	elif key == &"quality" and _juice:
+		_juice.auto_quality_allowed = int(value) == VisualQuality.AUTO

@@ -15,3 +15,12 @@ export_presets.cfg
 # OS
 .DS_Store
 Thumbs.db
+
+# Staging du pipeline de modèles (tools/build_models.py)
+assets/models/_staging/
+
+# Caches Python (scripts Blender)
+__pycache__/
+
+# Exports (APK/AAB)
+build/
