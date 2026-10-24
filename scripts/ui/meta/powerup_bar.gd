@@ -16,6 +16,8 @@ const RING_MIN := 118.0
 const RING_MAX := 160.0
 ## Rafraîchissement de l'état des boutons (fruits présents, rang, délai).
 const REFRESH_EVERY := 0.2
+## Bandeau « Touche un fruit à écraser » (sous la jauge de danger du HUD).
+const AIM_BANNER_Y := 440.0
 
 var controller: PowerupController
 ## Parent des fenêtres (offre) ; par défaut le parent de la barre.
@@ -265,7 +267,8 @@ func _show_aim() -> void:
 	aim_overlay.add_child(tint)
 	var banner := MetaUi.outlined("Touche un fruit à écraser", 56, UiTheme.CREAM, 14)
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	banner.position = Vector2(0, _row.position.y + _ring_size * 0.3)
+	# En haut, sous la barre « Prochain » : loin d'« Annuler » (en bas).
+	banner.position = Vector2(0, AIM_BANNER_Y)
 	banner.size = Vector2(1080, 80)
 	aim_overlay.add_child(banner)
 	UiJuice.breathe(banner, 0.05, 1.0)

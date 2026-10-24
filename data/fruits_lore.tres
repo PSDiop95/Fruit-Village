@@ -10,6 +10,7 @@ name_fr = "Sidem"
 name_en = "Jujube"
 name_wo = "Sidem"
 lore = "Le sidem est le fruit du jujubier, un arbuste épineux qui pousse jusque dans le Sahel. On le croque frais ou séché, et on en fait aussi une pâte sucrée."
+benefits = "Riche en vitamine C et en fibres. Séché, c'est un en-cas plein d'énergie."
 
 [sub_resource type="Resource" id="l1"]
 script = ExtResource("2")
@@ -17,6 +18,7 @@ id = &"bissap"
 name_fr = "Bissap"
 name_en = "Hibiscus"
 lore = "Ce ne sont pas des fruits mais les calices rouges d'une fleur d'hibiscus. Infusés et sucrés, ils donnent le bissap, servi à toutes les fêtes."
+benefits = "Ses calices rouges sont riches en antioxydants (anthocyanes). Une boisson rafraîchissante et sans caféine."
 
 [sub_resource type="Resource" id="l2"]
 script = ExtResource("2")
@@ -25,6 +27,7 @@ name_fr = "Tamarin"
 name_en = "Tamarind"
 name_wo = "Dakhar"
 lore = "Sa pulpe brune et acidulée parfume jus, bonbons et sauces. Le quartier de Dakar-Plateau aurait tiré son nom des tamariniers, « dakhar » en wolof."
+benefits = "Sa pulpe apporte fibres, potassium et magnésium. On l'utilise traditionnellement pour aider la digestion."
 
 [sub_resource type="Resource" id="l3"]
 script = ExtResource("2")
@@ -33,6 +36,7 @@ name_fr = "Ditakh"
 name_en = "Detar"
 name_wo = "Ditax"
 lore = "Sous sa coque verte se cache une pulpe farineuse très riche en vitamine C. Son jus vert est un classique des marchés de Dakar."
+benefits = "Très riche en vitamine C, il apporte aussi des fibres et des minéraux."
 
 [sub_resource type="Resource" id="l4"]
 script = ExtResource("2")
@@ -41,13 +45,15 @@ name_fr = "Madd"
 name_en = "Saba fruit"
 name_wo = "Madd"
 lore = "Le madd pousse sur une liane de la forêt de Casamance. On le mange avec du sucre, du sel et une pointe de piment."
+benefits = "Riche en vitamine C et en sucres naturels : il rafraîchit et redonne de l'énergie."
 
 [sub_resource type="Resource" id="l5"]
 script = ExtResource("2")
 id = &"goyave"
 name_fr = "Goyave"
 name_en = "Guava"
-lore = "La goyave contient plus de vitamine C qu'une orange. Sa chair rose se mange crue ou en confiture."
+lore = "La goyave pousse dans les cours et les jardins de toute l'Afrique de l'Ouest. Sa chair rose se mange crue, en jus ou en confiture."
+benefits = "Plus riche en vitamine C qu'une orange, et pleine de fibres."
 
 [sub_resource type="Resource" id="l6"]
 script = ExtResource("2")
@@ -55,6 +61,7 @@ id = &"mangue"
 name_fr = "Mangue"
 name_en = "Mango"
 lore = "La saison des mangues, de mai à juillet, remplit les étals de Kermel à Ziguinchor. Kent, Keitt, Bouko : chaque variété a ses fans."
+benefits = "Riche en vitamine A (bêta-carotène) et en vitamine C, utiles pour la vue et les défenses de l'organisme."
 
 [sub_resource type="Resource" id="l7"]
 script = ExtResource("2")
@@ -62,6 +69,7 @@ id = &"papaye"
 name_fr = "Papaye"
 name_en = "Papaya"
 lore = "La papaye pousse vite, souvent dans un coin de la cour. Ses graines noires ont un petit goût poivré."
+benefits = "Elle contient de la papaïne, une enzyme qui aide à digérer les protéines, et beaucoup de vitamine C."
 
 [sub_resource type="Resource" id="l8"]
 script = ExtResource("2")
@@ -69,6 +77,7 @@ id = &"ananas"
 name_fr = "Ananas"
 name_en = "Pineapple"
 lore = "Un pied d'ananas met plus d'un an à donner un seul fruit. Ceux de Guinée et de Côte d'Ivoire sont réputés pour leur douceur."
+benefits = "Il contient de la bromélaïne, une enzyme digestive, et il est riche en vitamine C et en manganèse."
 
 [sub_resource type="Resource" id="l9"]
 script = ExtResource("2")
@@ -76,6 +85,7 @@ id = &"coco"
 name_fr = "Noix de coco"
 name_en = "Coconut"
 lore = "Sur la plage, on boit l'eau de coco directement dans la noix ouverte à la machette. La chair râpée parfume desserts et sauces."
+benefits = "L'eau de coco apporte du potassium et des minéraux qui hydratent ; la chair est riche en fibres."
 
 [sub_resource type="Resource" id="l10"]
 script = ExtResource("2")
@@ -84,6 +94,7 @@ name_fr = "Pain de singe"
 name_en = "Baobab fruit"
 name_wo = "Bouye"
 lore = "C'est le fruit du baobab, l'arbre à palabres où l'on se réunit pour discuter. Sa pulpe blanche donne le bouye, une boisson douce et onctueuse."
+benefits = "Sa pulpe est riche en vitamine C, en calcium et en fibres : on la surnomme souvent « superfruit »."
 
 [resource]
 script = ExtResource("1")

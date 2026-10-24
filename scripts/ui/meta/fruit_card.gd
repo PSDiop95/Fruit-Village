@@ -41,6 +41,22 @@ func _ready() -> void:
 		lore.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lore.custom_minimum_size = Vector2(640, 0)
 		sec.add_child(lore)
+		if not entry.benefits.is_empty():
+			var bsec := PanelContainer.new()
+			bsec.theme_type_variation = &"PanelSection"
+			body.add_child(bsec)
+			var bv := VBoxContainer.new()
+			bv.add_theme_constant_override("separation", 4)
+			bsec.add_child(bv)
+			var cap := Label.new()
+			cap.text = "BIENFAITS"
+			cap.theme_type_variation = &"LabelCaption"
+			cap.add_theme_color_override("font_color", UiTheme.WAX_GREEN)
+			bv.add_child(cap)
+			var ben := MetaUi.label(entry.benefits, 36)
+			ben.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			ben.custom_minimum_size = Vector2(640, 0)
+			bv.add_child(ben)
 	share_button = MetaUi.button("Partager", &"ButtonGreen", Vector2(460, 116), share, 48)
 	body.add_child(share_button)
 
