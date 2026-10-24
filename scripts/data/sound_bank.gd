@@ -25,6 +25,22 @@ extends Resource
 ## Pièces gagnées.
 @export var coins: AudioStream
 
+@export_group("Musique")
+## Morceaux de fond joués en alternance (enchaînés, pas de boucle brute).
+## Vide : `music` en boucle.
+@export var music_tracks: Array[AudioStream] = []
+## Piste de tension (panier presque plein), en fondu enchaîné.
+@export var music_tension: AudioStream
+
+@export_group("Voix de la vendeuse")
+@export var voice_waaw: AudioStream
+@export var voice_wooy: AudioStream
+@export var voice_good: AudioStream
+@export var voice_dafa_neex: AudioStream
+@export var voice_cest_doux: AudioStream
+@export var voice_ca_cest_fort: AudioStream
+@export var voice_gaaw: AudioStream
+
 
 func note_for_rank(rank: int) -> AudioStream:
 	if merge_notes.is_empty():

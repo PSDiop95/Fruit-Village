@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="SoundBank" load_steps=26 format=3]
+[gd_resource type="Resource" script_class="SoundBank" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/sound_bank.gd" id="1"]
 [ext_resource type="AudioStream" path="res://assets/sfx/drop.wav" id="drop"]
@@ -25,6 +25,16 @@
 [ext_resource type="AudioStream" path="res://assets/sfx/play.wav" id="play"]
 [ext_resource type="AudioStream" path="res://assets/sfx/powerup.wav" id="powerup"]
 [ext_resource type="AudioStream" path="res://assets/sfx/coins.wav" id="coins"]
+[ext_resource type="AudioStream" path="res://assets/music/market_1.mp3" id="mus1"]
+[ext_resource type="AudioStream" path="res://assets/music/market_2.mp3" id="mus2"]
+[ext_resource type="AudioStream" path="res://assets/music/tension.mp3" id="tension"]
+[ext_resource type="AudioStream" path="res://assets/sfx/voice_waaw.wav" id="v_waaw"]
+[ext_resource type="AudioStream" path="res://assets/sfx/voice_wooy.wav" id="v_wooy"]
+[ext_resource type="AudioStream" path="res://assets/sfx/voice_good.wav" id="v_good"]
+[ext_resource type="AudioStream" path="res://assets/sfx/voice_dafa_neex.wav" id="v_neex"]
+[ext_resource type="AudioStream" path="res://assets/sfx/voice_cest_doux.wav" id="v_doux"]
+[ext_resource type="AudioStream" path="res://assets/sfx/voice_ca_cest_fort.wav" id="v_fort"]
+[ext_resource type="AudioStream" path="res://assets/sfx/voice_gaaw.wav" id="v_gaaw"]
 
 [resource]
 script = ExtResource("1")
@@ -42,3 +52,12 @@ ui_click = ExtResource("ui_click")
 play = ExtResource("play")
 powerup = ExtResource("powerup")
 coins = ExtResource("coins")
+music_tracks = Array[AudioStream]([ExtResource("mus1"), ExtResource("mus2")])
+music_tension = ExtResource("tension")
+voice_waaw = ExtResource("v_waaw")
+voice_wooy = ExtResource("v_wooy")
+voice_good = ExtResource("v_good")
+voice_dafa_neex = ExtResource("v_neex")
+voice_cest_doux = ExtResource("v_doux")
+voice_ca_cest_fort = ExtResource("v_fort")
+voice_gaaw = ExtResource("v_gaaw")

@@ -264,6 +264,23 @@ enum Quality { LOW, MEDIUM, HIGH }
 @export var coins_volume_db: float = -4.0
 @export var coins_max_per_second: int = 3
 
+@export_group("Voix")
+@export var voice_volume_db: float = -2.0
+## Écart minimal entre deux voix (s) ; les voix prioritaires (Baobab,
+## nouveau fruit, record) n'attendent que voice_priority_gap.
+@export var voice_min_gap: float = 4.0
+@export var voice_priority_gap: float = 1.2
+## Combo à partir duquel « Wóoy ! » remplace « Waaw ! ».
+@export var voice_big_combo: int = 4
+
+@export_group("Musique de tension")
+## Hauteur du fruit le plus haut, en part de la ligne de danger : la tension
+## monte au-dessus de `on`, redescend sous `off` (hystérésis).
+@export var tension_on_fill: float = 0.75
+@export var tension_off_fill: float = 0.6
+## Durée du fondu enchaîné calme ↔ tension (s).
+@export var tension_fade_time: float = 1.5
+
 @export_group("Debug")
 @export var show_fps_in_debug: bool = true
 ## Appui long à 3 doigts pour ouvrir le menu debug.

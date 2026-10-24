@@ -293,6 +293,33 @@ func test_m4_sounds_wired_and_merge_rises_with_rank() -> void:
 	assert_gt(high.pitch_scale, low.pitch_scale, "rang plus haut = son plus aigu")
 
 
+func test_voices_rate_limited_priority_passes() -> void:
+	var g := await _game()
+	var s: SoundBank = g.juice_config.sounds
+	for v in [s.voice_waaw, s.voice_wooy, s.voice_good, s.voice_dafa_neex, s.voice_cest_doux,
+			s.voice_ca_cest_fort, s.voice_gaaw]:
+		assert_not_null(v, "voix branchée")
+	var j := g.juice()
+	assert_not_null(j.play_voice(s.voice_waaw))
+	assert_null(j.play_voice(s.voice_good), "une voix toutes les quelques secondes au plus")
+	await wait_seconds(g.juice_config.voice_priority_gap + 0.1)
+	assert_not_null(j.play_voice(s.voice_ca_cest_fort, true), "voix prioritaire (Baobab)")
+
+
+func test_music_playlist_and_tension_crossfade() -> void:
+	var cfg: JuiceConfig = load("res://data/juice.tres")
+	var s: SoundBank = cfg.sounds
+	Audio.play_music_playlist(s.music_tracks, s.music_tension, cfg.tension_fade_time)
+	assert_eq(s.music_tracks.size(), 2)
+	assert_not_null(s.music_tension)
+	Audio.set_tension(true)
+	await wait_seconds(cfg.tension_fade_time + 0.3)
+	assert_almost_eq(Audio.tension_level(), 1.0, 0.01, "tension en fondu")
+	Audio.set_tension(false)
+	await wait_seconds(cfg.tension_fade_time + 0.3)
+	assert_almost_eq(Audio.tension_level(), 0.0, 0.01, "retour au calme")
+
+
 # ---------------------------------------------------------------- Clôture de partie
 
 func test_finalize_gives_coins_xp_and_events_once() -> void:

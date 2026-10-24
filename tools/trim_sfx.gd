@@ -6,6 +6,7 @@ extends SceneTree
 ## Usage : Godot --path . -s tools/trim_sfx.gd
 
 const NAMES := ["ui_click", "play", "merge", "powerup", "coins", "drop"]
+## Usage avec arguments : -- nom1 nom2 … (sinon NAMES).
 const DIR := "res://assets/sfx/"
 ## Seuil d'audibilité (amplitude, 0..1) et marge gardée avant l'attaque (s).
 const THRESHOLD := 0.02
@@ -30,7 +31,8 @@ func _run() -> void:
 	var player := AudioStreamPlayer.new()
 	player.bus = "TrimRecord"
 	root.add_child(player)
-	for n in NAMES:
+	var names: Array = OS.get_cmdline_user_args() if not OS.get_cmdline_user_args().is_empty() else NAMES
+	for n in names:
 		var src: AudioStream = load(DIR + n + ".mp3")
 		if src == null:
 			continue
