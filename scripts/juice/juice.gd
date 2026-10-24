@@ -134,7 +134,8 @@ func bind(p_game: Game) -> void:
 	Audio.set_danger_filter(0.0)
 	var s := config.sounds
 	if s and not s.music_tracks.is_empty():
-		Audio.play_music_playlist(s.music_tracks, s.music_tension, config.tension_fade_time)
+		Audio.play_music_playlist(s.music_tracks, s.music_tension, config.tension_fade_time,
+			config.music_crossfade_time)
 	else:
 		Audio.play_music(s.music if s else null)
 	Audio.set_tension(false)

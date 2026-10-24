@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="SoundBank" load_steps=36 format=3]
+[gd_resource type="Resource" script_class="SoundBank" load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/sound_bank.gd" id="1"]
 [ext_resource type="AudioStream" path="res://assets/sfx/drop.wav" id="drop"]
@@ -19,7 +19,6 @@
 [ext_resource type="AudioStream" path="res://assets/sfx/merge_08.wav" id="m08"]
 [ext_resource type="AudioStream" path="res://assets/sfx/merge_09.wav" id="m09"]
 [ext_resource type="AudioStream" path="res://assets/sfx/merge_10.wav" id="m10"]
-[ext_resource type="AudioStream" path="res://assets/music/market_loop.wav" id="music"]
 [ext_resource type="AudioStream" path="res://assets/sfx/merge.wav" id="merge"]
 [ext_resource type="AudioStream" path="res://assets/sfx/ui_click.wav" id="ui_click"]
 [ext_resource type="AudioStream" path="res://assets/sfx/play.wav" id="play"]
@@ -46,7 +45,6 @@ discover = ExtResource("discover")
 baobab = ExtResource("baobab")
 danger_heartbeat = ExtResource("heartbeat")
 game_over = ExtResource("game_over")
-music = ExtResource("music")
 merge = ExtResource("merge")
 ui_click = ExtResource("ui_click")
 play = ExtResource("play")

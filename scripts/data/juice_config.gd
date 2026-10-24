@@ -280,6 +280,8 @@ enum Quality { LOW, MEDIUM, HIGH }
 @export var tension_off_fill: float = 0.6
 ## Durée du fondu enchaîné calme ↔ tension (s).
 @export var tension_fade_time: float = 1.5
+## Fondu croisé entre deux morceaux de fond (s) : pas de silence ni de coupure.
+@export var music_crossfade_time: float = 4.0
 
 @export_group("Debug")
 @export var show_fps_in_debug: bool = true
