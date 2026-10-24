@@ -121,7 +121,16 @@ func _cell(i: int, r: DailyRewardDef, state: String) -> PanelContainer:
 		v.add_child(row)
 	if r.powerup != &"":
 		var def := Wallet.powerups.get_def(r.powerup)
-		if def:
+		if def and def.icon:
+			var t := TextureRect.new()
+			t.texture = def.icon
+			t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			t.custom_minimum_size = Vector2(84, 84)
+			t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			v.add_child(t)
+			v.add_child(_center(MetaUi.label(def.display_name, 30)))
+		elif def:
 			v.add_child(_center(MetaUi.label(def.glyph, 54, def.color.darkened(0.2), true)))
 			v.add_child(_center(MetaUi.label(def.display_name, 30)))
 	if state == "done":

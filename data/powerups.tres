@@ -1,7 +1,11 @@
-[gd_resource type="Resource" script_class="PowerupsConfig" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="PowerupsConfig" load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/powerups_config.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/data/powerup_def.gd" id="2"]
+[ext_resource type="Texture2D" path="res://assets/ui/hud/pu_shake.png" id="i_shake"]
+[ext_resource type="Texture2D" path="res://assets/ui/hud/pu_pestle.png" id="i_pestle"]
+[ext_resource type="Texture2D" path="res://assets/ui/hud/pu_swap.png" id="i_swap"]
+[ext_resource type="Texture2D" path="res://assets/ui/hud/pu_grow.png" id="i_grow"]
 
 [sub_resource type="Resource" id="p_shake"]
 script = ExtResource("2")
@@ -12,6 +16,7 @@ price = 200
 glyph = "≋"
 color = Color(0.36, 0.68, 0.92, 1)
 unlock_gift = 1
+icon = ExtResource("i_shake")
 rewarded_placement = &"shake_free"
 
 [sub_resource type="Resource" id="p_pestle"]
@@ -23,6 +28,7 @@ price = 250
 glyph = "▼"
 color = Color(0.85, 0.35, 0.25, 1)
 unlock_gift = 1
+icon = ExtResource("i_pestle")
 rewarded_placement = &""
 
 [sub_resource type="Resource" id="p_swap"]
@@ -34,6 +40,7 @@ price = 200
 glyph = "⇄"
 color = Color(0.55, 0.8, 0.3, 1)
 unlock_gift = 1
+icon = ExtResource("i_swap")
 rewarded_placement = &""
 
 [sub_resource type="Resource" id="p_grow"]
@@ -45,6 +52,7 @@ price = 300
 glyph = "▲"
 color = Color(0.98, 0.72, 0.15, 1)
 unlock_gift = 1
+icon = ExtResource("i_grow")
 rewarded_placement = &""
 
 [resource]
