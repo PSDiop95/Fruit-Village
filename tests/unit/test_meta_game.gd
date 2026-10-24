@@ -320,6 +320,36 @@ func test_music_playlist_and_tension_crossfade() -> void:
 	assert_almost_eq(Audio.tension_level(), 0.0, 0.01, "retour au calme")
 
 
+## Morceau silencieux de `seconds` s (test du fondu croisé).
+func _silent_track(seconds: float) -> AudioStreamWAV:
+	var w := AudioStreamWAV.new()
+	w.format = AudioStreamWAV.FORMAT_16_BITS
+	w.mix_rate = 8000
+	var data := PackedByteArray()
+	data.resize(int(seconds * 8000) * 2)
+	w.data = data
+	return w
+
+
+func test_music_crossfades_without_gap() -> void:
+	var a := _silent_track(1.5)
+	var b := _silent_track(1.5)
+	Audio.stop_music()
+	Audio.play_music_playlist([a, b] as Array[AudioStream], null, 1.0, 0.5)
+	var saw_overlap := false
+	var gap := false
+	for i in 150:
+		await wait_process_frames(1)
+		var playing := 0
+		for p in [Audio._music, Audio._next_music]:
+			playing += int(p.playing)
+		saw_overlap = saw_overlap or playing == 2
+		gap = gap or playing == 0
+	assert_true(saw_overlap, "le morceau suivant démarre avant la fin du précédent")
+	assert_false(gap, "jamais de silence entre deux morceaux")
+	Audio.stop_music()
+
+
 # ---------------------------------------------------------------- Clôture de partie
 
 func test_finalize_gives_coins_xp_and_events_once() -> void:
