@@ -208,3 +208,12 @@ des charges : à 100, on tombait à 1 power-up toutes les 1,2–1,9 parties.
 `data/ads.tres : privacy_policy_url`. Accessible depuis Réglages > Vie privée
 (« Confidentialité ») et le formulaire de consentement simulé. À renseigner
 aussi dans la fiche Play Store et dans le message RGPD d'AdMob.
+
+## Identifiants AdMob (24/10/2026)
+
+- App ID `ca-app-pub-8091937083176290~6673200969` : `project.godot`
+  (`admob/general/android/app_id`), présent dans le manifeste.
+- Blocs rewarded et interstitiel : `ads_ids.cfg` (non versionné), lus en
+  release uniquement. Debug : blocs de test Google (vérifié sur le A23).
+- En release, un bloc manquant désactive ce format (jamais de pub de test en
+  production).

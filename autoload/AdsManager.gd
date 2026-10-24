@@ -37,6 +37,7 @@ var _was_paused: bool = false
 var _was_muted: bool = false
 var _retry: Dictionary = {}  # kind -> nombre d'échecs consécutifs
 var _show_started: float = 0.0
+var _ids: Dictionary = {}
 
 
 func _ready() -> void:
@@ -73,7 +74,8 @@ func use_provider(p: AdProvider) -> void:
 	provider.earned.connect(_on_earned)
 	provider.closed.connect(_on_closed)
 	provider.show_failed.connect(_on_show_failed)
-	provider.start(config, ad_ids())
+	_ids = ad_ids()
+	provider.start(config, _ids)
 
 
 func use_clock(c: MetaClock) -> void:
@@ -91,12 +93,19 @@ func ad_ids() -> Dictionary:
 	if cf.load(IDS_FILE) != OK:
 		push_warning("ads_ids.cfg illisible : identifiants de test")
 		return ids
+	# Release avec vrais identifiants : un bloc absent désactive ce format
+	# (jamais de pub de test en production).
 	for k in ["app_id", "rewarded_id", "interstitial_id"]:
 		var v := str(cf.get_value("android", k, ""))
-		if v.begins_with("ca-app-pub-") and not v.begins_with("ca-app-pub-3940256099942544"):
-			ids[k] = v
+		ids[k] = v if v.begins_with("ca-app-pub-") \
+			and not v.begins_with("ca-app-pub-3940256099942544") else ""
 	ids["test"] = false
 	return ids
+
+
+## Le format a-t-il un identifiant de bloc ? (sinon jamais chargé ni proposé)
+func has_unit(kind: StringName) -> bool:
+	return not str(_ids.get("%s_id" % kind, "")).is_empty()
 
 
 func is_showing() -> bool:
@@ -129,7 +138,7 @@ func show_privacy_options() -> void:
 # ---------------------------------------------------------------- Chargement
 
 func _load(kind: StringName) -> void:
-	if can_request and not provider.is_loaded(kind):
+	if can_request and has_unit(kind) and not provider.is_loaded(kind):
 		provider.load_ad(kind)
 
 
