@@ -356,3 +356,16 @@ configurations.configureEach {
 
 // Added for Firebase (godotx_firebase): reads google-services.json.
 apply plugin: 'com.google.gms.google-services'
+
+// Added for Fruit Village: launch window shows the splash image, not black
+// (Godot's generated GodotAppMainTheme forces android:windowBackground=#000000).
+tasks.named("preBuild") {
+    doFirst {
+        def themes = file("res/values/themes.xml")
+        if (themes.exists()) {
+            themes.text = themes.text.replace(
+                '<item name="android:windowBackground">#000000</item>',
+                '<item name="android:windowBackground">@drawable/fv_launch</item>')
+        }
+    }
+}

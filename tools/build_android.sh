@@ -39,6 +39,35 @@ apply plugin: 'com.google.gms.google-services'
 "; } > "$f.new" && mv "$f.new" "$f"
 }
 
+# Fond de fenêtre au lancement : Godot impose #000000 (attribut réservé) ;
+# une tâche Gradle le remplace par l'image du splash avant la compilation.
+# Écran système gardé jusqu'au démarrage du jeu (sinon : surface noire).
+_patch_activity() {
+	sed -i 's|if (godot != null \&\& godot.getDisableGodotSplash()) {|if (godot != null) { // Fruit Village : pas de noir avant le chargement|' \
+		android/build/src/main/java/com/godot/game/GodotApp.java
+}
+
+patch_launch_gradle() {
+	local f=android/build/build.gradle
+	grep -q "fv_launch" "$f" && { _patch_activity; return 0; }
+	_patch_activity
+	cat >> "$f" <<'GRADLE'
+
+// Added for Fruit Village: launch window shows the splash image, not black
+// (Godot's generated GodotAppMainTheme forces android:windowBackground=#000000).
+tasks.named("preBuild") {
+    doFirst {
+        def themes = file("res/values/themes.xml")
+        if (themes.exists()) {
+            themes.text = themes.text.replace(
+                '<item name="android:windowBackground">#000000</item>',
+                '<item name="android:windowBackground">@drawable/fv_launch</item>')
+        }
+    }
+}
+GRADLE
+}
+
 if [ "$ONLY" = all ] || [ "$ONLY" = mock ]; then
 	"$GODOT" --headless --path . --export-debug "Android MockAds" build/fruit_village_m4_mockads.apk 2>&1 | grep -E "Signed|ERROR: Cannot"
 fi
@@ -47,6 +76,12 @@ if [ "$ONLY" = all ] || [ "$ONLY" = admob ]; then
 	rm -rf android/build/build
 	[ -f android/build/build.gradle ] || "$GODOT" --headless --path . --install-android-build-template --quit
 	patch_firebase_gradle
+	patch_launch_gradle
+	# Lancement sans écran noir : ressources Android (tools/android_res) et
+	# image du splash en drawable-nodpi (thème : export_presets.cfg).
+	cp -r tools/android_res/. android/build/res/
+	mkdir -p android/build/res/drawable-nodpi
+	cp assets/ui/splash.png android/build/res/drawable-nodpi/fv_splash.png
 	"$GODOT" --headless --path . --export-debug "Android AdMob test" \
 		build/fruit_village_m4_admob_test.apk > "$LOG" 2>&1
 	grep -E "BUILD SUCCESSFUL|BUILD FAILED|What went wrong" "$LOG" | head -3

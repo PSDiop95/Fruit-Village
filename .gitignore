@@ -12,6 +12,12 @@ export_presets.cfg
 # Build Gradle Android (régénéré par --install-android-build-template)
 android/build/*
 !android/build/build.gradle
+!android/build/src/
+android/build/src/*
+!android/build/src/main/
+android/build/src/main/*
+!android/build/src/main/java/
+
 # Binaires iOS AdMob (retéléchargés automatiquement par le plugin)
 addons/admob/ios/bin/
 

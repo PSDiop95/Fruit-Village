@@ -14,7 +14,27 @@ var curtain := UiJuice.Curtain.new()
 func _ready() -> void:
 	add_child(curtain)
 	Wallet.coins_changed.connect(_on_coins_changed)
-	show_title()
+	if _needs_loading_screen():
+		var loading := LoadingScreen.new()
+		add_child(loading)
+		loading.finished.connect(func() -> void:
+			loading.queue_free()
+			show_title(), CONNECT_ONE_SHOT)
+	else:
+		show_title()
+
+
+## Écran de chargement au premier démarrage du jeu (pas en headless — tests —
+## ni sous un script SceneTree d'outil — captures —, ni au retour au menu).
+static var _loaded_once: bool = false
+
+
+func _needs_loading_screen() -> bool:
+	if _loaded_once or DisplayServer.get_name() == "headless" \
+			or Engine.get_main_loop().get_script() != null:
+		return false
+	_loaded_once = true
+	return true
 
 
 ## Pièces gagnées (fin de partie, Doubler, missions, cadeau, niveau) : son.
