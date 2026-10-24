@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AdsConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/ads_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+privacy_policy_url = "https://fruit-village.netlify.app/"
+rewarded_placements = Array[StringName]([&"continue", &"shake_free", &"double_coins", &"double_mission", &"streak_shield"])
+continue_remove_count = 3
+continue_max_per_game = 1
+continue_offer_seconds = 6.0
+interstitial_enabled = true
+interstitial_min_games_between = 3
+interstitial_min_seconds_between = 180.0
+interstitial_min_lifetime_games = 5
+interstitial_after_rewarded_seconds = 90.0
+interstitial_session_grace_seconds = 120.0
+retry_delays = PackedFloat32Array(5, 15, 30, 60)
+test_app_id = "ca-app-pub-3940256099942544~3347511713"
+test_rewarded_id = "ca-app-pub-3940256099942544/5224354917"
+test_interstitial_id = "ca-app-pub-3940256099942544/1033173712"
+mock_fill_rate = 1.0
+mock_load_seconds = 0.5
+mock_ad_seconds = 3.0

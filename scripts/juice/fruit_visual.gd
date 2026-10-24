@@ -134,6 +134,12 @@ func _apply_halo(p_rank: int) -> void:
 		_halo.position = Vector3(0, 0, -minf(0.95 / maxf(radius, 0.01), 1.0))
 
 
+## M4 : silhouette de l'album (le halo additif n'a pas de sens teinté en noir).
+func hide_halo() -> void:
+	if _halo:
+		_halo.visible = false
+
+
 ## Matériau courant (après changement de qualité).
 func refresh_material() -> void:
 	if _mesh.material_override:

@@ -1,0 +1,94 @@
+[gd_resource type="Resource" script_class="MissionsConfig" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/missions_config.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/data/mission_def.gd" id="2"]
+
+[sub_resource type="Resource" id="m_games"]
+script = ExtResource("2")
+id = &"games"
+kind = 2
+text = "Joue %d parties"
+weight = 1.0
+min_level = 1
+targets = PackedInt32Array(3, 4, 5)
+rewards = PackedInt32Array(20, 25, 30)
+
+[sub_resource type="Resource" id="m_combos"]
+script = ExtResource("2")
+id = &"combos"
+kind = 0
+text = "Fais %d combos"
+weight = 1.0
+min_level = 1
+targets = PackedInt32Array(6, 9, 12)
+rewards = PackedInt32Array(25, 35, 45)
+
+[sub_resource type="Resource" id="m_merges"]
+script = ExtResource("2")
+id = &"merges"
+kind = 5
+text = "Fais %d fusions"
+weight = 0.8
+min_level = 1
+targets = PackedInt32Array(150, 250, 400)
+rewards = PackedInt32Array(20, 25, 35)
+
+[sub_resource type="Resource" id="m_score"]
+script = ExtResource("2")
+id = &"score"
+kind = 3
+text = "Marque %d points en une partie"
+weight = 1.0
+min_level = 1
+targets = PackedInt32Array(2500, 4000, 6000)
+rewards = PackedInt32Array(25, 35, 45)
+
+[sub_resource type="Resource" id="m_guava"]
+script = ExtResource("2")
+id = &"guava"
+kind = 1
+text = "Atteins %d %s"
+rank = 5
+weight = 0.8
+min_level = 1
+targets = PackedInt32Array(4, 6, 8)
+rewards = PackedInt32Array(25, 30, 40)
+
+[sub_resource type="Resource" id="m_mango"]
+script = ExtResource("2")
+id = &"mango"
+kind = 1
+text = "Atteins %d %s"
+rank = 6
+weight = 0.8
+min_level = 3
+targets = PackedInt32Array(2, 3, 5)
+rewards = PackedInt32Array(30, 40, 50)
+
+[sub_resource type="Resource" id="m_papaya"]
+script = ExtResource("2")
+id = &"papaya"
+kind = 1
+text = "Atteins %d %s"
+rank = 7
+weight = 0.5
+min_level = 5
+targets = PackedInt32Array(1, 2, 3)
+rewards = PackedInt32Array(45, 55, 70)
+
+[sub_resource type="Resource" id="m_powerups"]
+script = ExtResource("2")
+id = &"powerups"
+kind = 4
+text = "Utilise %d power-up(s)"
+weight = 0.7
+min_level = 3
+targets = PackedInt32Array(1, 2, 3)
+rewards = PackedInt32Array(20, 25, 30)
+
+[resource]
+script = ExtResource("1")
+active_count = 3
+tier_levels = PackedInt32Array(1, 5, 9)
+double_multiplier = 2
+missions = Array[ExtResource("2")]([SubResource("m_games"), SubResource("m_combos"), SubResource("m_merges"), SubResource("m_score"), SubResource("m_guava"), SubResource("m_mango"), SubResource("m_papaya"), SubResource("m_powerups")])

@@ -1,0 +1,91 @@
+[gd_resource type="Resource" script_class="FruitsLore" load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fruits_lore.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/data/fruit_lore.gd" id="2"]
+
+[sub_resource type="Resource" id="l0"]
+script = ExtResource("2")
+id = &"sidem"
+name_fr = "Sidem"
+name_en = "Jujube"
+name_wo = "Sidem"
+lore = "Le sidem est le fruit du jujubier, un arbuste épineux qui pousse jusque dans le Sahel. On le croque frais ou séché, et on en fait aussi une pâte sucrée."
+
+[sub_resource type="Resource" id="l1"]
+script = ExtResource("2")
+id = &"bissap"
+name_fr = "Bissap"
+name_en = "Hibiscus"
+lore = "Ce ne sont pas des fruits mais les calices rouges d'une fleur d'hibiscus. Infusés et sucrés, ils donnent le bissap, servi à toutes les fêtes."
+
+[sub_resource type="Resource" id="l2"]
+script = ExtResource("2")
+id = &"tamarin"
+name_fr = "Tamarin"
+name_en = "Tamarind"
+name_wo = "Dakhar"
+lore = "Sa pulpe brune et acidulée parfume jus, bonbons et sauces. Le quartier de Dakar-Plateau aurait tiré son nom des tamariniers, « dakhar » en wolof."
+
+[sub_resource type="Resource" id="l3"]
+script = ExtResource("2")
+id = &"ditakh"
+name_fr = "Ditakh"
+name_en = "Detar"
+name_wo = "Ditax"
+lore = "Sous sa coque verte se cache une pulpe farineuse très riche en vitamine C. Son jus vert est un classique des marchés de Dakar."
+
+[sub_resource type="Resource" id="l4"]
+script = ExtResource("2")
+id = &"madd"
+name_fr = "Madd"
+name_en = "Saba fruit"
+name_wo = "Madd"
+lore = "Le madd pousse sur une liane de la forêt de Casamance. On le mange avec du sucre, du sel et une pointe de piment."
+
+[sub_resource type="Resource" id="l5"]
+script = ExtResource("2")
+id = &"goyave"
+name_fr = "Goyave"
+name_en = "Guava"
+lore = "La goyave contient plus de vitamine C qu'une orange. Sa chair rose se mange crue ou en confiture."
+
+[sub_resource type="Resource" id="l6"]
+script = ExtResource("2")
+id = &"mangue"
+name_fr = "Mangue"
+name_en = "Mango"
+lore = "La saison des mangues, de mai à juillet, remplit les étals de Kermel à Ziguinchor. Kent, Keitt, Bouko : chaque variété a ses fans."
+
+[sub_resource type="Resource" id="l7"]
+script = ExtResource("2")
+id = &"papaye"
+name_fr = "Papaye"
+name_en = "Papaya"
+lore = "La papaye pousse vite, souvent dans un coin de la cour. Ses graines noires ont un petit goût poivré."
+
+[sub_resource type="Resource" id="l8"]
+script = ExtResource("2")
+id = &"ananas"
+name_fr = "Ananas"
+name_en = "Pineapple"
+lore = "Un pied d'ananas met plus d'un an à donner un seul fruit. Ceux de Guinée et de Côte d'Ivoire sont réputés pour leur douceur."
+
+[sub_resource type="Resource" id="l9"]
+script = ExtResource("2")
+id = &"coco"
+name_fr = "Noix de coco"
+name_en = "Coconut"
+lore = "Sur la plage, on boit l'eau de coco directement dans la noix ouverte à la machette. La chair râpée parfume desserts et sauces."
+
+[sub_resource type="Resource" id="l10"]
+script = ExtResource("2")
+id = &"pain_de_singe"
+name_fr = "Pain de singe"
+name_en = "Baobab fruit"
+name_wo = "Bouye"
+lore = "C'est le fruit du baobab, l'arbre à palabres où l'on se réunit pour discuter. Sa pulpe blanche donne le bouye, une boisson douce et onctueuse."
+
+[resource]
+script = ExtResource("1")
+entries = Array[ExtResource("2")]([SubResource("l0"), SubResource("l1"), SubResource("l2"), SubResource("l3"), SubResource("l4"), SubResource("l5"), SubResource("l6"), SubResource("l7"), SubResource("l8"), SubResource("l9"), SubResource("l10")])
+store_url = "https://play.google.com/store/apps/details?id=com.fruitvillage.game"

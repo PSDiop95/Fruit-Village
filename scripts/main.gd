@@ -35,10 +35,17 @@ func start_game() -> void:
 		_backdrop = null
 	_free_game()
 	game = (load(GAME_SCENE) as PackedScene).instantiate()
-	game.restart_requested.connect(start_game, CONNECT_DEFERRED)
+	game.restart_requested.connect(_replay, CONNECT_DEFERRED)
 	game.menu_requested.connect(show_title, CONNECT_DEFERRED)
 	add_child(game)
 	curtain.reveal()
+
+
+## Rejouer : seul moment où un interstitiel peut passer (entre deux parties),
+## si InterstitialPolicy l'autorise. La partie suivante démarre à sa fermeture.
+func _replay() -> void:
+	if not AdsManager.try_interstitial(start_game):
+		start_game()
 
 
 func _free_game() -> void:
@@ -55,7 +62,12 @@ func _make_backdrop() -> Node3D:
 	var cfg: GameConfig = load("res://data/game_config.tres")
 	var market := MarketScene.new()
 	root.add_child(market)
-	market.setup(load("res://data/visual.tres"), cfg)
+	var vc: VisualConfig = load("res://data/visual.tres")
+	# Même qualité qu'en partie (détection auto ou réglage joueur).
+	var q := VisualQuality.resolve(int(SaveManager.get_setting(&"quality")))
+	FruitModels.set_quality(q)
+	VisualQuality.apply_viewport(get_viewport(), q, vc)
+	market.setup(vc, cfg)
 	market.follow_ambiance_setting()
 	# La mascotte attend sur le cadre et salue à l'arrivée.
 	var mascot := Mascot.create(load("res://data/visual.tres"), load("res://data/juice.tres"))

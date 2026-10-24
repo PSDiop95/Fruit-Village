@@ -15,6 +15,8 @@ var ambiance: AmbianceDef
 var lights: FestiveLights
 var _squash: float = 0.0
 var _frame_base_y: float = 0.0
+## Teinte du cadre donnée par l'ambiance (le panier doré s'y multiplie).
+var _frame_tint: Color = Color.WHITE
 var stall: MeshInstance3D
 var layers: Array[MeshInstance3D] = []
 var passants: Array[Node3D] = []
@@ -65,7 +67,8 @@ func apply_ambiance(amb: AmbianceDef) -> void:
 		_decor_mat.set_shader_parameter("grade_add", Vector3(amb.decor_add.r, amb.decor_add.g, amb.decor_add.b))
 		_decor_mat.set_shader_parameter("haze_color", amb.haze_color)
 	if frame:
-		(frame.mesh.material as StandardMaterial3D).albedo_color = amb.frame_tint
+		_frame_tint = amb.frame_tint
+		apply_basket_skin()
 	if lights == null:
 		lights = FestiveLights.new()
 		add_child(lights)
@@ -94,12 +97,24 @@ func frame_top_drop() -> float:
 ## (connexion à une méthode : libérée avec la scène).
 func follow_ambiance_setting() -> void:
 	apply_ambiance(Ambiances.load_default().current())
+	apply_basket_skin()
 	SaveManager.setting_changed.connect(_on_setting_changed)
 
 
 func _on_setting_changed(key: StringName, _value: Variant) -> void:
 	if key == &"ambiance":
 		apply_ambiance(Ambiances.load_default().current())
+	elif key == &"basket_skin":
+		apply_basket_skin()
+
+
+## M4 : habillage du panier (« gold » = album complet).
+func apply_basket_skin() -> void:
+	if frame == null:
+		return
+	var gold := str(SaveManager.get_setting(&"basket_skin")) == "gold"
+	(frame.mesh.material as StandardMaterial3D).albedo_color = \
+		_frame_tint * config.basket_gold_tint if gold else _frame_tint
 
 
 ## Le panier a un habillage (cadre peint ou modèle) : pas de boîtes placeholder.
@@ -303,6 +318,8 @@ func _decor_instance(mesh: Mesh, fade: float, desat: float) -> MeshInstance3D:
 func apply_quality(level: int) -> void:
 	if sun:
 		sun.shadow_enabled = level >= config.shadows_min_quality
+	if environment:
+		environment.glow_enabled = config.glow_enabled and level >= config.glow_min_quality
 	for mi in [basket, stall]:
 		if mi:
 			mi.material_override = FruitModels.prop_material()

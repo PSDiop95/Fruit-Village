@@ -43,6 +43,12 @@ func take() -> int:
 	return r
 
 
+## Remplace le fruit courant (power-ups Échange / Agrandir). N'avance pas le
+## tirage : la suite de la séquence reste celle de la graine.
+func replace_current(rank: int) -> void:
+	_queue[0] = rank
+
+
 func _roll() -> int:
 	if _weights.is_empty():
 		return _ranks[_rng.randi_range(0, _ranks.size() - 1)]

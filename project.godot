@@ -25,6 +25,14 @@ config/icon="res://assets/ui/icon.png"
 
 SaveManager="*res://autoload/SaveManager.gd"
 Audio="*res://autoload/Audio.gd"
+Analytics="*res://autoload/Analytics.gd"
+Wallet="*res://autoload/Wallet.gd"
+Progression="*res://autoload/Progression.gd"
+Collection="*res://autoload/Collection.gd"
+Missions="*res://autoload/Missions.gd"
+DailyRewards="*res://autoload/DailyRewards.gd"
+AdsManager="*res://autoload/AdsManager.gd"
+Notifications="*res://autoload/Notifications.gd"
 
 [display]
 
@@ -38,7 +46,7 @@ window/handheld/orientation=1
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+enabled=PackedStringArray("res://addons/admob/plugin.cfg", "res://addons/godotx_firebase/plugin.cfg", "res://addons/gut/plugin.cfg")
 
 [physics]
 

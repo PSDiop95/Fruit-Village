@@ -6,6 +6,11 @@ extends SubViewportContainer
 var catalog: FruitCatalog = preload("res://data/fruits.tres")
 var juice: JuiceConfig = preload("res://data/juice.tres")
 
+## Album : le modèle tourne sur lui-même (sinon léger balancement).
+var spin: bool = false
+## Album : fruit verrouillé, silhouette sombre (sans halo).
+var silhouette: bool = false
+
 var _vp: SubViewport
 var _visual: FruitVisual
 var _cam: Camera3D
@@ -58,6 +63,9 @@ func set_fruit(rank: int) -> void:
 		return
 	var def := catalog.get_def(rank)
 	_visual.apply_def(rank, def)
+	if silhouette:
+		_visual.hide_halo()
+		modulate = Color(0.12, 0.08, 0.05, 0.8)
 	# Cadrage : le fruit remplit la bulle quelle que soit sa taille.
 	_cam.size = def.radius * 2.0 * 1.22
 
@@ -74,5 +82,7 @@ func current_rank() -> int:
 
 func _process(delta: float) -> void:
 	_time += delta
-	if _visual:
+	if _visual and spin:
+		_visual.rotation.y = _time * 1.2
+	elif _visual:
 		_visual.rotation.z = sin(_time * 1.6) * 0.12

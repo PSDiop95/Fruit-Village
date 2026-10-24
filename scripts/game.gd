@@ -19,6 +19,12 @@ signal danger_changed(ratio: float, state: DangerMonitor.State)
 ## Rejouer / retour au titre : gérés par Main s'il écoute, sinon rechargement.
 signal restart_requested
 signal menu_requested
+## M4 : fruit retiré sans fusion (pilon, « Continuer »). `reason` : &"pestle", &"continue".
+signal fruit_removed(fruit: Fruit, reason: StringName)
+## M4 : la partie reprend après « Continuer ».
+signal revived
+## M4 : power-up « Secouer » appliqué.
+signal basket_shaken
 
 const FRUIT_SCRIPT := preload("res://scripts/fruit.gd")
 
@@ -34,11 +40,19 @@ const FRUIT_SCRIPT := preload("res://scripts/fruit.gd")
 var score: int = 0
 var max_rank_reached: int = 0
 var is_over: bool = false
+## M4 : « Continuer » déjà utilisés dans cette partie.
+var continues_used: int = 0
 
 var spawner := Spawner.new()
 var merge_system := MergeSystem.new()
 var combo := ComboTracker.new()
 var danger := DangerMonitor.new()
+## M4 : méta (pièces, XP, missions, album, analytics) et power-ups.
+var meta: GameMeta
+var powerups: PowerupController
+## Aléatoire des power-ups (secousse, échange), dérivé de la graine de partie.
+var _power_rng := RandomNumberGenerator.new()
+var _game_counted: bool = false
 
 var _fruits_root: Node3D
 ## Fruits vivants (registre : évite de rescanner les enfants à chaque frame).
@@ -65,6 +79,7 @@ func _ready() -> void:
 	var s := seed_value if seed_value != 0 else int(Time.get_unix_time_from_system() * 1000.0)
 	spawner.setup(catalog.droppable_ranks(), s, config.preview_count,
 		catalog.droppable_weights())
+	_power_rng.seed = hash([s, "powerups"])
 	combo.configure(config.combo_window, config.combo_max_multiplier)
 	danger.configure(config.danger_warn_time, config.danger_game_over_time)
 	FruitModels.warm_up(catalog)
@@ -77,6 +92,15 @@ func _ready() -> void:
 	_batcher = FruitBatcher.new()
 	add_child(_batcher)
 	_build_preview()
+
+	meta = GameMeta.new()
+	meta.name = "Meta"
+	add_child(meta)
+	powerups = PowerupController.new()
+	powerups.name = "Powerups"
+	add_child(powerups)
+	powerups.bind(self)
+	meta.bind(self)
 
 	_hud = GameHud.new()
 	add_child(_hud)
@@ -440,12 +464,108 @@ func _end_game() -> void:
 	is_over = true
 	_preview.visible = false
 	_guide.visible = false
+	if powerups:
+		powerups.cancel_aim()
 	# Avec Juice, les fruits se figent un par un (séquence de fin) ; sinon tout de suite.
 	if _juice == null:
 		for f in _fruits:
 			f.freeze = true
-	var is_record := SaveManager.record_game(score, max_rank_reached)
+	# Après « Continuer », la même partie n'est pas comptée deux fois.
+	var is_record := SaveManager.record_game(score, max_rank_reached, not _game_counted)
+	_game_counted = true
 	game_over.emit(score, max_rank_reached, is_record)
+
+
+# ---------------------------------------------------------------- M4 : retraits, Continuer, power-ups
+
+## Retrait propre d'un fruit hors fusion (pilon, Continuer) : le fruit est
+## marqué `merging` (plus aucune fusion possible), sort de la physique et
+## disparaît par le même chemin qu'une fusion. Juice joue l'éclaboussure.
+func remove_fruit(f: Fruit, reason: StringName) -> bool:
+	if f == null or not is_instance_valid(f) or f.merging:
+		return false
+	var suck := juice_config.merge_suck_time if juice_enabled else 0.0
+	fruit_removed.emit(f, reason)
+	f.vanish_toward(f.global_position, suck)
+	return true
+
+
+## Les `count` fruits dont le haut est le plus élevé.
+func top_fruits(count: int) -> Array[Fruit]:
+	var list := fruits()
+	list.sort_custom(func(a: Fruit, b: Fruit) -> bool: return a.top_y() > b.top_y())
+	return list.slice(0, count)
+
+
+## « Continuer » (rewarded) : retire les fruits les plus hauts et relance la
+## partie. Une seule fois par partie (ads.tres).
+func continue_game(remove_count: int, max_per_game: int) -> bool:
+	if not is_over or continues_used >= max_per_game:
+		return false
+	continues_used += 1
+	for f in top_fruits(remove_count):
+		remove_fruit(f, &"continue")
+	revive()
+	return true
+
+
+func revive() -> void:
+	is_over = false
+	danger.reset()
+	_last_danger_ratio = -1.0
+	for f in _fruits:
+		if not f.merging:
+			f.freeze = false
+			f.age = 0.0
+			f.visual().set_gray(0.0)
+	_cooldown = 0.0
+	_refresh_preview()
+	revived.emit()
+
+
+## Fruit sous un point de l'écran (pilon), ou null.
+func fruit_at_screen(screen_pos: Vector2) -> Fruit:
+	var world := _camera.project_position(screen_pos, _camera.position.z)
+	var p := Vector2(world.x, world.y)
+	var best: Fruit = null
+	var best_d := INF
+	for f in fruits():
+		var d := p.distance_to(Vector2(f.global_position.x, f.global_position.y))
+		if d <= f.radius * 1.15 and d < best_d:
+			best = f
+			best_d = d
+	return best
+
+
+## Secouer : impulsion aléatoire contrôlée (graine de partie) à chaque fruit.
+## Les fusions qui en résultent passent par le MergeSystem habituel.
+func shake_basket(horizontal: float, vertical: float) -> void:
+	for f in fruits():
+		f.freeze = false
+		f.sleeping = false
+		var v := Vector3(_power_rng.randf_range(-horizontal, horizontal),
+			vertical * _power_rng.randf_range(0.6, 1.0), 0.0)
+		f.apply_central_impulse(v * f.mass)
+	basket_shaken.emit()
+
+
+## Échange : remplace le fruit à lâcher par un autre fruit lâchable.
+func swap_current() -> void:
+	var ranks := catalog.droppable_ranks().filter(func(r: int) -> bool: return r != spawner.current())
+	if ranks.is_empty():
+		return
+	spawner.replace_current(ranks[_power_rng.randi_range(0, ranks.size() - 1)])
+	_refresh_preview()
+
+
+## Agrandir : le fruit à lâcher monte d'un rang, plafonné à `max_rank`.
+func grow_current(max_rank: int) -> bool:
+	var r := spawner.current()
+	if r >= max_rank:
+		return false
+	spawner.replace_current(mini(r + 1, max_rank))
+	_refresh_preview()
+	return true
 
 
 # ---------------------------------------------------------------- Accès (Juice, debug)
@@ -473,11 +593,21 @@ func juice() -> Juice:
 
 ## Centre vertical de la caméra. Cadrage de référence 9:16 ; sur un écran plus
 ## allongé, le bas reste calé (panier + étal) et la hauteur en plus va au ciel.
+## M4 : la hauteur en plus va d'abord à une bande en bas (barre de power-ups,
+## bottom_ui_band_px), puis au ciel.
 static func camera_center_y(cfg: GameConfig, aspect_hw: float) -> float:
 	var w := cfg.basket_inner_width + cfg.wall_thickness * 2.0 + cfg.camera_side_margin
 	var ref_center := cfg.basket_height * 0.5 + cfg.camera_y_offset
 	var bottom := ref_center - w * 16.0 / 9.0 * 0.5
-	return bottom + w * maxf(aspect_hw, 16.0 / 9.0) * 0.5
+	return bottom - bottom_band_world(cfg, aspect_hw) + w * maxf(aspect_hw, 16.0 / 9.0) * 0.5
+
+
+## Hauteur (m) de la bande du bas réservée à l'UI : 0 en 16:9, au plus
+## bottom_ui_band_px (canevas 1080 de large) sur les écrans plus allongés.
+static func bottom_band_world(cfg: GameConfig, aspect_hw: float) -> float:
+	var w := cfg.basket_inner_width + cfg.wall_thickness * 2.0 + cfg.camera_side_margin
+	var extra := w * maxf(aspect_hw - 16.0 / 9.0, 0.0)
+	return minf(extra, cfg.bottom_ui_band_px * w / 1080.0)
 
 
 func _viewport_aspect() -> float:
@@ -492,6 +622,8 @@ func market() -> MarketScene:
 ## Qualité visuelle (Bas/Moyen/Haut) : matériaux, contour, ombres, particules.
 func set_quality(level: int) -> void:
 	FruitModels.set_quality(level)
+	if is_inside_tree():
+		VisualQuality.apply_viewport(get_viewport(), level, visual_config)
 	if _market:
 		_market.apply_quality(level)
 	if _mascot:
@@ -505,6 +637,8 @@ func set_quality(level: int) -> void:
 
 func restart() -> void:
 	get_tree().paused = false
+	if meta:
+		meta.finalize(&"restart")
 	if restart_requested.get_connections().is_empty():
 		get_tree().reload_current_scene()
 	else:
@@ -513,6 +647,8 @@ func restart() -> void:
 
 func go_to_menu() -> void:
 	get_tree().paused = false
+	if meta:
+		meta.finalize(&"quit")
 	if menu_requested.get_connections().is_empty():
 		get_tree().reload_current_scene()
 	else:

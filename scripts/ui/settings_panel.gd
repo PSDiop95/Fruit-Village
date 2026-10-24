@@ -18,6 +18,11 @@ const SOUND_TOGGLES := [
 const DISPLAY_TOGGLES := [
 	[&"reduced_effects", "Effets réduits"],
 ]
+## M4 : rappels locaux et statistiques d'usage.
+const PRIVACY_TOGGLES := [
+	[&"notifications_on", "Rappels quotidiens"],
+	[&"analytics_on", "Statistiques d'usage"],
+]
 const QUALITY_CHOICES := [VisualQuality.AUTO, JuiceConfig.Quality.LOW, JuiceConfig.Quality.MEDIUM,
 	JuiceConfig.Quality.HIGH]
 const WIDTH := 900.0
@@ -27,6 +32,9 @@ var quality_buttons: Array[Button] = []
 var ambiance_buttons: Array[Button] = []
 var close_button: Button
 var x_button: Button
+var consent_button: Button
+var privacy_button: Button
+var privacy_toggles: Dictionary = {}  # clé -> CheckButton (M4)
 
 
 func _ready() -> void:
@@ -77,6 +85,20 @@ func _ready() -> void:
 	ambiance_buttons = _segmented(display, amb_labels, amb_values, &"ambiance",
 		func(v: int) -> void: SaveManager.set_setting(&"ambiance", v))
 
+	var privacy := _section(box, "Vie privée")
+	for t in PRIVACY_TOGGLES:
+		_toggle(privacy, t[0], t[1], privacy_toggles)
+	# Consentement + politique côte à côte (la carte doit tenir en 9:16).
+	var links := HBoxContainer.new()
+	links.add_theme_constant_override("separation", 12)
+	privacy.add_child(links)
+	if AdsManager.privacy_options_required():
+		consent_button = _link_button("Consentement", AdsManager.show_privacy_options)
+		links.add_child(consent_button)
+	privacy_button = _link_button("Confidentialité",
+		func() -> void: OS.shell_open(AdsManager.config.privacy_policy_url))
+	links.add_child(privacy_button)
+
 	close_button = Button.new()
 	close_button.text = "OK"
 	close_button.theme_type_variation = &"ButtonGreen"
@@ -85,6 +107,17 @@ func _ready() -> void:
 	close_button.pressed.connect(close)
 	box.add_child(close_button)
 	UiJuice.bounce_all(self)
+
+
+func _link_button(text: String, cb: Callable) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.theme_type_variation = &"ButtonCream"
+	b.add_theme_font_size_override("font_size", 38)
+	b.custom_minimum_size = Vector2(0, 100)
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.pressed.connect(cb)
+	return b
 
 
 ## Section : titre discret + fond un ton plus sombre.
@@ -106,14 +139,15 @@ func _caption(parent: Container, text: String) -> void:
 	parent.add_child(l)
 
 
-func _toggle(parent: Container, key: StringName, label: String) -> void:
+func _toggle(parent: Container, key: StringName, label: String, into: Variant = null) -> void:
 	var cb := CheckButton.new()
 	cb.text = label
 	cb.button_pressed = bool(SaveManager.get_setting(key))
 	cb.custom_minimum_size = Vector2(0, 92)
 	cb.toggled.connect(func(on: bool) -> void: SaveManager.set_setting(key, on))
 	parent.add_child(cb)
-	toggles[key] = cb
+	var target: Dictionary = toggles if into == null else into
+	target[key] = cb
 
 
 ## Contrôle segmenté sur fond de section : le choix actif est le bouton orange.

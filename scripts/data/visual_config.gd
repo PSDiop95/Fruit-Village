@@ -81,6 +81,8 @@ extends Resource
 @export var basket_frame_border: float = 0.75
 ## Profondeur du cadre (derrière les plus gros fruits, rayon 1,68).
 @export var basket_frame_z: float = -1.8
+## M4 : teinte du cadre « panier doré » (récompense album complet).
+@export var basket_gold_tint: Color = Color(1.0, 0.86, 0.42)
 
 @export_group("Mascotte")
 ## Singe articulé (tools/blender/mascot_singe.py) assis sur le coin du cadre.
@@ -203,3 +205,10 @@ extends Resource
 ## Contour et rim light activés à partir de ce niveau (JuiceConfig.Quality).
 @export var outline_min_quality: int = 1
 @export var rim_min_quality: int = 1
+## Résolution 3D (part de l'écran, upscale FSR) par niveau Bas / Moyen / Haut.
+## Mesures Galaxy A23 (Adreno 610) : 80 % → 38 FPS, 70 % → 45 FPS.
+@export var render_scale_by_quality: PackedFloat32Array = PackedFloat32Array([0.62, 0.7, 0.8])
+## MSAA 3D par niveau (Viewport.MSAA : 0 = aucun, 1 = 2x).
+@export var msaa_by_quality: PackedInt32Array = PackedInt32Array([0, 0, 1])
+## Glow (halo lumineux) à partir de ce niveau.
+@export var glow_min_quality: int = 2

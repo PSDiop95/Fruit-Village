@@ -45,6 +45,10 @@ var _shown_score: float = 0.0
 var _roll_speed: float = 0.0
 var _pulse_tween: Tween
 var _goal_rank: int = -1
+## M4
+var powerup_bar: PowerupBar
+var level_popup: LevelUpPopup
+var modal_root: Control
 
 
 func bind(game: Game) -> void:
@@ -58,9 +62,26 @@ func bind(game: Game) -> void:
 		merges += 1
 		best_combo = maxi(best_combo, combo))
 	game.fruit_discovered.connect(func(_r: int) -> void: _refresh_goal())
+	game.revived.connect(_on_revived)
 	_score.text = "0"
 	_best.text = "Record : %d" % SaveManager.best_score
 	_refresh_goal()
+	# Fenêtres méta en partie (offre de power-up, niveau supérieur) : calque
+	# au-dessus des textes Juice (calque 5).
+	var modal_layer := CanvasLayer.new()
+	modal_layer.layer = 10
+	modal_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(modal_layer)
+	modal_root = Control.new()
+	modal_root.theme = UiTheme.get_theme()
+	modal_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	modal_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	modal_layer.add_child(modal_root)
+	if game.powerups:
+		powerup_bar = PowerupBar.new()
+		_root.add_child(powerup_bar)
+		powerup_bar.modal_host = modal_root
+		powerup_bar.bind(game.powerups)
 
 
 func _build() -> void:
@@ -400,6 +421,9 @@ func _build_game_over() -> void:
 	_over_panel = _over.card
 	_over.replay_pressed.connect(func() -> void: _game.restart())
 	_over.menu_pressed.connect(func() -> void: menu_requested.emit())
+	_over.continue_accepted.connect(_on_continue_accepted)
+	_over.continue_declined.connect(_finalize_and_show)
+	_over.double_pressed.connect(_on_double_pressed)
 
 
 # ---------------------------------------------------------------- Pause / réglages
@@ -444,8 +468,10 @@ func open_settings() -> SettingsPanel:
 
 
 func _notification(what: int) -> void:
-	# Mise en pause automatique quand l'appli passe en arrière-plan.
-	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and _game and not _game.is_over:
+	# Mise en pause automatique quand l'appli passe en arrière-plan (sauf
+	# pendant une pub, qui gère elle-même pause et reprise, ou la visée).
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and _game and not _game.is_over \
+			and not AdsManager.is_showing() and not (_game.powerups and _game.powerups.aiming):
 		open_pause()
 
 
@@ -535,5 +561,64 @@ func _on_game_over(score: int, max_rank: int, is_record: bool) -> void:
 	_score.text = str(score)
 	_danger.visible = false
 	_pause_button.visible = false
+	if powerup_bar:
+		powerup_bar.refresh()
 	_over.show_results(score, max_rank, _game.catalog.get_def(max_rank), is_record,
 		SaveManager.best_score, merges, best_combo, play_time)
+	if _game.meta and _game.meta.can_continue():
+		AdsManager.offer(AdsConfig.CONTINUE)
+		_over.show_continue_offer(AdsManager.config.continue_offer_seconds)
+	else:
+		_finalize_and_show()
+
+
+# ---------------------------------------------------------------- M4 : Continuer, récompenses
+
+func _on_continue_accepted() -> void:
+	var cfg := AdsManager.config
+	var started := AdsManager.show_rewarded(AdsConfig.CONTINUE, func() -> void:
+		_game.continue_game(cfg.continue_remove_count, cfg.continue_max_per_game),
+		func(rewarded: bool) -> void:
+			if not rewarded:
+				_finalize_and_show())
+	if not started:
+		_finalize_and_show()
+
+
+func _on_revived() -> void:
+	if _over:
+		_over.visible = false
+	_pause_button.visible = true
+	if powerup_bar:
+		powerup_bar.refresh()
+
+
+## Clôture de la partie (pièces, XP, missions) et affichage des récompenses.
+func _finalize_and_show() -> void:
+	if _game.meta == null or _over == null:
+		return
+	var summary := _game.meta.finalize(&"overflow")
+	var can_double := AdsManager.is_rewarded_ready(AdsConfig.DOUBLE_COINS)
+	if can_double and int(summary.get("coins", 0)) > 0:
+		AdsManager.offer(AdsConfig.DOUBLE_COINS)
+	_over.show_rewards(summary, can_double)
+	var levels: Array = summary.get("levels", [])
+	if not levels.is_empty():
+		var unlocks: Array[StringName] = []
+		for lv in levels:
+			unlocks.append_array(Progression.core.unlocks_at(lv))
+		get_tree().create_timer(0.9, true, false, true).timeout.connect(func() -> void:
+			if is_inside_tree():
+				show_level_up(levels.back(), int(summary.get("level_coins", 0)), unlocks))
+
+
+func show_level_up(level: int, coins: int, unlocks: Array[StringName]) -> LevelUpPopup:
+	level_popup = LevelUpPopup.new(level, coins, unlocks)
+	modal_root.add_child(level_popup)
+	return level_popup
+
+
+func _on_double_pressed() -> void:
+	AdsManager.show_rewarded(AdsConfig.DOUBLE_COINS, func() -> void:
+		var extra := _game.meta.grant_double_coins()
+		_over.show_doubled(int(_game.meta.summary.get("coins", 0)) + extra))

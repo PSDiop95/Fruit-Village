@@ -15,6 +15,9 @@ extends Resource
 @export var camera_side_margin: float = 1.2
 ## Décalage vertical du centre caméra au-dessus du milieu du panier (m).
 @export var camera_y_offset: float = 1.8
+## M4 : bande réservée en bas de l'écran (px du canevas 1080 de large) pour
+## la barre de power-ups, prise sur la hauteur en plus des écrans > 16:9.
+@export var bottom_ui_band_px: float = 250.0
 
 @export_group("Physique")
 @export var gravity_scale: float = 1.6

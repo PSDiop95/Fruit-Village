@@ -1,0 +1,4 @@
+profil,joueurs,parties,parties_par_joueur_actif_jour,pieces_gagnees_par_partie,pieces_depensees_par_partie,powerups_utilises,parties_par_powerup,parties_par_powerup_achete,part_achetes_pct,solde_moyen_j14,niveau_moyen_j14,epargne_non_depensee_pct
+occasionnel,500,9576,2.48,43.8,35.8,4097,2.34,5.58,42,153,5.60,18
+regulier,350,21032,5.03,51.1,48.6,7774,2.71,4.12,66,151,11.64,5
+accro,150,24252,11.92,52.9,52.0,7729,3.14,3.85,82,153,20.67,2

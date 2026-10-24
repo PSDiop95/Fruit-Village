@@ -11,6 +11,7 @@ danger_line_y = 7.6
 spawn_y = 9.4
 camera_side_margin = 1.2
 camera_y_offset = 1.8
+bottom_ui_band_px = 250.0
 gravity_scale = 1.6
 bounce = 0.08
 friction = 0.45
