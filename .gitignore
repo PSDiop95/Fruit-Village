@@ -9,6 +9,23 @@ export_presets.cfg
 *.avi
 *.mp4
 
+# Build Gradle Android (régénéré par --install-android-build-template)
+android/build/*
+!android/build/build.gradle
+!android/build/src/
+android/build/src/*
+!android/build/src/main/
+android/build/src/main/*
+!android/build/src/main/java/
+
+# Binaires iOS AdMob (retéléchargés automatiquement par le plugin)
+addons/admob/ios/bin/
+
+# Identifiants AdMob de production (modèle : ads_ids.example.cfg)
+ads_ids.cfg
+# Config Firebase (fournie par l'équipe, jamais versionnée)
+google-services.json
+
 # Réglages locaux
 .claude/settings.local.json
 
@@ -23,4 +40,4 @@ assets/models/_staging/
 __pycache__/
 
 # Exports (APK/AAB)
-build/
+/build/

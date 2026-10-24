@@ -27,6 +27,19 @@ func run(p_game: Game) -> void:
 	var env := game.market().environment
 	print("PERF device=%s gpu=%s size=%s fruits=%d" % [OS.get_model_name(),
 		RenderingServer.get_video_adapter_name(), vp.get_visible_rect().size, game.fruits().size()])
+	# Niveaux de qualité (VisualQuality / JuiceConfig.Quality), puis voile flou
+	# de fin de partie par-dessus le panier plein.
+	for q in [JuiceConfig.Quality.HIGH, JuiceConfig.Quality.MEDIUM, JuiceConfig.Quality.LOW]:
+		game.set_quality(q)
+		await _measure("qualité %s" % VisualQuality.label(q))
+		var blur := BlurBackdrop.new()
+		game.hud().add_child(blur)
+		blur.capture()
+		blur.set_amount(1.0)
+		blur.visible = true
+		await _measure("qualité %s + flou" % VisualQuality.label(q))
+		blur.queue_free()
+	game.set_quality(JuiceConfig.Quality.HIGH)
 	# Mesures alternées (le téléphone chauffe : la base est remesurée entre deux variantes).
 	await _measure("base (FSR 80 %, MSAA 2x)")
 	vp.scaling_3d_scale = 1.0

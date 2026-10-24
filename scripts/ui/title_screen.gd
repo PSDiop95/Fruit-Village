@@ -19,8 +19,15 @@ var best_thumb: FruitThumb
 var best_name: Label
 var logo: TextureRect
 var menu: VBoxContainer
+## M4 : pièces / niveau, accès Missions / Cadeau du jour / Album.
+var coins_pill: PanelContainer
+var level_label: Label
+var level_bar: ProgressBar
+var feature_buttons: Dictionary = {}  # ProgressionCore.* -> Button
+var panel: MetaModal
 var _root: Control
 var _settings: SettingsPanel
+var _badges: Dictionary = {}
 
 
 func _ready() -> void:
@@ -53,6 +60,7 @@ func _ready() -> void:
 	menu.size = basket.size
 	_root.add_child(menu)
 
+	menu.add_child(_status_row())
 	menu.add_child(_best_pill())
 
 	play_button = Button.new()
@@ -70,11 +78,118 @@ func _ready() -> void:
 	settings_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	settings_button.pressed.connect(open_settings)
 	menu.add_child(settings_button)
+	menu.add_child(_feature_row())
 
 	# Jouer respire (invite à toucher) : pas de rebond d'appui sur ce bouton.
 	play_button.set_meta(UiJuice.META, true)
 	UiJuice.bounce_all(_root)
 	UiJuice.breathe(play_button)
+
+	# Méthodes (pas de lambdas) : déconnectées d'office quand l'écran est libéré.
+	Wallet.coins_changed.connect(_on_coins_changed)
+	Progression.xp_changed.connect(_on_xp_changed)
+	Missions.changed.connect(refresh_meta)
+	DailyRewards.changed.connect(refresh_meta)
+	refresh_meta()
+	# Cadeau du jour disponible : la fenêtre s'ouvre d'elle-même à l'arrivée.
+	if DailyRewards.can_claim():
+		get_tree().create_timer(0.6).timeout.connect(func() -> void:
+			if is_inside_tree() and panel == null and _settings == null:
+				open_feature(ProgressionCore.DAILY))
+
+
+# ---------------------------------------------------------------- M4 : méta
+
+## Pastille crème M3 : pièces | niveau + barre d'XP.
+func _status_row() -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 20)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	coins_pill = MetaUi.coin_pill(Wallet.coins(), 48)
+	row.add_child(coins_pill)
+	var lv := PanelContainer.new()
+	lv.theme_type_variation = &"Pill"
+	lv.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(lv)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 2)
+	lv.add_child(col)
+	level_label = MetaUi.label("", 44, UiTheme.INK, true)
+	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(level_label)
+	level_bar = MetaUi.progress_bar(18, UiTheme.WAX_YELLOW)
+	level_bar.custom_minimum_size = Vector2(200, 18)
+	level_bar.max_value = 1.0
+	col.add_child(level_bar)
+	return row
+
+
+## Missions / Cadeau du jour / Album : boutons crème peints ; verrouillés
+## (« Niv. N ») tant que le niveau n'est pas atteint ; pastille rouge si
+## quelque chose est à réclamer.
+func _feature_row() -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 18)
+	for f in [[ProgressionCore.MISSIONS, "Missions"], [ProgressionCore.DAILY, "Cadeau"],
+			[ProgressionCore.ALBUM, "Album"]]:
+		var b := MetaUi.button(f[1], &"ButtonCream", Vector2(250, 112), open_feature.bind(f[0]), 40)
+		row.add_child(b)
+		feature_buttons[f[0]] = b
+		var badge := MetaUi.badge("!")
+		badge.position = Vector2(250 - 44, -16)
+		badge.visible = false
+		b.add_child(badge)
+		_badges[f[0]] = badge
+	return row
+
+
+func _on_coins_changed(_c: int, _d: int, _r: StringName) -> void:
+	refresh_meta()
+
+
+func _on_xp_changed(_x: int, _l: int) -> void:
+	refresh_meta()
+
+
+func refresh_meta() -> void:
+	if coins_pill == null:
+		return
+	MetaUi.set_pill_amount(coins_pill, Wallet.coins())
+	level_label.text = "Niveau %d" % Progression.level()
+	level_bar.value = Progression.core.progress_ratio()
+	var names := {ProgressionCore.MISSIONS: "Missions", ProgressionCore.DAILY: "Cadeau",
+		ProgressionCore.ALBUM: "Album"}
+	for f in feature_buttons:
+		var b: Button = feature_buttons[f]
+		var open := Progression.is_unlocked(f)
+		b.text = names[f] if open else "Niv. %d" % Progression.unlock_level(f)
+		b.modulate = Color.WHITE if open else Color(1, 1, 1, 0.6)
+	_badges[ProgressionCore.MISSIONS].visible = Missions.claimable_count() > 0
+	_badges[ProgressionCore.DAILY].visible = DailyRewards.can_claim()
+
+
+## Ouvre Missions / Cadeau / Album (fenêtre « verrouillé » sinon).
+func open_feature(f: StringName) -> MetaModal:
+	if panel:
+		panel.close()
+	if not Progression.is_unlocked(f):
+		panel = MetaModal.new(MetaUi.feature_name(f), 820.0)
+		var l := MetaUi.label("Débloqué au niveau %d.\nJoue des parties pour gagner de l'XP !" %
+			Progression.unlock_level(f), 44)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		panel.body.add_child(l)
+	else:
+		match f:
+			ProgressionCore.MISSIONS: panel = MissionsPanel.new()
+			ProgressionCore.DAILY: panel = DailyPanel.new()
+			_: panel = AlbumPanel.new()
+	_root.add_child(panel)
+	panel.closed.connect(func() -> void:
+		panel = null
+		refresh_meta())
+	return panel
 
 
 ## Pastille crème : miniature 3D dans le médaillon, texte à droite.

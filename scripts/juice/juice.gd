@@ -120,6 +120,11 @@ func bind(p_game: Game) -> void:
 	game.top_merge.connect(_on_top_merge)
 	game.danger_changed.connect(_on_danger_changed)
 	game.game_over.connect(_on_game_over)
+	game.fruit_removed.connect(_on_fruit_removed)
+	game.revived.connect(_on_revived)
+	game.basket_shaken.connect(_on_basket_shaken)
+	if game.powerups:
+		game.powerups.used.connect(_on_powerup_used)
 
 	Audio.set_danger_filter(0.0)
 	Audio.play_music(config.sounds.music if config.sounds else null)
@@ -425,7 +430,7 @@ func _on_merged(rank_created: int, pos: Vector3, points: int, combo: int) -> voi
 	(text_pool.acquire() as FxItems.FloatText).start(fx_pos + Vector3(0, def.radius * 0.6, 0.1),
 		"+%d" % points, txt_color, size_mult)
 	if not top:
-		Audio.play(config.sounds.note_for_rank(rank_created), config.merge_volume_db)
+		play_merge_sound(rank_created)
 	vibrate(config.vibrate_merge_ms)
 
 	if combo >= config.combo_min:
@@ -510,6 +515,50 @@ func _on_game_over(_score: int, _max_rank: int, _is_record: bool) -> void:
 	_freeze_queue.sort_custom(func(a: Fruit, b: Fruit) -> bool:
 		return a.global_position.y > b.global_position.y)
 	_freeze_left = 0.0
+
+
+## Son de fusion : SoundBank.merge monté d'un demi-ton par rang (gamme
+## montante : un combo devient une mélodie), sinon note par rang.
+func play_merge_sound(rank_created: int) -> AudioStreamPlayer:
+	var s := config.sounds
+	if s and s.merge:
+		return Audio.play(s.merge, config.merge_volume_db,
+			pow(2.0, rank_created * config.merge_semitones_per_rank / 12.0))
+	return Audio.play(s.note_for_rank(rank_created) if s else null, config.merge_volume_db)
+
+
+func _on_powerup_used(_id: StringName, _source: StringName) -> void:
+	Audio.play(config.sounds.powerup if config.sounds else null, config.powerup_volume_db)
+
+
+## M4 : fruit écrasé (pilon) ou retiré (Continuer) : éclaboussure de fusion M2.
+func _on_fruit_removed(fruit: Fruit, _reason: StringName) -> void:
+	var def := game.catalog.get_def(fruit.rank)
+	var p := fruit.global_position
+	var fx_pos := Vector3(p.x, p.y, FX_Z)
+	(flash_pool.acquire() as FxItems.Flash).start(fx_pos + Vector3(0, 0, -0.2), def.radius)
+	(splash_pool.acquire() as ParticleBurst).burst(fx_pos, def.color)
+	(drop_pool.acquire() as ParticleBurst).burst(fx_pos, def.color.lightened(0.1))
+	(ring_pool.acquire() as FxItems.Ring).start(fx_pos, def.radius, config.ring_color)
+	Audio.play(config.sounds.impact, config.merge_volume_db, 0.7, config.pitch_jitter)
+	shake.add(config.big_merge_trauma * 0.6)
+	vibrate(config.vibrate_merge_ms)
+
+
+## M4 : reprise après « Continuer » : fin de la séquence de game over.
+func _on_revived() -> void:
+	_over = false
+	_freeze_queue.clear()
+	time_scaler.clear()
+	Engine.time_scale = 1.0
+	for f in game.fruits():
+		f.visual().set_gray(0.0)
+
+
+func _on_basket_shaken() -> void:
+	bump_basket(config.basket_bump_merge * 2.0)
+	shake.add(config.big_merge_trauma)
+	vibrate(config.vibrate_big_merge_ms)
 
 
 # ---------------------------------------------------------------- Boucle

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="EconomyConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/economy_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+coin_score_divisor = 150.0
+starting_coins = 0
+double_multiplier = 2
+max_balance = 999999

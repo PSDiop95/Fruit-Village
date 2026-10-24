@@ -14,6 +14,17 @@ extends Resource
 @export var game_over: AudioStream
 @export var music: AudioStream
 
+@export_group("M4 : interface et méta")
+## Son de fusion unique, monté d'un demi-ton par rang (gamme montante).
+## Vide : notes par rang (merge_notes).
+@export var merge: AudioStream
+@export var ui_click: AudioStream
+## Lancement d'une partie (Jouer, Rejouer).
+@export var play: AudioStream
+@export var powerup: AudioStream
+## Pièces gagnées.
+@export var coins: AudioStream
+
 
 func note_for_rank(rank: int) -> AudioStream:
 	if merge_notes.is_empty():

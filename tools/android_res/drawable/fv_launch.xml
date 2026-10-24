@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fond de fenêtre au lancement (Fruit Village) : l'image du splash, centrée,
+     sans mise à l'échelle (drawable-nodpi, 1080 px de large) = plein écran
+     sans déformation sur les téléphones 1080 px ; ciel autour sinon.
+     Remplace le fond noir de Godot entre l'écran système et le jeu. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/fv_sky" />
+    <item>
+        <bitmap android:src="@drawable/fv_splash" android:gravity="center" />
+    </item>
+</layer-list>

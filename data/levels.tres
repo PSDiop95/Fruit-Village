@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="LevelsConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/levels_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+xp_thresholds = PackedInt32Array(60, 240, 520, 900, 1350, 1900, 2550)
+xp_step_after = 700
+xp_step_growth = 150
+xp_per_game = 20
+xp_per_100_points = 1.5
+xp_per_merge = 0.2
+xp_max_per_game = 200
+level_up_coins = 30
+missions_level = 2
+powerups_level = 3
+daily_level = 4
+album_level = 5

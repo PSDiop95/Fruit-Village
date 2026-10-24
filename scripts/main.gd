@@ -13,7 +13,37 @@ var curtain := UiJuice.Curtain.new()
 
 func _ready() -> void:
 	add_child(curtain)
-	show_title()
+	Wallet.coins_changed.connect(_on_coins_changed)
+	if _needs_loading_screen():
+		var loading := LoadingScreen.new()
+		add_child(loading)
+		loading.finished.connect(func() -> void:
+			loading.queue_free()
+			show_title(), CONNECT_ONE_SHOT)
+	else:
+		show_title()
+
+
+## Écran de chargement au premier démarrage du jeu (pas en headless — tests —
+## ni sous un script SceneTree d'outil — captures —, ni au retour au menu).
+static var _loaded_once: bool = false
+
+
+func _needs_loading_screen() -> bool:
+	if _loaded_once or DisplayServer.get_name() == "headless" \
+			or Engine.get_main_loop().get_script() != null:
+		return false
+	_loaded_once = true
+	return true
+
+
+## Pièces gagnées (fin de partie, Doubler, missions, cadeau, niveau) : son.
+func _on_coins_changed(_coins: int, delta: int, reason: StringName) -> void:
+	if delta <= 0 or reason == &"load":
+		return
+	var cfg: JuiceConfig = load("res://data/juice.tres")
+	if cfg.sounds and cfg.sounds.coins:
+		Audio.play_limited(&"coins", cfg.coins_max_per_second, cfg.sounds.coins, cfg.coins_volume_db)
 
 
 func show_title() -> void:
@@ -34,11 +64,21 @@ func start_game() -> void:
 		_backdrop.queue_free()
 		_backdrop = null
 	_free_game()
+	var cfg: JuiceConfig = load("res://data/juice.tres")
+	if cfg.sounds and cfg.sounds.play:
+		Audio.play(cfg.sounds.play, cfg.play_volume_db)
 	game = (load(GAME_SCENE) as PackedScene).instantiate()
-	game.restart_requested.connect(start_game, CONNECT_DEFERRED)
+	game.restart_requested.connect(_replay, CONNECT_DEFERRED)
 	game.menu_requested.connect(show_title, CONNECT_DEFERRED)
 	add_child(game)
 	curtain.reveal()
+
+
+## Rejouer : seul moment où un interstitiel peut passer (entre deux parties),
+## si InterstitialPolicy l'autorise. La partie suivante démarre à sa fermeture.
+func _replay() -> void:
+	if not AdsManager.try_interstitial(start_game):
+		start_game()
 
 
 func _free_game() -> void:
@@ -55,7 +95,12 @@ func _make_backdrop() -> Node3D:
 	var cfg: GameConfig = load("res://data/game_config.tres")
 	var market := MarketScene.new()
 	root.add_child(market)
-	market.setup(load("res://data/visual.tres"), cfg)
+	var vc: VisualConfig = load("res://data/visual.tres")
+	# Même qualité qu'en partie (détection auto ou réglage joueur).
+	var q := VisualQuality.resolve(int(SaveManager.get_setting(&"quality")))
+	FruitModels.set_quality(q)
+	VisualQuality.apply_viewport(get_viewport(), q, vc)
+	market.setup(vc, cfg)
 	market.follow_ambiance_setting()
 	# La mascotte attend sur le cadre et salue à l'arrivée.
 	var mascot := Mascot.create(load("res://data/visual.tres"), load("res://data/juice.tres"))

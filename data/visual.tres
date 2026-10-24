@@ -69,3 +69,6 @@ edge_darken = 0.28
 edge_power = 2.2
 top_light = 0.14
 backdrop_depth = 40.0
+render_scale_by_quality = PackedFloat32Array(0.62, 0.7, 0.8)
+msaa_by_quality = PackedInt32Array(0, 0, 1)
+glow_min_quality = 2

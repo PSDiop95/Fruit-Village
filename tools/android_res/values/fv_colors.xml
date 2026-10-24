@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ciel du splash (haut de assets/ui/splash.png). -->
+    <color name="fv_sky">#3087DA</color>
+</resources>

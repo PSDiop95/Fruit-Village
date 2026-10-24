@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="DailyRewardsConfig" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/daily_rewards_config.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/data/daily_reward_def.gd" id="2"]
+
+[sub_resource type="Resource" id="d1"]
+script = ExtResource("2")
+coins = 20
+
+[sub_resource type="Resource" id="d2"]
+script = ExtResource("2")
+coins = 25
+
+[sub_resource type="Resource" id="d3"]
+script = ExtResource("2")
+coins = 0
+powerup = &"swap"
+powerup_count = 1
+
+[sub_resource type="Resource" id="d4"]
+script = ExtResource("2")
+coins = 35
+
+[sub_resource type="Resource" id="d5"]
+script = ExtResource("2")
+coins = 0
+powerup = &"pestle"
+powerup_count = 1
+
+[sub_resource type="Resource" id="d6"]
+script = ExtResource("2")
+coins = 50
+
+[sub_resource type="Resource" id="d7"]
+script = ExtResource("2")
+coins = 100
+powerup = &"grow"
+powerup_count = 1
+is_chest = true
+
+[resource]
+script = ExtResource("1")
+rewards = Array[ExtResource("2")]([SubResource("d1"), SubResource("d2"), SubResource("d3"), SubResource("d4"), SubResource("d5"), SubResource("d6"), SubResource("d7")])
+shield_cooldown_days = 7
+shield_max_missed_days = 1
+backward_tolerance_minutes = 10
+forward_jump_hours = 48
+notifications_max_per_day = 2
+reminder_hour = 12
+streak_warning_hour = 19
