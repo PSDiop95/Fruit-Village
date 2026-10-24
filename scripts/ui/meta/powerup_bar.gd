@@ -145,6 +145,8 @@ static func _small_pill() -> StyleBox:
 
 
 func _press(b: Control, target: float) -> void:
+	if target < 1.0:
+		UiJuice.click()
 	var tw := create_tween().set_ignore_time_scale(true)
 	if target < 1.0:
 		tw.tween_property(b, "scale", Vector2.ONE * target, 0.06)

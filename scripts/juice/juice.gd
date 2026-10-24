@@ -123,6 +123,8 @@ func bind(p_game: Game) -> void:
 	game.fruit_removed.connect(_on_fruit_removed)
 	game.revived.connect(_on_revived)
 	game.basket_shaken.connect(_on_basket_shaken)
+	if game.powerups:
+		game.powerups.used.connect(_on_powerup_used)
 
 	Audio.set_danger_filter(0.0)
 	Audio.play_music(config.sounds.music if config.sounds else null)
@@ -428,7 +430,7 @@ func _on_merged(rank_created: int, pos: Vector3, points: int, combo: int) -> voi
 	(text_pool.acquire() as FxItems.FloatText).start(fx_pos + Vector3(0, def.radius * 0.6, 0.1),
 		"+%d" % points, txt_color, size_mult)
 	if not top:
-		Audio.play(config.sounds.note_for_rank(rank_created), config.merge_volume_db)
+		play_merge_sound(rank_created)
 	vibrate(config.vibrate_merge_ms)
 
 	if combo >= config.combo_min:
@@ -513,6 +515,20 @@ func _on_game_over(_score: int, _max_rank: int, _is_record: bool) -> void:
 	_freeze_queue.sort_custom(func(a: Fruit, b: Fruit) -> bool:
 		return a.global_position.y > b.global_position.y)
 	_freeze_left = 0.0
+
+
+## Son de fusion : SoundBank.merge monté d'un demi-ton par rang (gamme
+## montante : un combo devient une mélodie), sinon note par rang.
+func play_merge_sound(rank_created: int) -> AudioStreamPlayer:
+	var s := config.sounds
+	if s and s.merge:
+		return Audio.play(s.merge, config.merge_volume_db,
+			pow(2.0, rank_created * config.merge_semitones_per_rank / 12.0))
+	return Audio.play(s.note_for_rank(rank_created) if s else null, config.merge_volume_db)
+
+
+func _on_powerup_used(_id: StringName, _source: StringName) -> void:
+	Audio.play(config.sounds.powerup if config.sounds else null, config.powerup_volume_db)
 
 
 ## M4 : fruit écrasé (pilon) ou retiré (Continuer) : éclaboussure de fusion M2.

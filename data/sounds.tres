@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="SoundBank" load_steps=21 format=3]
+[gd_resource type="Resource" script_class="SoundBank" load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/sound_bank.gd" id="1"]
 [ext_resource type="AudioStream" path="res://assets/sfx/drop.wav" id="drop"]
@@ -20,6 +20,11 @@
 [ext_resource type="AudioStream" path="res://assets/sfx/merge_09.wav" id="m09"]
 [ext_resource type="AudioStream" path="res://assets/sfx/merge_10.wav" id="m10"]
 [ext_resource type="AudioStream" path="res://assets/music/market_loop.wav" id="music"]
+[ext_resource type="AudioStream" path="res://assets/sfx/merge.mp3" id="merge"]
+[ext_resource type="AudioStream" path="res://assets/sfx/ui_click.mp3" id="ui_click"]
+[ext_resource type="AudioStream" path="res://assets/sfx/play.mp3" id="play"]
+[ext_resource type="AudioStream" path="res://assets/sfx/powerup.mp3" id="powerup"]
+[ext_resource type="AudioStream" path="res://assets/sfx/coins.mp3" id="coins"]
 
 [resource]
 script = ExtResource("1")
@@ -32,3 +37,8 @@ baobab = ExtResource("baobab")
 danger_heartbeat = ExtResource("heartbeat")
 game_over = ExtResource("game_over")
 music = ExtResource("music")
+merge = ExtResource("merge")
+ui_click = ExtResource("ui_click")
+play = ExtResource("play")
+powerup = ExtResource("powerup")
+coins = ExtResource("coins")

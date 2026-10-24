@@ -254,6 +254,15 @@ enum Quality { LOW, MEDIUM, HIGH }
 @export var baobab_volume_db: float = 0.0
 @export var heartbeat_volume_db: float = -4.0
 @export var game_over_volume_db: float = -3.0
+## Son de fusion unique (SoundBank.merge) : demi-tons ajoutés par rang créé.
+@export var merge_semitones_per_rank: float = 1.0
+@export var ui_click_volume_db: float = -8.0
+## Au plus N clics par seconde (le fichier a une longue fin).
+@export var ui_click_max_per_second: int = 6
+@export var play_volume_db: float = -3.0
+@export var powerup_volume_db: float = -3.0
+@export var coins_volume_db: float = -4.0
+@export var coins_max_per_second: int = 3
 
 @export_group("Debug")
 @export var show_fps_in_debug: bool = true

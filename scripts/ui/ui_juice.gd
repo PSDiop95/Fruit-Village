@@ -16,8 +16,21 @@ static func bounce(b: BaseButton) -> void:
 	b.set_meta(META, true)
 	_center_pivot(b)
 	b.resized.connect(_center_pivot.bind(b))
-	b.button_down.connect(func() -> void: _tween_scale(b, Vector2.ONE * PRESS_SCALE, 0.06, false))
+	b.button_down.connect(func() -> void:
+		click()
+		_tween_scale(b, Vector2.ONE * PRESS_SCALE, 0.06, false))
 	b.button_up.connect(func() -> void: _tween_scale(b, Vector2.ONE, 0.4, true))
+
+
+## Son de clic (SoundBank.ui_click), limité en fréquence. Accès dynamique à
+## l'autoload Audio (les outils SceneTree compilent sans autoloads).
+static func click() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	var audio := tree.root.get_node_or_null(^"Audio") if tree else null
+	var cfg: JuiceConfig = load("res://data/juice.tres")
+	if audio and cfg.sounds and cfg.sounds.ui_click:
+		audio.play_limited(&"ui_click", cfg.ui_click_max_per_second, cfg.sounds.ui_click,
+			cfg.ui_click_volume_db)
 
 
 ## Rebond sur tous les boutons sous `root`.

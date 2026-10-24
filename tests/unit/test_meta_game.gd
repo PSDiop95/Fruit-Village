@@ -279,6 +279,20 @@ func test_swap_changes_current_to_other_droppable() -> void:
 		assert_true(g.spawner.current() in g.catalog.droppable_ranks())
 
 
+# ---------------------------------------------------------------- Sons M4
+
+func test_m4_sounds_wired_and_merge_rises_with_rank() -> void:
+	var cfg: JuiceConfig = load("res://data/juice.tres")
+	for s in [cfg.sounds.merge, cfg.sounds.ui_click, cfg.sounds.play, cfg.sounds.powerup,
+			cfg.sounds.coins]:
+		assert_not_null(s, "son M4 branché")
+	var g := await _game()
+	var low := g.juice().play_merge_sound(2)
+	var high := g.juice().play_merge_sound(8)
+	assert_eq(low.stream, cfg.sounds.merge)
+	assert_gt(high.pitch_scale, low.pitch_scale, "rang plus haut = son plus aigu")
+
+
 # ---------------------------------------------------------------- Clôture de partie
 
 func test_finalize_gives_coins_xp_and_events_once() -> void:

@@ -13,7 +13,17 @@ var curtain := UiJuice.Curtain.new()
 
 func _ready() -> void:
 	add_child(curtain)
+	Wallet.coins_changed.connect(_on_coins_changed)
 	show_title()
+
+
+## Pièces gagnées (fin de partie, Doubler, missions, cadeau, niveau) : son.
+func _on_coins_changed(_coins: int, delta: int, reason: StringName) -> void:
+	if delta <= 0 or reason == &"load":
+		return
+	var cfg: JuiceConfig = load("res://data/juice.tres")
+	if cfg.sounds and cfg.sounds.coins:
+		Audio.play_limited(&"coins", cfg.coins_max_per_second, cfg.sounds.coins, cfg.coins_volume_db)
 
 
 func show_title() -> void:
@@ -34,6 +44,9 @@ func start_game() -> void:
 		_backdrop.queue_free()
 		_backdrop = null
 	_free_game()
+	var cfg: JuiceConfig = load("res://data/juice.tres")
+	if cfg.sounds and cfg.sounds.play:
+		Audio.play(cfg.sounds.play, cfg.play_volume_db)
 	game = (load(GAME_SCENE) as PackedScene).instantiate()
 	game.restart_requested.connect(_replay, CONNECT_DEFERRED)
 	game.menu_requested.connect(show_title, CONNECT_DEFERRED)

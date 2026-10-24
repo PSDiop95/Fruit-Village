@@ -115,7 +115,9 @@ func _build() -> void:
 	_pause_button.position = Vector2(1080 - 432, 46)
 	_pause_button.size = Vector2(150, 150)
 	_pause_button.pivot_offset = Vector2(75, 75)
-	_pause_button.button_down.connect(func() -> void: _press_bounce(_pause_button, 0.88))
+	_pause_button.button_down.connect(func() -> void:
+		UiJuice.click()
+		_press_bounce(_pause_button, 0.88))
 	_pause_button.button_up.connect(func() -> void: _press_bounce(_pause_button, 1.0))
 	_pause_button.pressed.connect(open_pause)
 	_root.add_child(_pause_button)
