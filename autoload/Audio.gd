@@ -14,6 +14,14 @@ var created_players: int = 0
 var _players: Array[AudioStreamPlayer] = []
 var _next_player: int = 0
 var _music: AudioStreamPlayer
+## Musique : morceaux enchaînés + piste de tension en fondu (M4).
+var _playlist: Array[AudioStream] = []
+var _track: int = 0
+var _tension: AudioStreamPlayer
+var _tension_stream: AudioStream
+var _tension_target: float = 0.0
+var _tension_level: float = 0.0
+var _fade_time: float = 1.5
 var _lowpass: AudioEffectLowPassFilter
 var _rng := RandomNumberGenerator.new()
 var _rate: Dictionary = {}  # clé -> PackedFloat64Array (instants des derniers sons, s)
@@ -26,6 +34,10 @@ func _ready() -> void:
 	_music.bus = BUS_MUSIC
 	_music.finished.connect(_on_music_finished)
 	add_child(_music)
+	_tension = AudioStreamPlayer.new()
+	_tension.bus = BUS_MUSIC
+	_tension.finished.connect(func() -> void: _tension.play())
+	add_child(_tension)
 	prewarm(config.sfx_pool_size)
 	apply_volumes()
 	SaveManager.setting_changed.connect(func(_k: StringName, _v: Variant) -> void: apply_volumes())
@@ -113,16 +125,60 @@ func _take_player() -> AudioStreamPlayer:
 func play_music(stream: AudioStream) -> void:
 	if stream == null or (_music.playing and _music.stream == stream):
 		return
+	_playlist.clear()
 	_music.stream = stream
 	_music.play()
 
 
+## Morceaux enchaînés en alternance (sans boucle brute) ; `tension` : piste
+## mise en fondu enchaîné par set_tension(). Sans effet si déjà en cours.
+func play_music_playlist(tracks: Array[AudioStream], tension: AudioStream = null,
+		fade_time: float = 1.5) -> void:
+	_tension_stream = tension
+	_fade_time = maxf(fade_time, 0.05)
+	if tracks.is_empty() or (_music.playing and _playlist == tracks):
+		return
+	_playlist = tracks.duplicate()
+	_track = 0
+	_music.stream = _playlist[0]
+	_music.play()
+
+
+## true : la piste de tension prend le dessus (fondu), false : retour au calme.
+func set_tension(on: bool) -> void:
+	_tension_target = 1.0 if on and _tension_stream else 0.0
+
+
+func tension_level() -> float:
+	return _tension_level
+
+
 func stop_music() -> void:
 	_music.stop()
+	_tension.stop()
+	_tension_level = 0.0
+	_tension_target = 0.0
 
 
 func _on_music_finished() -> void:
+	if not _playlist.is_empty():
+		_track = (_track + 1) % _playlist.size()
+		_music.stream = _playlist[_track]
 	_music.play()
+
+
+func _process(delta: float) -> void:
+	if is_equal_approx(_tension_level, _tension_target):
+		return
+	_tension_level = move_toward(_tension_level, _tension_target, delta / _fade_time)
+	if _tension_level > 0.0 and not _tension.playing and _tension_stream:
+		_tension.stream = _tension_stream
+		_tension.play()
+	# Fondu à puissance constante (pas de creux au milieu du fondu).
+	_music.volume_db = linear_to_db(maxf(cos(_tension_level * PI * 0.5), 0.0001))
+	_tension.volume_db = linear_to_db(maxf(sin(_tension_level * PI * 0.5), 0.0001))
+	if _tension_level <= 0.0:
+		_tension.stop()
 
 
 ## 0 = musique claire, 1 = étouffée (danger maximal). Interpolation exponentielle.

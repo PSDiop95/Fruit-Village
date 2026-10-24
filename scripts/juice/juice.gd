@@ -66,6 +66,11 @@ var _heartbeat_left: float = 0.0
 
 # Game over
 var _freeze_queue: Array[Fruit] = []
+## M4 : voix et musique de tension.
+var _last_voice: float = -1000.0
+var _tension_on: bool = false
+var _tension_check: float = 0.0
+var _gaaw_said: bool = false
 var _freeze_left: float = 0.0
 var _over: bool = false
 
@@ -127,13 +132,19 @@ func bind(p_game: Game) -> void:
 		game.powerups.used.connect(_on_powerup_used)
 
 	Audio.set_danger_filter(0.0)
-	Audio.play_music(config.sounds.music if config.sounds else null)
+	var s := config.sounds
+	if s and not s.music_tracks.is_empty():
+		Audio.play_music_playlist(s.music_tracks, s.music_tension, config.tension_fade_time)
+	else:
+		Audio.play_music(s.music if s else null)
+	Audio.set_tension(false)
 
 
 func _exit_tree() -> void:
 	# Garantie : quitter la partie (rejouer, menu) ne laisse jamais le temps ralenti.
 	time_scaler.clear()
 	Engine.time_scale = 1.0
+	Audio.set_tension(false)
 
 
 # ---------------------------------------------------------------- Construction
@@ -433,6 +444,14 @@ func _on_merged(rank_created: int, pos: Vector3, points: int, combo: int) -> voi
 		play_merge_sound(rank_created)
 	vibrate(config.vibrate_merge_ms)
 
+	# Voix : grosse fusion « Good ! », sinon combo « Waaw ! » / « Wóoy ! ».
+	var vs := config.sounds
+	if vs and not top and rank_created >= config.big_merge_min_rank:
+		play_voice(vs.voice_good)
+	elif vs and combo >= config.voice_big_combo:
+		play_voice(vs.voice_wooy)
+	elif vs and combo >= config.combo_min:
+		play_voice(vs.voice_waaw)
 	if combo >= config.combo_min:
 		_show_big_text("COMBO x%d !" % combo, config.combo_fill_bottom, config.combo_text_font_size, 0.6,
 			combo - config.combo_min, config.combo_fill_top)
@@ -470,6 +489,7 @@ func _on_discovered(rank: int) -> void:
 	else:
 		_show_banner("Nouveau : %s !" % def.display_name, def.color)
 	Audio.play(config.sounds.discover, config.discover_volume_db)
+	play_voice(config.sounds.voice_dafa_neex, true)
 	if _last_merge_fruit and is_instance_valid(_last_merge_fruit) and _last_merge_fruit.rank == rank:
 		_beam_target = _last_merge_fruit
 		_beam_t = 0.0
@@ -482,6 +502,7 @@ func _on_top_merge(pos: Vector3) -> void:
 	shake.add(config.baobab_trauma)
 	vibrate(config.vibrate_baobab_ms)
 	Audio.play(config.sounds.baobab, config.baobab_volume_db)
+	play_voice(config.sounds.voice_ca_cest_fort, true)
 	_show_big_text("BAOBAB !", config.baobab_text_color, config.baobab_text_font_size, 1.6)
 	var top_y := game.config.basket_height + 3.5
 	(leaves_pool.acquire() as ParticleBurst).burst(Vector3(0, top_y, FX_Z))
@@ -496,6 +517,12 @@ func _on_top_merge(pos: Vector3) -> void:
 func _on_danger_changed(ratio: float, state: DangerMonitor.State) -> void:
 	_danger_ratio = ratio
 	_danger_state = state
+	# « Gaaw ! » une fois par alerte (réarmé quand le danger retombe).
+	if state == DangerMonitor.State.WARNING and not _gaaw_said and not _over:
+		_gaaw_said = true
+		play_voice(config.sounds.voice_gaaw)
+	elif state == DangerMonitor.State.SAFE and ratio <= 0.0:
+		_gaaw_said = false
 
 
 func _on_game_over(_score: int, _max_rank: int, _is_record: bool) -> void:
@@ -672,6 +699,7 @@ func _update_danger(dt: float) -> void:
 	var target := _danger_ratio if not _over else 0.0
 	_danger_smooth = move_toward(_danger_smooth, target, dt * 2.0)
 	Audio.set_danger_filter(_danger_smooth)
+	_update_tension(dt)
 
 	var mat := game.danger_line_material()
 	var vig := 0.0
@@ -689,6 +717,41 @@ func _update_danger(dt: float) -> void:
 		_heartbeat_left = 0.0
 	var cur: float = _vignette_mat.get_shader_parameter("intensity")
 	_vignette_mat.set_shader_parameter("intensity", move_toward(cur, vig, dt * 3.0))
+
+
+## Musique de tension : panier presque plein (fruit le plus haut au-delà de
+## tension_on_fill de la ligne de danger), avec hystérésis. Vérifié 4×/s.
+func _update_tension(dt: float) -> void:
+	_tension_check -= dt
+	if _tension_check > 0.0:
+		return
+	_tension_check = 0.25
+	if _over:
+		_tension_on = false
+	else:
+		var top := 0.0
+		for f in game.fruits():
+			if f.age > game.config.danger_grace_time:
+				top = maxf(top, f.top_y())
+		var fill := top / maxf(game.config.danger_line_y, 0.01)
+		if fill >= config.tension_on_fill:
+			_tension_on = true
+		elif fill < config.tension_off_fill:
+			_tension_on = false
+	Audio.set_tension(_tension_on)
+
+
+## Voix de la vendeuse : au plus une toutes les voice_min_gap s ; les voix
+## prioritaires (Baobab, nouveau fruit, record) n'attendent que voice_priority_gap.
+func play_voice(stream: AudioStream, priority: bool = false) -> AudioStreamPlayer:
+	if stream == null:
+		return null
+	var now := Time.get_ticks_msec() / 1000.0
+	var gap := config.voice_priority_gap if priority else config.voice_min_gap
+	if now - _last_voice < gap:
+		return null
+	_last_voice = now
+	return Audio.play(stream, config.voice_volume_db)
 
 
 func _update_freeze(dt: float) -> void:
@@ -735,6 +798,7 @@ func _celebrate_record() -> void:
 	var top := game.config.basket_height + 1.5
 	(confetti_pool.acquire() as ParticleBurst).burst(Vector3(-1.5, top, FX_Z))
 	(confetti_pool.acquire() as ParticleBurst).burst(Vector3(1.5, top, FX_Z))
+	play_voice(config.sounds.voice_cest_doux, true)
 	vibrate(config.vibrate_big_merge_ms)
 
 
