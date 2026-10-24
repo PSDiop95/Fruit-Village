@@ -44,6 +44,12 @@ const INTERSTITIAL := &"interstitial"
 @export var test_rewarded_id: String = "ca-app-pub-3940256099942544/5224354917"
 @export var test_interstitial_id: String = "ca-app-pub-3940256099942544/1033173712"
 
+@export_group("Consentement UMP (debug uniquement)")
+## Simule la zone EEE (formulaire RGPD) sur les appareils de test, en debug.
+@export var ump_debug_eea: bool = false
+## Empreintes d'appareils de test (logcat : « addTestDeviceHashedId(...) »).
+@export var ump_test_device_ids: PackedStringArray = PackedStringArray()
+
 @export_group("Pubs simulées (MockAds)")
 ## Probabilité qu'une pub simulée se charge.
 @export var mock_fill_rate: float = 1.0

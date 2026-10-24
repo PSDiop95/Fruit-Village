@@ -68,7 +68,7 @@ func _consent_info() -> Object:
 	return _info
 
 
-func start(_config: AdsConfig, ids: Dictionary) -> void:
+func start(config: AdsConfig, ids: Dictionary) -> void:
 	_ids = ids
 	var info := _consent_info()
 	var params := _new("ConsentRequestParameters")
@@ -76,6 +76,17 @@ func start(_config: AdsConfig, ids: Dictionary) -> void:
 		_finish_consent()
 		return
 	params.set("tag_for_under_age_of_consent", false)
+	# Debug : zone EEE simulée sur les appareils de test (formulaire RGPD).
+	if OS.is_debug_build() and config and config.ump_debug_eea \
+			and not config.ump_test_device_ids.is_empty():
+		var dbg := _new("ConsentDebugSettings")
+		if dbg:
+			dbg.set("debug_geography", 1)  # DebugGeography.Values.EEA
+			var ids_arr: Array[String] = []
+			for d in config.ump_test_device_ids:
+				ids_arr.append(d)
+			dbg.set("test_device_hashed_ids", ids_arr)
+			params.set("consent_debug_settings", dbg)
 	info.call("update", params, _on_info_updated, _on_info_failed)
 
 

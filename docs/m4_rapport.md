@@ -217,3 +217,11 @@ aussi dans la fiche Play Store et dans le message RGPD d'AdMob.
   release uniquement. Debug : blocs de test Google (vérifié sur le A23).
 - En release, un bloc manquant désactive ce format (jamais de pub de test en
   production).
+
+## Consentement RGPD (UMP) — vérifié
+
+Message RGPD créé dans AdMob ; formulaire affiché au premier lancement sur le
+Galaxy A23, avant toute requête de pub. Hors EEE, test via
+`data/ads.tres : ump_debug_eea` + `ump_test_device_ids` (builds debug
+uniquement, ignoré en release). À faire dans AdMob : activer le bouton
+« Ne pas autoriser » au premier écran (refus aussi simple que l'accord).
