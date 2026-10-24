@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="SoundBank" load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/sound_bank.gd" id="1"]
-[ext_resource type="AudioStream" path="res://assets/sfx/drop.wav" id="drop"]
+[ext_resource type="AudioStream" path="res://assets/sfx/drop.mp3" id="drop"]
 [ext_resource type="AudioStream" path="res://assets/sfx/impact.wav" id="impact"]
 [ext_resource type="AudioStream" path="res://assets/sfx/combo_chord.wav" id="combo_chord"]
 [ext_resource type="AudioStream" path="res://assets/sfx/discover.wav" id="discover"]
