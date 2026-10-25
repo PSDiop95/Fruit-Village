@@ -40,7 +40,7 @@ décor, passants, ombres, qualité). Aucune valeur visuelle en dur.
 | Élément | État actuel | À fournir |
 |---|---|---|
 | **Police** | Police système grasse (Segoe UI sur PC, Roboto sur Android) | `Fredoka-SemiBold.ttf` ou `Baloo2-Bold.ttf` (licence OFL) dans `assets/fonts/` : prise en compte automatiquement, puis relancer `tools/make_theme.gd` |
-| **Logo** | Texte « Merge Marché » sur cartouche + frise wax | Logo illustré (PNG transparent, ~1000 px de large) |
+| **Logo** | Texte du titre provisoire sur cartouche + frise wax | Logo illustré (PNG transparent, ~1000 px de large) |
 | **Icône** | Rendu 3D sidem + mangue + pain de singe sur orange | Illustration finale 512x512 (+ icône adaptative Android : avant-plan / fond 432x432) |
 | **Splash** | Même rendu + titre | Illustration 1080x1920 |
 | **Sons** | Placeholders synthétiques M2 (`tools/gen_sounds.py`) | Notes kora / balafon, boucle afrobeat/mbalax, ambiance marché, voix (« Dieuredieuf ! », « Waaw ! », « Ndekki li ! ») |

@@ -1,7 +1,6 @@
 # Godot
 .godot/
 *.translation
-export_presets.cfg
 *.apk
 *.aab
 
@@ -20,6 +19,18 @@ android/build/src/main/*
 
 # Binaires iOS AdMob (retéléchargés automatiquement par le plugin)
 addons/admob/ios/bin/
+
+# Signature Android : JAMAIS versionnée (voir docs/KEYSTORE.md)
+export_credentials.cfg
+*.keystore
+*.jks
+*.p12
+*.pem
+*.der
+keystore*.properties
+# Clé d'upload exportée pour Play (PEPK) et bundles intermédiaires
+*.zip.enc
+*.apks
 
 # Identifiants AdMob de production (modèle : ads_ids.example.cfg)
 ads_ids.cfg
