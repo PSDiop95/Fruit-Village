@@ -7,15 +7,15 @@ extends Node
 ## - jeu en pause et son coupé pendant la pub, reprise propre (fermeture,
 ##   échec, retour d'arrière-plan) ;
 ## - interstitiel soumis à InterstitialPolicy.
-## Identifiants : TOUJOURS ceux de test Google en debug. En release, ceux de
-## res://ads_ids.cfg (non versionné) s'il existe.
+## Identifiants : TOUJOURS ceux de test Google en debug. En release, UNIQUEMENT
+## les vrais de res://ads_ids.cfg (non versionné) ; sinon pas de pub (AdIds).
+## Release sans SDK AdMob : aucune pub (jamais MockAds, qui donne des récompenses).
 
 signal availability_changed
 signal consent_changed(can_request_ads: bool)
 signal ad_started(kind: StringName)
 signal ad_finished(kind: StringName)
 
-const IDS_FILE := "res://ads_ids.cfg"
 ## Délai de grâce après la fermeture : certains SDK livrent la récompense
 ## juste APRÈS la fermeture. Au-delà, la fermeture ne récompense jamais.
 const CLOSE_GRACE := 0.3
@@ -45,7 +45,13 @@ func _ready() -> void:
 	policy = InterstitialPolicy.new(config)
 	SaveManager.register_system("ads", self)
 	policy.begin_session(clock.now())
-	var p: AdProvider = AdMobAds.new() if AdMobAds.available() else MockAds.new()
+	var p: AdProvider
+	if AdMobAds.available():
+		p = AdMobAds.new()
+	elif OS.is_debug_build():
+		p = MockAds.new()
+	else:
+		p = AdProvider.new()
 	use_provider(p)
 
 
@@ -83,24 +89,10 @@ func use_clock(c: MetaClock) -> void:
 	policy.begin_session(clock.now())
 
 
-## Identifiants à utiliser. Debug : identifiants de test Google, toujours.
+## Identifiants à utiliser (règles : AdIds).
 func ad_ids() -> Dictionary:
-	var ids := {"app_id": config.test_app_id, "rewarded_id": config.test_rewarded_id,
-		"interstitial_id": config.test_interstitial_id, "test": true}
-	if OS.is_debug_build() or not FileAccess.file_exists(IDS_FILE):
-		return ids
-	var cf := ConfigFile.new()
-	if cf.load(IDS_FILE) != OK:
-		push_warning("ads_ids.cfg illisible : identifiants de test")
-		return ids
-	# Release avec vrais identifiants : un bloc absent désactive ce format
-	# (jamais de pub de test en production).
-	for k in ["app_id", "rewarded_id", "interstitial_id"]:
-		var v := str(cf.get_value("android", k, ""))
-		ids[k] = v if v.begins_with("ca-app-pub-") \
-			and not v.begins_with("ca-app-pub-3940256099942544") else ""
-	ids["test"] = false
-	return ids
+	var debug := OS.is_debug_build()
+	return AdIds.resolve(config, debug, null if debug else AdIds.load_file())
 
 
 ## Le format a-t-il un identifiant de bloc ? (sinon jamais chargé ni proposé)

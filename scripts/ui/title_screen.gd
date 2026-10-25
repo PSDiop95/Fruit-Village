@@ -6,7 +6,7 @@ extends CanvasLayer
 
 signal play_pressed
 
-const LOGO := "res://assets/ui/logo.png"
+const LOGO := "res://assets/branding/fruit-village-logo.png"
 ## Largeurs (px, écran 1080 de large) des éléments du menu.
 const MENU_WIDTH := 660.0
 const PLAY_SIZE := Vector2(640, 230)

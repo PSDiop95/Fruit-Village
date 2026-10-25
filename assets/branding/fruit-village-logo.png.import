@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bbjt150twnnl8"
-path="res://.godot/imported/logo.png-d34d183e6fc605a54aaa32000f044bbc.ctex"
+uid="uid://uynite7cvm4s"
+path="res://.godot/imported/fruit-village-logo.png-dd89c5cd7133c35614bae522e3499e7b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/ui/logo.png"
-dest_files=["res://.godot/imported/logo.png-d34d183e6fc605a54aaa32000f044bbc.ctex"]
+source_file="res://assets/branding/fruit-village-logo.png"
+dest_files=["res://.godot/imported/fruit-village-logo.png-dd89c5cd7133c35614bae522e3499e7b.ctex"]
 
 [params]
 

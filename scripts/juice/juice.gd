@@ -111,9 +111,11 @@ func bind(p_game: Game) -> void:
 	_build_beam()
 	_build_baobab()
 	_build_overlay()
-	_debug = DebugMenu.new()
-	add_child(_debug)
-	_debug.bind(game, self)
+	# Menu debug (F1 / 3 doigts) : jamais en release.
+	if OS.is_debug_build():
+		_debug = DebugMenu.new()
+		add_child(_debug)
+		_debug.bind(game, self)
 	apply_particle_amounts()
 
 	game.dropped.connect(_on_dropped)

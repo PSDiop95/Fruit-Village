@@ -1,7 +1,8 @@
 extends SceneTree
 ## Prépare les visuels finaux (art_src/ → assets/ui/) aux tailles du jeu :
-## logo 1024, icône 512, icônes adaptatives Android 432 (fond ciel + logo),
+## icône 512, icônes adaptatives Android 432 (fond ciel + logo),
 ## splash 1080 de large. Les originaux restent dans art_src/ (hors APK).
+## Logo du titre : assets/branding/fruit-village-logo.png (fourni, tel quel).
 ## Usage : Godot --headless --path . -s tools/prepare_art.gd
 
 
@@ -9,10 +10,6 @@ func _initialize() -> void:
 	var logo := _load("res://art_src/logo_2048.png")
 	var icon := _load("res://art_src/icon_2048.png")
 	var splash := _load("res://art_src/splash_1536x2752.jpg")
-
-	var l := logo.duplicate() as Image
-	l.resize(1024, 1024, Image.INTERPOLATE_LANCZOS)
-	l.save_png("res://assets/ui/logo.png")
 
 	var i := icon.duplicate() as Image
 	i.resize(512, 512, Image.INTERPOLATE_LANCZOS)
@@ -39,7 +36,7 @@ func _initialize() -> void:
 	var bg_art := _load("res://art_src/background_marche_baie.png")
 	bg_art.convert(Image.FORMAT_RGB8)
 	bg_art.save_png("res://assets/ui/background_marche.png")
-	print("ART logo=%s icon=%s splash=%s fond=%s" % [l.get_size(), i.get_size(), s.get_size(), bg_art.get_size()])
+	print("ART icon=%s splash=%s fond=%s" % [i.get_size(), s.get_size(), bg_art.get_size()])
 	quit()
 
 

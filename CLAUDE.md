@@ -1,4 +1,4 @@
-# Merge Marché — Cahier des charges (CLAUDE.md)
+# Fruit Village — Cahier des charges (CLAUDE.md)
 
 > Fichier de référence pour Claude Code. À placer à la racine du projet Godot.
 > Objectif business : jeu très addictif, financé par la pub (rewarded d'abord), pour financer les autres projets.

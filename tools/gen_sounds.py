@@ -1,4 +1,4 @@
-"""Génère les sons placeholders de Merge Marché (M2).
+"""Génère les sons placeholders de Fruit Village (M2).
 
 Usage : python tools/gen_sounds.py            (depuis la racine du projet)
 
