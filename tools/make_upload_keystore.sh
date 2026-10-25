@@ -29,8 +29,10 @@ echo "Choisis un mot de passe fort (≥ 12 caractères) et note-le dans ton gest
 # Certificat public (à garder avec les sauvegardes ; utile si la clé est perdue).
 "$KEYTOOL" -export -rfc -keystore "$(cygpath -w "$KS")" -alias "$ALIAS" \
 	-file "$(cygpath -w "$DIR/upload_certificate.pem")"
-"$KEYTOOL" -list -v -keystore "$(cygpath -w "$KS")" -alias "$ALIAS" | grep -E "SHA1:|SHA256:" \
-	| tee "$DIR/upload_certificate_fingerprints.txt"
+# Empreintes lues dans le certificat public (sans mot de passe). keytool est
+# localisé : « SHA 1: » en français, « SHA1: » en anglais.
+"$KEYTOOL" -printcert -file "$(cygpath -w "$DIR/upload_certificate.pem")" | grep -E "SHA ?(1|256):" \
+	| sed 's/^[[:space:]]*//' | tee "$DIR/upload_certificate_fingerprints.txt" || true
 
 if [ ! -f export_credentials.cfg ]; then
 	cat > export_credentials.cfg <<CFG
