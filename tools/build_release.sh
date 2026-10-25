@@ -28,7 +28,17 @@ if [ -z "${FV_UPLOAD_KEYSTORE:-}" ] && [ -f export_credentials.cfg ]; then
 fi
 [ -n "${FV_UPLOAD_KEYSTORE:-}" ] || die "clé d'upload non configurée (export_credentials.cfg ou FV_UPLOAD_KEYSTORE) : voir docs/KEYSTORE.md"
 [ -f "$FV_UPLOAD_KEYSTORE" ] || die "keystore introuvable : $FV_UPLOAD_KEYSTORE"
-[ -n "${FV_UPLOAD_ALIAS:-}" ] && [ -n "${FV_UPLOAD_PASSWORD:-}" ] || die "FV_UPLOAD_ALIAS / FV_UPLOAD_PASSWORD manquants"
+[ -n "${FV_UPLOAD_ALIAS:-}" ] || die "FV_UPLOAD_ALIAS manquant"
+# Mot de passe absent : saisie masquée (jamais affiché ni écrit sur le disque).
+if [ -z "${FV_UPLOAD_PASSWORD:-}" ] && [ -t 0 ]; then
+	read -rsp "Mot de passe de la clé d'upload : " FV_UPLOAD_PASSWORD
+	echo
+fi
+export FV_UPLOAD_PASSWORD
+[ -n "${FV_UPLOAD_PASSWORD:-}" ] || die "mot de passe manquant (lance le script dans un terminal, ou exporte FV_UPLOAD_PASSWORD)"
+"$(cygpath -u "$JAVA_HOME")/bin/keytool" -list -keystore "$(cygpath -w "$FV_UPLOAD_KEYSTORE")" \
+	-alias "$FV_UPLOAD_ALIAS" -storepass:env FV_UPLOAD_PASSWORD > /dev/null 2>&1 \
+	|| die "mot de passe ou alias incorrect pour $FV_UPLOAD_KEYSTORE"
 [ -f ads_ids.cfg ] || die "ads_ids.cfg absent (vrais identifiants AdMob, modèle : ads_ids.example.cfg)"
 PACKAGE="$(preset_option "$PRESET" package/unique_name)"
 VERSION_CODE="$(preset_option "$PRESET" version/code)"

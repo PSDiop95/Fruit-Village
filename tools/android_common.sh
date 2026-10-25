@@ -69,6 +69,7 @@ GRADLE
 
 # Modèle Gradle prêt : installé si absent, patchs, ressources de lancement.
 prepare_gradle_project() {
+	ensure_godot_android_setup || return 1
 	stop_gradle
 	rm -rf android/build/build
 	[ -f android/build/build.gradle ] || "$GODOT" --headless --path . --install-android-build-template --quit
@@ -82,6 +83,41 @@ prepare_gradle_project() {
 	rm -rf android/build/src/main/assets android/build/assetPackInstallTime/src/main/assets
 	mkdir -p android/build/res/drawable-nodpi
 	cp assets/ui/splash.png android/build/res/drawable-nodpi/fv_splash.png
+}
+
+# Réglages d'éditeur Godot pour l'export Android (JDK, SDK) et modèles
+# d'export 4.7.2 : vérifiés et réparés à chaque build, car ils vivent dans
+# %APPDATA%\Godot (hors projet) et peuvent manquer sur une machine ou une
+# session (ex. AppData virtualisé d'une app empaquetée). Sauvegarde .bak-fv.
+ensure_godot_android_setup() {
+	local appdata settings jdk sdk ver tpl
+	appdata="$(cygpath -u "${APPDATA:?APPDATA non défini}")"
+	settings="$appdata/Godot/editor_settings-4.7.tres"
+	jdk="$(cygpath -m "$JAVA_HOME")"
+	sdk="$(cygpath -m "$ANDROID_TOOLS/sdk")"
+	if [ ! -f "$settings" ]; then
+		# Premier lancement de Godot sur cette session : il crée ses réglages.
+		"$GODOT" --headless --editor --quit --path . > /dev/null 2>&1 || true
+	fi
+	[ -f "$settings" ] || { echo "ERREUR : $settings introuvable" >&2; return 1; }
+	if ! grep -qF "export/android/java_sdk_path = \"$jdk\"" "$settings" \
+			|| ! grep -qF "export/android/android_sdk_path = \"$sdk\"" "$settings"; then
+		cp "$settings" "$settings.bak-fv"
+		sed -i -e "s|^export/android/java_sdk_path = .*|export/android/java_sdk_path = \"$jdk\"|" \
+			-e "s|^export/android/android_sdk_path = .*|export/android/android_sdk_path = \"$sdk\"|" "$settings"
+		grep -q "^export/android/java_sdk_path" "$settings" \
+			|| echo "export/android/java_sdk_path = \"$jdk\"" >> "$settings"
+		grep -q "^export/android/android_sdk_path" "$settings" \
+			|| echo "export/android/android_sdk_path = \"$sdk\"" >> "$settings"
+		echo "Réglages Godot : JDK et SDK Android configurés (sauvegarde : $settings.bak-fv)"
+	fi
+	ver="$(cat android/.build_version)"
+	tpl="$appdata/Godot/export_templates/$ver"
+	if [ ! -f "$tpl/android_release.apk" ] && [ -f "$ANDROID_TOOLS/dl/templates.tpz" ]; then
+		echo "Installation des modèles d'export $ver (Android)…"
+		mkdir -p "$tpl"
+		unzip -q -o -j "$ANDROID_TOOLS/dl/templates.tpz" "templates/android_*" "templates/version.txt" -d "$tpl"
+	fi
 }
 
 # Valeur d'une option d'un preset : preset_option "Android Release" version/code
