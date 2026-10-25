@@ -30,3 +30,12 @@ l'écran. Badge Google Play : utiliser le badge officiel (play.google.com/intl/f
 sans le modifier, seulement une fois l'app publiée.
 
 Version 15 s (Reels/Shorts) : retirer 6,0–8,0 s et raccourcir 14,0–16,5 s à 1 s.
+
+## Version générée depuis le jeu
+
+`tools/video/make_promo.sh` rend cette vidéo depuis le vrai jeu (Movie Maker
+de Godot pour le son, capture 1080x1920 pour l'image, montage par
+`tools/video/edit.py`) → `store/video/fruit_village_promo_{20s,15s}_{fr,en}.mp4`
+(non versionnés). Écarts : voix finale « Dafa neex » (« Dieuredieuf » pas
+encore enregistrée), carte du pain de singe sans défilement de l'album,
+combo réel jusqu'à x8, pas de badge Google Play avant publication.
