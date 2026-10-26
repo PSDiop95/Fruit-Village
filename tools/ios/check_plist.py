@@ -21,6 +21,9 @@ GOOGLE_SKAN = "cstr6suwn9.skadnetwork"
 def main() -> int:
     plist_path, mode = Path(sys.argv[1]), sys.argv[2]
     p = plistlib.loads(plist_path.read_bytes())
+    if "GOOGLE_APP_ID" in p or "CFBundleExecutable" not in p:
+        print(f"  ECHEC : {plist_path.name} n'est pas l'Info.plist du jeu (configuration Firebase ?)")
+        return 1
     errors = []
 
     app_id = p.get("GADApplicationIdentifier", "")

@@ -114,7 +114,9 @@ else
 fi
 [ -d "$PROJECT" ] || { tail -40 "$OUT_DIR/export.log"; die "projet Xcode non produit"; }
 SCHEME="$(xcodebuild -list -json -project "$PROJECT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["project"]["schemes"][0])')"
-PLIST="$(find "$OUT_DIR/FruitVillage" -maxdepth 1 -name "*-Info.plist" | sed -n 1p)"
+# Nom exact : Firebase dépose aussi GoogleService-Info.plist dans ce dossier.
+PLIST="$OUT_DIR/FruitVillage/FruitVillage-Info.plist"
+[ -f "$PLIST" ] || die "Info.plist du jeu introuvable : $PLIST"
 echo "Schéma Xcode : $SCHEME — Info.plist : $PLIST"
 
 # ---- Contrôles de l'Info.plist et du .pck (identifiants pub, ATT, chiffrement)
