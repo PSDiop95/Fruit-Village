@@ -117,9 +117,9 @@ SCHEME="$(xcodebuild -list -json -project "$PROJECT" | python3 -c 'import json,s
 PLIST="$(find "$OUT_DIR/FruitVillage" -maxdepth 1 -name "*-Info.plist" | sed -n 1p)"
 echo "Schéma Xcode : $SCHEME — Info.plist : $PLIST"
 
-# ---- Contrôles de l'Info.plist (identifiants pub, ATT, chiffrement)
+# ---- Contrôles de l'Info.plist et du .pck (identifiants pub, ATT, chiffrement)
+find "$OUT_DIR" -maxdepth 3 -name "*.pck" -exec ls -la {} \;  # emplacement du .pck (journal)
 python3 tools/ios/check_plist.py "$PLIST" "$MODE"
-find "$OUT_DIR" -maxdepth 2 -name "*.pck" -exec ls -la {} ;  # emplacement du .pck (journal)
 
 if [ "$MODE" != "upload" ]; then
 	xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Debug \
