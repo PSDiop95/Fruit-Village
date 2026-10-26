@@ -51,7 +51,7 @@ preset_set() {  # preset_set <option> <valeur brute> : section options du preset
 }
 
 [ "$(uname -s)" = "Darwin" ] || die "macOS requis (Xcode)"
-xcodebuild -version | head -1
+xcodebuild -version | sed -n 1p  # sed lit tout : pas de « broken pipe » (pipefail)
 mkdir -p "$WORK" "$OUT_DIR"
 
 # ---- Godot + modèles d'export iOS
@@ -114,7 +114,7 @@ else
 fi
 [ -d "$PROJECT" ] || { tail -40 "$OUT_DIR/export.log"; die "projet Xcode non produit"; }
 SCHEME="$(xcodebuild -list -json -project "$PROJECT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["project"]["schemes"][0])')"
-PLIST="$(find "$OUT_DIR/FruitVillage" -maxdepth 1 -name "*-Info.plist" | head -1)"
+PLIST="$(find "$OUT_DIR/FruitVillage" -maxdepth 1 -name "*-Info.plist" | sed -n 1p)"
 echo "Schéma Xcode : $SCHEME — Info.plist : $PLIST"
 
 # ---- Contrôles de l'Info.plist (identifiants pub, ATT, chiffrement)
