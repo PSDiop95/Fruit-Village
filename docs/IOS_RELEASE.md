@@ -117,14 +117,21 @@ runner en fin de job.
 ### 6. Premier envoi TestFlight
 
 GitHub → Actions → **iOS** → Run workflow → branche `main` → coche
-**upload** → Run. Durée ≈ 25-35 min (téléchargements en cache ensuite).
+**upload** → Run. Durée ≈ 10 min une fois la machine obtenue. GitHub
+prévient que les runners macOS arm64 sont saturés par moments : l'attente
+peut durer, et un job « not acquired by Runner » n'est pas un échec du
+build. Relance-le (Re-run jobs).
 Le job :
 1. lance les tests GUT (arrêt au premier échec) ;
 2. exporte le projet Xcode en release (App ID et blocs AdMob iOS réels) ;
 3. contrôle l'Info.plist et le `.pck` (`check_plist.py`) ;
-4. archive avec signature automatique (clé API), numéro de build = numéro
-   d'exécution du workflow (toujours croissant) ;
-5. envoie sur App Store Connect.
+4. archive avec une signature ad hoc (aucun iPhone enregistré requis) et
+   vérifie que chaque framework embarqué est signé ; numéro de build =
+   numéro d'exécution du workflow (toujours croissant) ;
+5. signe en distribution App Store (certificat et profil créés dans le cloud
+   via la clé API) et envoie sur App Store Connect.
+
+Premier envoi réussi le 26/10/2026 : build 11, version 1.0.0.
 
 Apple traite le build (15-30 min, e-mail), puis il apparaît dans
 **TestFlight**. Réponds à la question de conformité du chiffrement s'il la

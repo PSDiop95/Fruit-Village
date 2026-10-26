@@ -131,14 +131,26 @@ if [ "$MODE" != "upload" ]; then
 	exit 0
 fi
 
-# ---- Archive signée (signature automatique, clé API) puis envoi TestFlight
+# ---- Archive puis signature de distribution et envoi TestFlight
+# L'archive est signée AD HOC (« - ») : une signature de développement
+# exigerait un iPhone enregistré sur le compte, et une archive non signée
+# laisse les frameworks embarqués (AdMob, Firebase) sans signature, ce
+# qu'Apple refuse. La signature App Store (certificat + profil de
+# distribution, créés dans le cloud par Xcode via la clé API) remplace la
+# signature ad hoc de chaque binaire à l'export : aucun appareil requis.
 AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$ASC_KEY_PATH"
 	-authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
 xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Release \
 	-destination "generic/platform=iOS" -archivePath "$OUT_DIR/FruitVillage.xcarchive" archive \
-	"${AUTH[@]}" DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic \
-	CODE_SIGN_IDENTITY="Apple Development" PROVISIONING_PROFILE_SPECIFIER="" \
+	DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-" \
+	AD_HOC_CODE_SIGNING_ALLOWED=YES PROVISIONING_PROFILE_SPECIFIER="" PROVISIONING_PROFILE="" \
 	> "$OUT_DIR/archive.log" 2>&1 || { tail -60 "$OUT_DIR/archive.log"; die "archive en échec"; }
+# Chaque binaire embarqué doit porter une signature avant l'export.
+unsigned=0
+for f in "$OUT_DIR"/FruitVillage.xcarchive/Products/Applications/*.app/Frameworks/*.framework; do
+	codesign -v "$f" 2>/dev/null || { echo "non signé : $(basename "$f")"; unsigned=1; }
+done
+[ $unsigned -eq 0 ] || die "frameworks non signés dans l'archive"
 cat > "$OUT_DIR/ExportOptions.plist" <<PLISTEOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

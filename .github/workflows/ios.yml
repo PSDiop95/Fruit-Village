@@ -29,10 +29,10 @@ jobs:
     env:
       MODE: ${{ (github.event_name == 'workflow_dispatch' && inputs.upload) && 'upload' || 'check' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Cache Godot et bibliothèques iOS
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ${{ runner.temp }}/fv-ios/*.zip
@@ -63,7 +63,7 @@ jobs:
 
       - name: Journaux
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ios-logs-${{ env.MODE }}
           path: build/ios/*.log
