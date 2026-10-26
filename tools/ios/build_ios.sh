@@ -119,6 +119,7 @@ echo "Schéma Xcode : $SCHEME — Info.plist : $PLIST"
 
 # ---- Contrôles de l'Info.plist (identifiants pub, ATT, chiffrement)
 python3 tools/ios/check_plist.py "$PLIST" "$MODE"
+find "$OUT_DIR" -maxdepth 2 -name "*.pck" -exec ls -la {} ;  # emplacement du .pck (journal)
 
 if [ "$MODE" != "upload" ]; then
 	xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Debug \

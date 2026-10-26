@@ -46,9 +46,14 @@ def main() -> int:
     if p.get("UIRequiresFullScreen") is not True:
         errors.append("UIRequiresFullScreen doit valoir true (iPad, portrait seul)")
 
-    pcks = list(plist_path.parent.glob("*.pck"))
+    # Godot range le .pck à côté du projet Xcode (build/ios/), pas toujours dans
+    # le dossier de l'Info.plist : on cherche aux deux endroits.
+    pcks = list(plist_path.parent.glob("*.pck")) + list(plist_path.parent.parent.glob("*.pck"))
+    print(f"  pck : {', '.join(f.name for f in pcks) or 'aucun'}")
+    if not pcks:
+        errors.append("aucun .pck trouvé à côté de l'Info.plist ni du projet Xcode")
     embedded = any(b"ads_ids.cfg" in f.read_bytes() for f in pcks)
-    print(f"  ads_ids.cfg dans le .pck : {'oui' if embedded else 'non'} ({len(pcks)} pck)")
+    print(f"  ads_ids.cfg dans le .pck : {'oui' if embedded else 'non'}")
     if mode == "upload" and not embedded:
         errors.append("upload : ads_ids.cfg absent du .pck (aucune pub)")
     if mode != "upload" and embedded:
