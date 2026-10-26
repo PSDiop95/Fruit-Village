@@ -119,6 +119,13 @@ PLIST="$OUT_DIR/FruitVillage/FruitVillage-Info.plist"
 [ -f "$PLIST" ] || die "Info.plist du jeu introuvable : $PLIST"
 echo "Schéma Xcode : $SCHEME — Info.plist : $PLIST"
 
+# ---- Droits : Game Center est activé sur l'app dans App Store Connect, Apple
+# refuse le binaire sans com.apple.developer.game-center.
+ENTITLEMENTS="$OUT_DIR/FruitVillage/FruitVillage.entitlements"
+grep -q "com.apple.developer.game-center" "$ENTITLEMENTS" \
+	|| die "droit Game Center absent de $ENTITLEMENTS"
+echo "Droits : Game Center présent"
+
 # ---- Contrôles de l'Info.plist et du .pck (identifiants pub, ATT, chiffrement)
 find "$OUT_DIR" -maxdepth 3 -name "*.pck" -exec ls -la {} \;  # emplacement du .pck (journal)
 python3 tools/ios/check_plist.py "$PLIST" "$MODE"

@@ -232,6 +232,9 @@ func test_ios_preset() -> void:
 	assert_true(o["privacy/tracking_enabled"])
 	assert_true(o["plugins/GodotxFirebaseCore"])
 	assert_true(o["plugins/GodotxFirebaseAnalytics"])
+	# Game Center activé sur l'app dans App Store Connect : Apple refuse le
+	# binaire sans ce droit (« INVALID_BINARY »), même sans fonction Game Center.
+	assert_true(o["entitlements/game_center"], "droit Game Center")
 	assert_true(str(_value(p, "include_filter")).contains("ads_ids.cfg"))
 	assert_true(str(_value(p, "exclude_filter")).contains("GoogleService-Info.plist"))
 	var icon := Image.load_from_file(ProjectSettings.globalize_path(o["icons/icon_1024x1024"]))
