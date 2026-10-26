@@ -3,6 +3,7 @@
 - play       : Google Play 1080x1920 (9:16)        -> store/screenshots/<langue>/
 - iphone_6_9 : App Store iPhone 6,9" 1320x2868     -> store/ios/screenshots/iphone_6_9/<langue>/
 - iphone_6_3 : App Store iPhone 6,3" 1206x2622     -> store/ios/screenshots/iphone_6_3/<langue>/
+- iphone_6_5 : App Store iPhone 6,5" 1284x2778     -> store/ios/screenshots/iphone_6_5/<langue>/ (obligatoire)
 - ipad_13    : App Store iPad 13" 2064x2752         -> store/ios/screenshots/ipad_13/<langue>/
 
 Entrée : captures brutes 1080x1920 de capture_store.gd (dossier en argument,
@@ -21,6 +22,7 @@ TARGETS = {
     "play": (1080, 1920, "store/screenshots"),
     "iphone_6_9": (1320, 2868, "store/ios/screenshots/iphone_6_9"),
     "iphone_6_3": (1206, 2622, "store/ios/screenshots/iphone_6_3"),
+    "iphone_6_5": (1284, 2778, "store/ios/screenshots/iphone_6_5"),
     "ipad_13": (2064, 2752, "store/ios/screenshots/ipad_13"),
 }
 BAND = 300           # hauteur du bandeau texte (à 1920 de haut)
