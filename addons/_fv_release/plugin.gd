@@ -6,7 +6,7 @@ var _export: EditorExportPlugin
 
 
 func _enter_tree() -> void:
-	_export = preload("res://addons/fv_release/release_export.gd").new()
+	_export = preload("res://addons/_fv_release/release_export.gd").new()
 	add_export_plugin(_export)
 
 

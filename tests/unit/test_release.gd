@@ -5,6 +5,10 @@ extends GutTest
 
 const PRESETS := "res://export_presets.cfg"
 const RELEASE_PRESET := "Android Release"
+const IOS_PRESET := "iOS Release"
+const REAL_IOS := {"app_id": "ca-app-pub-1234567890123456~9876543210",
+	"rewarded_id": "ca-app-pub-1234567890123456/3333333333",
+	"interstitial_id": "ca-app-pub-1234567890123456/4444444444"}
 const PACKAGE := "com.smartiaservices.fruitvillage"
 const REAL := {"app_id": "ca-app-pub-1234567890123456~1234567890",
 	"rewarded_id": "ca-app-pub-1234567890123456/1111111111",
@@ -17,6 +21,13 @@ func _cfg(values: Dictionary) -> ConfigFile:
 	var cf := ConfigFile.new()
 	for k in values:
 		cf.set_value(AdIds.SECTION, k, values[k])
+	return cf
+
+
+func _cfg_ios(values: Dictionary) -> ConfigFile:
+	var cf := ConfigFile.new()
+	for k in values:
+		cf.set_value(AdIds.IOS, k, values[k])
 	return cf
 
 
@@ -95,8 +106,14 @@ func test_local_ads_ids_file_is_release_ready() -> void:
 		pending("ads_ids.cfg absent : build release impossible (voir ads_ids.example.cfg)")
 		return
 	for k in AdIds.KEYS:
-		var v := str(cf.get_value(AdIds.SECTION, k, ""))
-		assert_true(AdIds.is_real_id(v), "ads_ids.cfg %s : vrai identifiant" % k)
+		var v := str(cf.get_value(AdIds.ANDROID, k, ""))
+		assert_true(AdIds.is_real_id(v), "ads_ids.cfg [android] %s : vrai identifiant" % k)
+	if not cf.has_section(AdIds.IOS):
+		pending("ads_ids.cfg : section [ios] absente (build iOS release impossible)")
+		return
+	for k in AdIds.KEYS:
+		var v := str(cf.get_value(AdIds.IOS, k, ""))
+		assert_true(AdIds.is_real_id(v), "ads_ids.cfg [ios] %s : vrai identifiant" % k)
 
 
 ## project.godot (versionné, lu par le plugin AdMob pour le manifeste) :
@@ -107,6 +124,8 @@ func test_project_app_id_is_test() -> void:
 	# Absent = valeur par défaut du plugin (App ID de test Google).
 	var v := str(cf.get_value("admob", "general/android/app_id", AdIds.GOOGLE_TEST_APP_ID))
 	assert_eq(v, AdIds.GOOGLE_TEST_APP_ID)
+	var vi := str(cf.get_value("admob", "general/ios/app_id", AdIds.GOOGLE_TEST_IOS_APP_ID))
+	assert_eq(vi, AdIds.GOOGLE_TEST_IOS_APP_ID)
 
 
 func test_release_runtime_never_mock_ads() -> void:
@@ -155,7 +174,7 @@ func test_release_permissions_minimal() -> void:
 
 func test_debug_presets_never_embed_real_ids() -> void:
 	for name in _presets():
-		if name == RELEASE_PRESET:
+		if name == RELEASE_PRESET or name == IOS_PRESET:
 			continue
 		var p: Dictionary = _presets()[name]
 		assert_false(str(_value(p, "include_filter")).contains("ads_ids.cfg"), name)
@@ -172,6 +191,72 @@ func test_no_secret_in_presets() -> void:
 	assert_false(text.contains(".keystore"), "aucun chemin de keystore")
 	assert_false(text.contains(".jks"), "aucun chemin de keystore")
 
+
+# ---------------------------------------------------------------- iOS
+
+func test_ios_debug_uses_ios_test_ids() -> void:
+	var ids := AdIds.resolve(config, true, _cfg_ios(REAL_IOS), AdIds.IOS)
+	assert_eq(ids["app_id"], AdIds.GOOGLE_TEST_IOS_APP_ID)
+	for k in AdIds.KEYS:
+		assert_true(AdIds.is_test_id(ids[k]), "debug iOS %s = test" % k)
+		assert_ne(ids[k], AdIds.test_ids(config)[k], "iOS : identifiants de test iOS, pas Android")
+
+
+func test_ios_release_reads_ios_section_only() -> void:
+	var cf := _cfg(REAL)  # [android] seul
+	var ids := AdIds.resolve(config, false, cf, AdIds.IOS)
+	for k in AdIds.KEYS:
+		assert_eq(ids[k], "", "iOS sans section [ios] : format désactivé")
+	cf = _cfg_ios(REAL_IOS)
+	ids = AdIds.resolve(config, false, cf, AdIds.IOS)
+	for k in AdIds.KEYS:
+		assert_eq(ids[k], REAL_IOS[k])
+	assert_eq(AdIds.resolve(config, false, cf, AdIds.ANDROID)["app_id"], "", "pas de croisement")
+
+
+func test_ios_preset() -> void:
+	var all := _presets()
+	assert_true(all.has(IOS_PRESET), "preset « %s »" % IOS_PRESET)
+	if not all.has(IOS_PRESET):
+		return
+	var p: Dictionary = all[IOS_PRESET]
+	var o: Dictionary = p["options"]
+	assert_eq(o["application/bundle_identifier"], PACKAGE)
+	assert_eq(o["application/targeted_device_family"], 2, "iPhone et iPad")
+	assert_true(o["application/export_project_only"], "compilation : xcodebuild (CI)")
+	assert_eq(o["application/app_store_team_id"], "", "équipe Apple : secret de CI, jamais versionné")
+	var plist := str(o["application/additional_plist_content"])
+	assert_string_contains(plist, "NSUserTrackingUsageDescription")
+	assert_string_contains(plist, "<key>ITSAppUsesNonExemptEncryption</key><false/>")
+	assert_string_contains(plist, "<key>UIRequiresFullScreen</key><true/>")
+	assert_true(o["privacy/tracking_enabled"])
+	assert_true(o["plugins/GodotxFirebaseCore"])
+	assert_true(o["plugins/GodotxFirebaseAnalytics"])
+	assert_true(str(_value(p, "include_filter")).contains("ads_ids.cfg"))
+	assert_true(str(_value(p, "exclude_filter")).contains("GoogleService-Info.plist"))
+	var icon := Image.load_from_file(ProjectSettings.globalize_path(o["icons/icon_1024x1024"]))
+	assert_eq(icon.get_size(), Vector2i(1024, 1024))
+	assert_false(icon.detect_alpha() != Image.ALPHA_NONE, "icône App Store opaque")
+
+
+## Le plugin AdMob iOS lit l'App ID dans son _export_begin : _fv_release doit
+## être chargé avant lui (l'éditeur trie la liste par ordre alphabétique).
+func test_release_plugin_loads_before_admob() -> void:
+	var enabled: PackedStringArray = ProjectSettings.get_setting("editor_plugins/enabled")
+	var sorted := enabled.duplicate()
+	sorted.sort()
+	assert_eq(sorted, enabled, "liste triée (comme l'éditeur l'écrit)")
+	assert_lt(enabled.find("res://addons/_fv_release/plugin.cfg"),
+		enabled.find("res://addons/admob/plugin.cfg"))
+
+
+func test_screen_fit_letterbox_rules() -> void:
+	assert_true(ScreenFit.needs_letterbox("iOS", Vector2(1179, 2556)), "iPhone : encoche")
+	assert_true(ScreenFit.needs_letterbox("iOS", Vector2(2064, 2752)), "iPad")
+	assert_true(ScreenFit.needs_letterbox("Android", Vector2(1600, 2560)), "tablette Android")
+	assert_false(ScreenFit.needs_letterbox("Android", Vector2(1080, 2408)), "téléphone Android : inchangé")
+	assert_false(ScreenFit.needs_letterbox("Android", Vector2(1080, 1920)))
+	assert_false(ScreenFit.needs_letterbox("iOS", Vector2.ZERO))
 
 # ---------------------------------------------------------------- Debug off
 
@@ -190,5 +275,5 @@ func test_debug_menu_and_fps_debug_only() -> void:
 func test_secrets_are_git_ignored() -> void:
 	var gi := FileAccess.get_file_as_string("res://.gitignore")
 	for pat in ["ads_ids.cfg", "export_credentials.cfg", "*.keystore", "*.jks",
-			"google-services.json"]:
+			"google-services.json", "GoogleService-Info.plist", "/ios/"]:
 		assert_true(gi.split("\n").has(pat), ".gitignore : %s" % pat)

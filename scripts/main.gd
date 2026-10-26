@@ -12,6 +12,7 @@ var curtain := UiJuice.Curtain.new()
 
 
 func _ready() -> void:
+	ScreenFit.apply(get_window())
 	add_child(curtain)
 	Wallet.coins_changed.connect(_on_coins_changed)
 	if _needs_loading_screen():

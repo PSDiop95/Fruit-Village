@@ -38,7 +38,7 @@ Rapport brut : `build/release/report_verification_cle_jetable.txt`.
 | `BIND_GET_INSTALL_REFERRER_SERVICE` | Firebase | source d'installation (utile pour les campagnes diaspora / Tier 1) ; retirable si tu préfères |
 | `<package>.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | AndroidX | interne à l'app (signature), ni visible ni demandée |
 
-Retirées (plugin `addons/fv_release`, `tools:node="remove"`) :
+Retirées (plugin `addons/_fv_release`, `tools:node="remove"`) :
 `READ_BASIC_PHONE_STATE` (SDK pub), `FOREGROUND_SERVICE` (WorkManager, aucun
 service au premier plan), `ACCESS_ADSERVICES_AD_ID` /
 `ACCESS_ADSERVICES_ATTRIBUTION` (Privacy Sandbox, non utilisé),
@@ -82,7 +82,7 @@ R8). Pas bloquant : on est déjà sous 60 Mo.
   désactivé (jamais d'identifiant de test). En release sans SDK AdMob : aucune
   pub (avant : MockAds, qui donnait des récompenses gratuites).
   Le vrai App ID n'est plus dans `project.godot` ; le plugin
-  `addons/fv_release` le pose le temps de l'export release et retire
+  `addons/_fv_release` le pose le temps de l'export release et retire
   `ads_ids.cfg` des exports debug.
   ⚠️ Trouvé en passant : les anciens APK debug M4 embarquaient
   `ads_ids.cfg` (vrais identifiants) et `google-services.json` ; corrigé.

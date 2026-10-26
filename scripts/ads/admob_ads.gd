@@ -8,7 +8,8 @@ extends AdProvider
 ## Ordre imposé : consentement UMP → MobileAds.initialize() → chargements.
 ## Les identifiants viennent d'AdsManager (tests Google en debug).
 
-const ANDROID_SINGLETON := "PoingGodotAdMob"
+## Même nom de singleton natif sur Android et iOS.
+const SINGLETON := "PoingGodotAdMob"
 ## UMP (énums du plugin) : ConsentStatus / PrivacyOptionsRequirementStatus.
 const CONSENT_NOT_REQUIRED := 1
 const CONSENT_REQUIRED := 2
@@ -30,10 +31,10 @@ static func _class_path(cls: String) -> String:
 	return ""
 
 
-## Vrai seulement si la bibliothèque Android du plugin est dans l'APK
-## (singleton natif) : un APK exporté sans Gradle retombe sur MockAds.
+## Vrai seulement si la bibliothèque native du plugin est dans le paquet
+## (singleton) : un APK exporté sans Gradle retombe sur MockAds (debug).
 static func available() -> bool:
-	return Engine.has_singleton(ANDROID_SINGLETON) and _class_path("MobileAds") != "" \
+	return Engine.has_singleton(SINGLETON) and _class_path("MobileAds") != "" \
 		and _class_path("RewardedAdLoader") != ""
 
 

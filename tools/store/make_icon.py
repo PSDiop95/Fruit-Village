@@ -1,4 +1,5 @@
-"""Icône Google Play 512x512 (PNG 32 bits, carré plein) depuis art_src/icon_2048.png.
+"""Icône Google Play 512x512 (PNG 32 bits, carré plein) et icône iOS 1024 (opaque)
+depuis art_src/icon_2048.png.
 
 L'icône source est un carré arrondi sur fond transparent ; Google Play applique
 lui-même l'arrondi (20 %) : on rend un carré plein, coins comblés par le décor
@@ -26,7 +27,10 @@ def main() -> None:
     full = Image.alpha_composite(bg, card)
     # Rogne 2 % pour retirer le liseré du bord arrondi.
     m = int(w * 0.02)
-    full = full.crop((m, m, w - m, w - m)).resize((512, 512), Image.LANCZOS)
+    full = full.crop((m, m, w - m, w - m))
+    # iOS : 1024 opaque (App Store refuse toute transparence), coins arrondis par iOS.
+    full.resize((1024, 1024), Image.LANCZOS).convert("RGB").save(ROOT / "assets/ui/icon_ios_1024.png")
+    full = full.resize((512, 512), Image.LANCZOS)
     full.putalpha(255)
     OUT.mkdir(parents=True, exist_ok=True)
     full.save(OUT / "icon_512.png")

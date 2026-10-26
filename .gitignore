@@ -52,3 +52,7 @@ __pycache__/
 
 # Exports (APK/AAB)
 /build/
+
+# iOS : configuration Firebase (secret) et plugins natifs téléchargés par tools/ios/build_ios.sh
+GoogleService-Info.plist
+/ios/
