@@ -56,3 +56,6 @@ __pycache__/
 # iOS : configuration Firebase (secret) et plugins natifs téléchargés par tools/ios/build_ios.sh
 GoogleService-Info.plist
 /ios/
+# Clé API App Store Connect (privée) : jamais versionnée, à ranger hors du projet
+*.p8
+AuthKey_*

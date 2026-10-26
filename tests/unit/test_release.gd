@@ -275,5 +275,5 @@ func test_debug_menu_and_fps_debug_only() -> void:
 func test_secrets_are_git_ignored() -> void:
 	var gi := FileAccess.get_file_as_string("res://.gitignore")
 	for pat in ["ads_ids.cfg", "export_credentials.cfg", "*.keystore", "*.jks",
-			"google-services.json", "GoogleService-Info.plist", "/ios/"]:
+			"google-services.json", "GoogleService-Info.plist", "/ios/", "*.p8"]:
 		assert_true(gi.split("\n").has(pat), ".gitignore : %s" % pat)
