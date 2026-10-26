@@ -160,6 +160,7 @@ par `ITSAppUsesNonExemptEncryption = false`).
 | Texte promotionnel | `store/ios/*/promotional_text.txt` |
 | Description | `store/ios/*/description.txt` |
 | Mots-clés | `store/ios/*/keywords.txt` (≤ 100 caractères, déjà ajustés) |
+| **Captures iPhone 6,5" (obligatoire)** | `store/ios/screenshots/iphone_6_5/{fr,en}/` (1284×2778) |
 | Captures « iPhone avec Dynamic Island (grand écran) » 6,9" | `store/ios/screenshots/iphone_6_9/{fr,en}/` (1320×2868) |
 | Captures « iPhone avec Dynamic Island (écran moyen) » 6,3" | `store/ios/screenshots/iphone_6_3/{fr,en}/` (1206×2622) |
 | ⚠️ Jamais les captures Google Play | `store/screenshots/` (1080×1920) : refusées par Apple (ratio 9:16) |
