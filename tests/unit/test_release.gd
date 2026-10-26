@@ -230,8 +230,10 @@ func test_ios_preset() -> void:
 	assert_string_contains(plist, "<key>ITSAppUsesNonExemptEncryption</key><false/>")
 	assert_string_contains(plist, "<key>UIRequiresFullScreen</key><true/>")
 	assert_true(o["privacy/tracking_enabled"])
-	assert_true(o["plugins/GodotxFirebaseCore"])
-	assert_true(o["plugins/GodotxFirebaseAnalytics"])
+	# Pas de Firebase sur iOS en 1.0 : les xcframeworks du plugin godotx ne sont
+	# pas signés par Google (refus automatique Apple ITMS-91065 / 91061).
+	assert_false(o["plugins/GodotxFirebaseCore"], "pas de Firebase iOS (SDK non signés)")
+	assert_false(o["plugins/GodotxFirebaseAnalytics"], "pas de Firebase iOS (SDK non signés)")
 	# Game Center activé sur l'app dans App Store Connect : Apple refuse le
 	# binaire sans ce droit (« INVALID_BINARY »), même sans fonction Game Center.
 	assert_true(o["entitlements/game_center"], "droit Game Center")

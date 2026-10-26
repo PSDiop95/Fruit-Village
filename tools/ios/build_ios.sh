@@ -15,7 +15,10 @@
 #   ASC_ISSUER_ID        Issuer ID de la clé
 #   ASC_KEY_PATH         chemin du fichier AuthKey_<ID>.p8
 #   BUILD_NUMBER         numéro de build (CFBundleVersion), croissant
-#   ads_ids.cfg et GoogleService-Info.plist présents à la racine du projet.
+#   ads_ids.cfg (section [ios]) présent à la racine du projet.
+# Pas de Firebase sur iOS en 1.0 : les xcframeworks du plugin godotx ne sont
+# pas signés par Google ; Apple refuse alors l'app à la soumission
+# (ITMS-91065 / 91061, « binaire non valide »).
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 MODE="${1:-check}"
@@ -33,8 +36,6 @@ TEMPLATES_TPZ="Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
 TEMPLATES_SHA512="ca4d71c4d7b81dfc15d1a98baa07534aa95b03fdda78a0075b06672e1648d2e5f40980c9adc28d23e1b92e732ee7bf3461997aa804af74ec2fcd7a93ccb84079"
 ADMOB_URL="https://github.com/poingstudios/godot-admob-plugin/releases/download/v5.1.0/ios-template-v${GODOT_VERSION}.zip"
 ADMOB_SHA256="6e7f1c807761f9c0ad45d335ac4c74acd4bba7a31f9e1c7cd16a5220010cce71"
-FIREBASE_URL="https://github.com/godot-x/firebase/releases/download/3.1.0/godotx_firebase.zip"
-FIREBASE_SHA256="da7273def2ff744efacaab70e2ad863d65a4225ec401f5335de40a19df8170c1"
 
 die() { echo "ERREUR : $*" >&2; exit 1; }
 fetch() {  # fetch <url> <fichier> <algo> <empreinte>
@@ -73,13 +74,6 @@ if [ ! -d addons/admob/ios/bin/ads/libs ]; then
 	mkdir -p addons/admob/ios/bin
 	unzip -q -o "$WORK/admob-ios.zip" -d addons/admob/ios/bin
 fi
-if [ ! -f ios/plugins/firebase_core/firebase_core.gdip ]; then
-	fetch "$FIREBASE_URL" "$WORK/godotx_firebase.zip" 256 "$FIREBASE_SHA256"
-	unzip -q -o "$WORK/godotx_firebase.zip" "godotx_firebase/ios/plugins/firebase_core/*" \
-		"godotx_firebase/ios/plugins/firebase_analytics/*" -d "$WORK/fb"
-	mkdir -p ios/plugins
-	cp -R "$WORK/fb/godotx_firebase/ios/plugins/." ios/plugins/
-fi
 
 # ---- Import (cache .godot) puis tests
 "$GODOT" --headless --path . --import > "$OUT_DIR/import.log" 2>&1 || true
@@ -103,7 +97,6 @@ if [ "$MODE" = "upload" ]; then
 	: "${APPLE_TEAM_ID:?}" "${ASC_KEY_ID:?}" "${ASC_ISSUER_ID:?}" "${ASC_KEY_PATH:?}" "${BUILD_NUMBER:?}"
 	[ -f ads_ids.cfg ] || die "ads_ids.cfg absent"
 	grep -q "^\[ios\]" ads_ids.cfg || die "ads_ids.cfg : section [ios] absente"
-	[ -f GoogleService-Info.plist ] || die "GoogleService-Info.plist absent"
 	preset_set application/app_store_team_id "\"$APPLE_TEAM_ID\""
 	preset_set application/version "\"$BUILD_NUMBER\""
 	"$GODOT" --headless --path . --export-release "$PRESET" "$OUT_DIR/FruitVillage.ipa" > "$OUT_DIR/export.log" 2>&1 || true
@@ -114,7 +107,7 @@ else
 fi
 [ -d "$PROJECT" ] || { tail -40 "$OUT_DIR/export.log"; die "projet Xcode non produit"; }
 SCHEME="$(xcodebuild -list -json -project "$PROJECT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["project"]["schemes"][0])')"
-# Nom exact : Firebase dépose aussi GoogleService-Info.plist dans ce dossier.
+# Nom exact (un GoogleService-Info.plist peut aussi se trouver dans ce dossier).
 PLIST="$OUT_DIR/FruitVillage/FruitVillage-Info.plist"
 [ -f "$PLIST" ] || die "Info.plist du jeu introuvable : $PLIST"
 echo "Schéma Xcode : $SCHEME — Info.plist : $PLIST"
@@ -152,6 +145,12 @@ xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Release \
 	DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-" \
 	AD_HOC_CODE_SIGNING_ALLOWED=YES PROVISIONING_PROFILE_SPECIFIER="" PROVISIONING_PROFILE="" \
 	> "$OUT_DIR/archive.log" 2>&1 || { tail -60 "$OUT_DIR/archive.log"; die "archive en échec"; }
+# Aucun SDK Firebase / Google non signé dans l'app (refus Apple ITMS-91065).
+APP_FW="$(ls -d "$OUT_DIR"/FruitVillage.xcarchive/Products/Applications/*.app/Frameworks)"
+ls "$APP_FW"
+if ls "$APP_FW" | grep -qE "^(Firebase|GoogleUtilities|GoogleAppMeasurement|nanopb|FBLPromises|GoogleAdsOnDeviceConversion)"; then
+	die "frameworks Firebase présents dans l'app (non signés : refus Apple)"
+fi
 # Chaque binaire embarqué doit porter une signature avant l'export.
 unsigned=0
 for f in "$OUT_DIR"/FruitVillage.xcarchive/Products/Applications/*.app/Frameworks/*.framework; do
