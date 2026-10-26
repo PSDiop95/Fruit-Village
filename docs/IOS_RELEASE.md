@@ -160,7 +160,9 @@ par `ITSAppUsesNonExemptEncryption = false`).
 | Texte promotionnel | `store/ios/*/promotional_text.txt` |
 | Description | `store/ios/*/description.txt` |
 | Mots-clés | `store/ios/*/keywords.txt` (≤ 100 caractères, déjà ajustés) |
-| Captures iPhone 6,9" | `store/ios/screenshots/iphone_6_9/{fr,en}/` (1320×2868) |
+| Captures « iPhone avec Dynamic Island (grand écran) » 6,9" | `store/ios/screenshots/iphone_6_9/{fr,en}/` (1320×2868) |
+| Captures « iPhone avec Dynamic Island (écran moyen) » 6,3" | `store/ios/screenshots/iphone_6_3/{fr,en}/` (1206×2622) |
+| ⚠️ Jamais les captures Google Play | `store/screenshots/` (1080×1920) : refusées par Apple (ratio 9:16) |
 | Captures iPad 13" | `store/ios/screenshots/ipad_13/{fr,en}/` (2064×2752) |
 | Vidéo d'aperçu (facultatif) | `store/video/fruit_village_promo_20s_*.mp4` : à réencoder en 886×1920 pour l'iPhone si tu l'ajoutes |
 | URL d'assistance | https://fruit-village.netlify.app/ |
