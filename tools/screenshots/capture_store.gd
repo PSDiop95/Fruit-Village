@@ -3,7 +3,9 @@ extends SceneTree
 ## bandeau texte est ajouté par tools/screenshots/compose.py).
 ## Usage : tools/screenshots/make_screenshots.sh (xvfb-run sous Linux,
 ## fenêtre hors écran sous Windows). Direct :
-##   Godot --path . --resolution 1080x1920 -s tools/screenshots/capture_store.gd -- <dossier>
+##   Godot --path . --resolution 1080x1920 -s tools/screenshots/capture_store.gd -- <dossier> [LxH] [ios]
+## LxH : taille d'écran (défaut 1080x1920) ; « ios » : cadrage iPhone/iPad
+## (ScreenFit) appliqué comme sur un appareil iOS.
 ##
 ## Produit : 01_fusion, 02_combo, 03_album, 04_baobab, 05_missions, 06_rares (.png).
 ## Graine et positions fixes : captures identiques d'une exécution à l'autre.
@@ -32,8 +34,14 @@ func _run() -> void:
 	var win := root.get_window()
 	win.borderless = true
 	win.position = Vector2i.ZERO
-	win.size = Vector2i(1080, 1920)
+	var size := Vector2i(1080, 1920)
+	if args.size() > 1:
+		var wh := args[1].split("x")
+		size = Vector2i(int(wh[0]), int(wh[1]))
+	win.size = size
 	await _frames(10)
+	if args.size() > 2 and args[2] == "ios":
+		ScreenFit.apply(win, "iOS")
 	print("WINDOW %s" % win.size)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE))
 	var sm = _node("SaveManager")

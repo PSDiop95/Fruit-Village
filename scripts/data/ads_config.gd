@@ -44,6 +44,11 @@ const INTERSTITIAL := &"interstitial"
 @export var test_rewarded_id: String = "ca-app-pub-3940256099942544/5224354917"
 @export var test_interstitial_id: String = "ca-app-pub-3940256099942544/1033173712"
 
+@export_group("Identifiants de test Google (iOS)")
+@export var test_ios_app_id: String = "ca-app-pub-3940256099942544~1458002511"
+@export var test_ios_rewarded_id: String = "ca-app-pub-3940256099942544/1712485313"
+@export var test_ios_interstitial_id: String = "ca-app-pub-3940256099942544/4411468910"
+
 @export_group("Consentement UMP (debug uniquement)")
 ## Simule la zone EEE (formulaire RGPD) sur les appareils de test, en debug.
 @export var ump_debug_eea: bool = false

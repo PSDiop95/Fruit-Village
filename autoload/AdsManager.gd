@@ -92,7 +92,8 @@ func use_clock(c: MetaClock) -> void:
 ## Identifiants à utiliser (règles : AdIds).
 func ad_ids() -> Dictionary:
 	var debug := OS.is_debug_build()
-	return AdIds.resolve(config, debug, null if debug else AdIds.load_file())
+	return AdIds.resolve(config, debug, null if debug else AdIds.load_file(),
+		AdIds.current_platform())
 
 
 ## Le format a-t-il un identifiant de bloc ? (sinon jamais chargé ni proposé)

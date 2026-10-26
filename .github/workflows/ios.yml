@@ -1,0 +1,74 @@
+# Build iOS de Fruit Village sur un runner macOS (pas de Mac nécessaire).
+# - Pull request : contrôle sans secret (export debug + compilation non signée).
+# - Lancement manuel (Actions > iOS > Run workflow) : avec « upload » coché,
+#   tests + export release + archive signée + envoi sur TestFlight.
+# Rien n'est publié sur l'App Store : la soumission à la revue reste manuelle.
+# Secrets requis pour l'envoi : voir docs/IOS_RELEASE.md.
+name: iOS
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: "Envoyer le build sur TestFlight (sinon : contrôle seul)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios:
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      MODE: ${{ (github.event_name == 'workflow_dispatch' && inputs.upload) && 'upload' || 'check' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot et bibliothèques iOS
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ runner.temp }}/fv-ios/*.zip
+            ${{ runner.temp }}/fv-ios/*.tpz
+          key: fv-ios-godot-4.7.2-admob-5.1.0-firebase-3.1.0
+
+      - name: Secrets (mode upload)
+        if: env.MODE == 'upload'
+        env:
+          ADS_IDS_CFG: ${{ secrets.ADS_IDS_CFG }}
+          GOOGLE_SERVICE_INFO_PLIST_B64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_B64 }}
+          ASC_KEY_P8_B64: ${{ secrets.ASC_KEY_P8_B64 }}
+        run: |
+          printf '%s\n' "$ADS_IDS_CFG" > ads_ids.cfg
+          echo "$GOOGLE_SERVICE_INFO_PLIST_B64" | base64 --decode > GoogleService-Info.plist
+          mkdir -p "$RUNNER_TEMP/keys"
+          echo "$ASC_KEY_P8_B64" | base64 --decode > "$RUNNER_TEMP/keys/AuthKey.p8"
+          chmod 600 "$RUNNER_TEMP/keys/AuthKey.p8"
+
+      - name: Build iOS (${{ env.MODE }})
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_PATH: ${{ runner.temp }}/keys/AuthKey.p8
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: tools/ios/build_ios.sh "$MODE"
+
+      - name: Journaux
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-logs-${{ env.MODE }}
+          path: build/ios/*.log
+          if-no-files-found: ignore
+
+      - name: Nettoyage des secrets
+        if: always()
+        run: rm -f ads_ids.cfg GoogleService-Info.plist "$RUNNER_TEMP/keys/AuthKey.p8"

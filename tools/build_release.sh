@@ -58,7 +58,8 @@ if [ "$SKIP_TESTS" != "--skip-tests" ]; then
 	code=$?
 	set -e
 	grep -E "^(Tests|Passing Tests|Failing Tests|Pending|Risky)" build/release/tests.log | sed 's/\x1b\[[0-9;]*m//g' || true
-	if [ $code -ne 0 ] || ! grep -q "All tests passed" build/release/tests.log; then
+	# Code de sortie GUT + aucun test en échec (un test « en attente » n'est pas un échec).
+	if [ $code -ne 0 ] || sed 's/\x1b\[[0-9;]*m//g' build/release/tests.log | grep -qE "^Failing Tests +[1-9]"; then
 		die "tests en échec (build/release/tests.log) : pas d'export"
 	fi
 fi
