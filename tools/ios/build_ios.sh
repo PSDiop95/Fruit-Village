@@ -38,7 +38,7 @@ FIREBASE_SHA256="da7273def2ff744efacaab70e2ad863d65a4225ec401f5335de40a19df8170c
 
 die() { echo "ERREUR : $*" >&2; exit 1; }
 fetch() {  # fetch <url> <fichier> <algo> <empreinte>
-	[ -f "$2" ] || curl -fsSL --retry 3 -o "$2" "$1"
+	[ -f "$2" ] || curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -o "$2" "$1"
 	echo "$4  $2" | shasum -a "$3" -c - > /dev/null || die "empreinte invalide : $2"
 }
 preset_set() {  # preset_set <option> <valeur brute> : section options du preset iOS
