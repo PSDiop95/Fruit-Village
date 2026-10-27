@@ -237,6 +237,9 @@ func test_ios_preset() -> void:
 	# Game Center activé sur l'app dans App Store Connect : Apple refuse le
 	# binaire sans ce droit (« INVALID_BINARY »), même sans fonction Game Center.
 	assert_true(o["entitlements/game_center"], "droit Game Center")
+	# Godot écrit ces clés même vides ; vides, Apple invalide le binaire (ITMS-90683).
+	for key in ["camera", "microphone", "photolibrary"]:
+		assert_ne(str(o.get("privacy/%s_usage_description" % key, "")), "", "texte %s requis" % key)
 	assert_true(str(_value(p, "include_filter")).contains("ads_ids.cfg"))
 	assert_true(str(_value(p, "exclude_filter")).contains("GoogleService-Info.plist"))
 	var icon := Image.load_from_file(ProjectSettings.globalize_path(o["icons/icon_1024x1024"]))

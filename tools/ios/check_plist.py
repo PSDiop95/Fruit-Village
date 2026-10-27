@@ -36,6 +36,11 @@ def main() -> int:
 
     if not p.get("NSUserTrackingUsageDescription"):
         errors.append("NSUserTrackingUsageDescription manquant (ATT)")
+    # Godot lie AVFoundation (caméra, micro) : une clé de description vide
+    # invalide le binaire à la soumission (ITMS-90683).
+    for key, value in p.items():
+        if key.endswith("UsageDescription") and not str(value).strip():
+            errors.append(f"{key} vide (ITMS-90683)")
     if p.get("ITSAppUsesNonExemptEncryption") is not False:
         errors.append("ITSAppUsesNonExemptEncryption doit valoir false")
     skan = {d.get("SKAdNetworkIdentifier") for d in p.get("SKAdNetworkItems", [])}
