@@ -229,7 +229,11 @@ func test_ios_preset() -> void:
 	assert_string_contains(plist, "NSUserTrackingUsageDescription")
 	assert_string_contains(plist, "<key>ITSAppUsesNonExemptEncryption</key><false/>")
 	assert_string_contains(plist, "<key>UIRequiresFullScreen</key><true/>")
-	assert_true(o["privacy/tracking_enabled"])
+	# NSPrivacyTracking à true exige des NSPrivacyTrackingDomains, que iOS bloque
+	# sans accord ATT (plus de pubs) ; sans domaines, Apple invalide le binaire
+	# (ITMS-91064, build 22). Le SDK Google déclare son suivi dans son manifeste.
+	assert_false(o["privacy/tracking_enabled"], "NSPrivacyTracking false (ITMS-91064)")
+	assert_eq(Array(o["privacy/tracking_domains"]), [], "aucun domaine de suivi")
 	# Pas de Firebase sur iOS en 1.0 : les xcframeworks du plugin godotx ne sont
 	# pas signés par Google (refus automatique Apple ITMS-91065 / 91061).
 	assert_false(o["plugins/GodotxFirebaseCore"], "pas de Firebase iOS (SDK non signés)")

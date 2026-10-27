@@ -5,7 +5,8 @@ Usage : python3 tools/ios/check_plist.py <FruitVillage-Info.plist> <check|upload
 - App ID AdMob (GADApplicationIdentifier) : test Google en check, réel en upload ;
 - ads_ids.cfg dans le .pck : absent en check (debug), présent en upload ;
 - ATT (NSUserTrackingUsageDescription), chiffrement exempté, SKAdNetwork Google,
-  orientation portrait seule, plein écran iPad.
+  orientation portrait seule, plein écran iPad ;
+- PrivacyInfo.xcprivacy : NSPrivacyTracking false, aucun domaine (ITMS-91064).
 Code de sortie 1 si une règle est violée. Bibliothèque standard seulement.
 """
 import plistlib
@@ -53,6 +54,20 @@ def main() -> int:
         errors.append("orientation : portrait seul attendu")
     if p.get("UIRequiresFullScreen") is not True:
         errors.append("UIRequiresFullScreen doit valoir true (iPad, portrait seul)")
+
+    # Manifeste de confidentialité de l'app : NSPrivacyTracking et
+    # NSPrivacyTrackingDomains doivent concorder, sinon binaire invalide (ITMS-91064).
+    manifests = list(plist_path.parent.glob("PrivacyInfo.xcprivacy")) + list(
+        plist_path.parent.parent.glob("PrivacyInfo.xcprivacy"))
+    if not manifests:
+        errors.append("PrivacyInfo.xcprivacy introuvable")
+    for m in manifests:
+        priv = plistlib.loads(m.read_bytes())
+        tracking = priv.get("NSPrivacyTracking")
+        domains = priv.get("NSPrivacyTrackingDomains", [])
+        print(f"  {m.name} : NSPrivacyTracking={tracking}, domaines={len(domains)}")
+        if tracking is not False or domains:
+            errors.append(f"{m.name} : NSPrivacyTracking false sans domaines attendu (ITMS-91064)")
 
     # Godot range le .pck à côté du projet Xcode (build/ios/), pas toujours dans
     # le dossier de l'Info.plist : on cherche aux deux endroits.
