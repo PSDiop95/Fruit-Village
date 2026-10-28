@@ -69,14 +69,14 @@ func _band_px(canvas: Vector2) -> float:
 
 
 func _layout_ring_size() -> float:
-	var canvas := get_viewport().get_visible_rect().size
+	var canvas := ScreenFit.safe_rect(get_viewport()).size
 	return clampf(_band_px(canvas) - PILL_BELOW - 40.0, RING_MIN, RING_MAX)
 
 
 ## En bas de l'écran : centrée dans la bande réservée (écrans allongés), sinon
-## posée sur la frise du bas du cadre (16:9).
+## posée sur la frise du bas du cadre (16:9). Repère : la zone sûre (parent).
 func _place_row() -> void:
-	var canvas := get_viewport().get_visible_rect().size
+	var canvas := ScreenFit.safe_rect(get_viewport()).size
 	var band := _band_px(canvas)
 	_row.size = Vector2(1080.0, _ring_size)
 	var y := canvas.y - _ring_size - PILL_BELOW - 10.0
@@ -267,6 +267,7 @@ func _show_aim() -> void:
 	tint.set_anchors_preset(Control.PRESET_FULL_RECT)
 	tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	aim_overlay.add_child(tint)
+	ScreenFit.bleed_to_screen(tint)
 	var banner := MetaUi.outlined("Touche un fruit à écraser", 56, UiTheme.CREAM, 14)
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	# En haut, sous la barre « Prochain » : loin d'« Annuler » (en bas).

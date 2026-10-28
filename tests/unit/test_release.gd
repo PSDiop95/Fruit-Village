@@ -263,12 +263,38 @@ func test_release_plugin_loads_before_admob() -> void:
 
 
 func test_screen_fit_letterbox_rules() -> void:
-	assert_true(ScreenFit.needs_letterbox("iOS", Vector2(1179, 2556)), "iPhone : encoche")
-	assert_true(ScreenFit.needs_letterbox("iOS", Vector2(2064, 2752)), "iPad")
-	assert_true(ScreenFit.needs_letterbox("Android", Vector2(1600, 2560)), "tablette Android")
-	assert_false(ScreenFit.needs_letterbox("Android", Vector2(1080, 2408)), "téléphone Android : inchangé")
-	assert_false(ScreenFit.needs_letterbox("Android", Vector2(1080, 1920)))
-	assert_false(ScreenFit.needs_letterbox("iOS", Vector2.ZERO))
+	assert_false(ScreenFit.needs_letterbox(Vector2(1179, 2556)), "iPhone : plein écran, zone sûre")
+	assert_true(ScreenFit.needs_letterbox(Vector2(2064, 2752)), "iPad")
+	assert_true(ScreenFit.needs_letterbox(Vector2(1600, 2560)), "tablette Android")
+	assert_false(ScreenFit.needs_letterbox(Vector2(1080, 2408)), "téléphone Android : inchangé")
+	assert_false(ScreenFit.needs_letterbox(Vector2(1080, 1920)))
+	assert_false(ScreenFit.needs_letterbox(Vector2.ZERO))
+
+
+## iPhone : interface et cadrage dans la zone sûre, décor plein écran ; le
+## panier y occupe la même place qu'en 9:16 sans encoche.
+func test_safe_area_layout() -> void:
+	var saved := ScreenFit.safe_insets
+	var vp := SubViewport.new()
+	vp.size = Vector2i(1080, 2341)  # iPhone 6,1" au canevas de 1080 de large
+	add_child_autofree(vp)
+	var cfg: GameConfig = load("res://data/game_config.tres")
+	ScreenFit.safe_insets = Vector2.ZERO
+	assert_eq(ScreenFit.safe_rect(vp), Rect2(0, 0, 1080, 2341), "sans encoche : écran entier")
+	var cam_full := Game.camera_y(cfg, vp)
+	assert_almost_eq(cam_full, Game.camera_center_y(cfg, 2341.0 / 1080.0), 0.0001)
+	ScreenFit.safe_insets = ScreenFit.IPHONE_INSETS
+	var safe := ScreenFit.safe_rect(vp)
+	assert_almost_eq(safe.position.y, 2341.0 * 59.0 / 852.0, 0.01, "sous la Dynamic Island")
+	assert_almost_eq(safe.end.y, 2341.0 * (1.0 - 34.0 / 852.0), 0.01, "au-dessus de la barre d'accueil")
+	# Le bas du panier (y = 0 dans le monde) tombe au même endroit de la zone
+	# sûre que sur un écran de la taille de cette zone, sans encoche.
+	var w := cfg.basket_inner_width + cfg.wall_thickness * 2.0 + cfg.camera_side_margin
+	var ppm := 1080.0 / w
+	var floor_on_screen := 2341.0 * 0.5 + Game.camera_y(cfg, vp) * ppm
+	var floor_in_safe := TitleScreen.basket_screen_rect(safe.size).end.y
+	assert_almost_eq(floor_on_screen - safe.position.y, floor_in_safe, 0.5)
+	ScreenFit.safe_insets = saved
 
 # ---------------------------------------------------------------- Debug off
 

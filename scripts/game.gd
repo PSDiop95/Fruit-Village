@@ -140,7 +140,9 @@ func _build_environment() -> void:
 	_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	_camera.keep_aspect = Camera3D.KEEP_WIDTH
 	_camera.size = config.basket_inner_width + config.wall_thickness * 2.0 		+ config.camera_side_margin
-	_camera.position = Vector3(0, camera_center_y(config, _viewport_aspect()), 20)
+	var cam_y := camera_y(config, get_viewport()) if is_inside_tree() \
+		else camera_center_y(config, _viewport_aspect())
+	_camera.position = Vector3(0, cam_y, 20)
 	_camera.current = true
 	add_child(_camera)
 
@@ -600,6 +602,17 @@ static func camera_center_y(cfg: GameConfig, aspect_hw: float) -> float:
 	var ref_center := cfg.basket_height * 0.5 + cfg.camera_y_offset
 	var bottom := ref_center - w * 16.0 / 9.0 * 0.5
 	return bottom - bottom_band_world(cfg, aspect_hw) + w * maxf(aspect_hw, 16.0 / 9.0) * 0.5
+
+
+## Centre vertical de la caméra pour `vp` : cadrage calculé dans la zone sûre
+## (ScreenFit.safe_rect), puis décalé pour que ce cadrage tombe dans la zone
+## sûre de l'écran ; le décor remplit le reste (encoche, barre d'accueil).
+static func camera_y(cfg: GameConfig, vp: Viewport) -> float:
+	var view := vp.get_visible_rect().size
+	var safe := ScreenFit.safe_rect(vp)
+	var w := cfg.basket_inner_width + cfg.wall_thickness * 2.0 + cfg.camera_side_margin
+	var shift := (safe.get_center().y - view.y * 0.5) * w / maxf(view.x, 1.0)
+	return camera_center_y(cfg, safe.size.y / maxf(safe.size.x, 1.0)) + shift
 
 
 ## Hauteur (m) de la bande du bas réservée à l'UI : 0 en 16:9, au plus

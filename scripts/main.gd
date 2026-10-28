@@ -113,8 +113,7 @@ func _make_backdrop() -> Node3D:
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 	cam.keep_aspect = Camera3D.KEEP_WIDTH
 	cam.size = cfg.basket_inner_width + cfg.wall_thickness * 2.0 + cfg.camera_side_margin
-	var vs := get_viewport().get_visible_rect().size
-	cam.position = Vector3(0, Game.camera_center_y(cfg, vs.y / maxf(vs.x, 1.0)), 20)
+	cam.position = Vector3(0, Game.camera_y(cfg, get_viewport()), 20)
 	root.add_child(cam)
 	cam.current = true
 	return root

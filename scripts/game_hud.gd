@@ -90,6 +90,7 @@ func _build() -> void:
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
+	ScreenFit.fit_to_safe(_root)
 
 	# --- Bandeau haut : planche du score | bouton pause | anneau « Suivant »
 	# (éléments peints : assets/ui/hud/, découpés par tools/prepare_ui_art.gd)
