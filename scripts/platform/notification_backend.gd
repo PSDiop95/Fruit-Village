@@ -1,7 +1,7 @@
 class_name NotificationBackend
 extends Node
 ## Interface des notifications locales. MockNotifications (dev, tests) ou
-## AndroidNotifications (plugin « Notification Scheduler »).
+## MobileNotifications (plugin « Notification Scheduler », Android + iOS).
 
 func backend_name() -> String:
 	return "mock"

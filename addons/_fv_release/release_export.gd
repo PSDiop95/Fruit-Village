@@ -59,6 +59,8 @@ const REMOVED_PERMISSIONS: Array[String] = [
 	"android.permission.ACCESS_ADSERVICES_AD_ID",  # Firebase : Privacy Sandbox, non utilisé
 	"android.permission.ACCESS_ADSERVICES_ATTRIBUTION",  # idem
 	"android.permission.AD_ID",  # nom erroné du plugin AdMob ; la vraie est com.google.android.gms.permission.AD_ID
+	"android.permission.SCHEDULE_EXACT_ALARM",  # rappels : heure approximative suffit (déclaration Play évitée)
+	"android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",  # rappels : jamais demandé (politique Play)
 ]
 
 

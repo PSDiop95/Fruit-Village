@@ -55,7 +55,11 @@ __pycache__/
 
 # iOS : configuration Firebase (secret) et plugins natifs téléchargés par tools/ios/build_ios.sh
 GoogleService-Info.plist
-/ios/
+/ios/*
+!/ios/plugins/
+/ios/plugins/*
+# Rappels locaux (Notification Scheduler v6) : lib statique légère, versionnée
+!/ios/plugins/NotificationSchedulerPlugin*
 # Clé API App Store Connect (privée) : jamais versionnée, à ranger hors du projet
 *.p8
 AuthKey_*

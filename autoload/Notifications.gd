@@ -9,7 +9,7 @@ var clock := MetaClock.new()
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	backend = AndroidNotifications.new() if AndroidNotifications.available() \
+	backend = MobileNotifications.new() if MobileNotifications.available() \
 		else MockNotifications.new()
 	add_child(backend)
 	DailyRewards.claimed.connect(func(_i: int, _r: DailyRewardDef, _s: int) -> void: reschedule())
@@ -20,7 +20,7 @@ func _ready() -> void:
 	reschedule.call_deferred()
 
 
-## Déblocage du cadeau du jour : permission (Android 13+) puis premiers rappels.
+## Déblocage du cadeau du jour : permission (Android 13+, iOS) puis premiers rappels.
 func _on_level_up(_level: int, unlocks: Array[StringName], _coins: int) -> void:
 	if ProgressionCore.DAILY in unlocks:
 		request_permission()
@@ -51,6 +51,6 @@ func reschedule() -> void:
 		backend.schedule(n["id"], n["delay"], n["title"], n["text"])
 
 
-## Au déblocage de la connexion quotidienne (Android 13+ : permission).
+## Au déblocage de la connexion quotidienne (Android 13+ et iOS : permission).
 func request_permission() -> void:
 	backend.request_permission()

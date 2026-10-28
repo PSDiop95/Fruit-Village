@@ -60,7 +60,7 @@ n'est comptée qu'une fois.
 |---|---|---|---|
 | AdMob + UMP | **Poing Studios « Godot AdMob » v5.1.0** (installé) (sept. 2026, testé jusqu'à Godot 4.7.2) — github.com/poingstudios/godot-admob-plugin | Le plus maintenu (releases régulières, nightly oct. 2026), Android + iOS, UMP intégré, pubs simulées dans l'éditeur, MIT | Installé, APK Gradle produit ; adaptateur `AdMobAds` vérifié contre le code du plugin. **Non exécuté sur téléphone** |
 | Firebase Analytics | **Godotx Firebase** (godot-x/firebase, v2.5.0, cible Godot 4.7) | Seul plugin Firebase à jour avec Analytics + consentement (`set_consent`, collecte désactivée par défaut) | `FirebaseAnalytics` écrit, non exécuté |
-| Notifications locales | **Notification Scheduler** (godot-mobile-plugins, v5.2) | Le plus suivi ; canaux, permission Android 13+, annulation | Interface + **mock** ; `AndroidNotifications` écrit, **non validé sur téléphone** |
+| Notifications locales | **Notification Scheduler** (godot-mobile-plugins, v5.2) | Le plus suivi ; canaux, permission Android 13+, annulation | Interface + **mock** ; `MobileNotifications` (v6, Android + iOS) **non validé sur téléphone** |
 | Partage natif | **Share** (godot-mobile-plugins/godot-share) | Même éditeur que ci-dessus | Interface ; sans plugin : image dans `user://share/` + texte copié |
 
 Les noms de méthodes AdMob/UMP diffèrent légèrement entre README et doc du
