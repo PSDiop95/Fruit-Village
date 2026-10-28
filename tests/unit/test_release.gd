@@ -262,6 +262,30 @@ func test_release_plugin_loads_before_admob() -> void:
 		enabled.find("res://addons/admob/plugin.cfg"))
 
 
+## Rappels locaux Android + iOS : plugin Notification Scheduler activé, lib iOS
+## statique (rien à signer), icône Android monochrome, permissions Play évitées.
+func test_notifications_plugin_ready() -> void:
+	var enabled: PackedStringArray = ProjectSettings.get_setting("editor_plugins/enabled")
+	assert_true(enabled.has("res://addons/NotificationSchedulerPlugin/plugin.cfg"), "plugin éditeur activé")
+	var all := _presets()
+	if all.has(IOS_PRESET):
+		assert_true(all[IOS_PRESET]["options"].get("plugins/NotificationSchedulerPlugin", false),
+			"plugin iOS activé dans le preset")
+	var gdip := ConfigFile.new()
+	assert_eq(gdip.load("res://ios/plugins/NotificationSchedulerPlugin.gdip"), OK)
+	assert_eq(Array(gdip.get_value("dependencies", "embedded", [])), [], "aucun framework embarqué à signer")
+	for v in ["debug", "release"]:
+		assert_true(FileAccess.file_exists(
+			"res://ios/plugins/NotificationSchedulerPlugin.%s.xcframework/ios-arm64/NotificationSchedulerPlugin.a" % v))
+	var icon := Image.load_from_file(ProjectSettings.globalize_path(
+		"res://assets/NotificationSchedulerPlugin/android/drawable-xxxhdpi/ic_notification.png"))
+	assert_eq(icon.get_size(), Vector2i(96, 96), "icône de notification Android")
+	var removed: Array[String] = preload("res://addons/_fv_release/release_export.gd").REMOVED_PERMISSIONS
+	assert_true(removed.has("android.permission.SCHEDULE_EXACT_ALARM"), "pas d'alarme exacte (déclaration Play)")
+	assert_true(removed.has("android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"))
+	assert_false(removed.has("android.permission.POST_NOTIFICATIONS"), "permission Android 13+ gardée")
+
+
 func test_screen_fit_letterbox_rules() -> void:
 	assert_false(ScreenFit.needs_letterbox(Vector2(1179, 2556)), "iPhone : plein écran, zone sûre")
 	assert_true(ScreenFit.needs_letterbox(Vector2(2064, 2752)), "iPad")
@@ -313,5 +337,9 @@ func test_debug_menu_and_fps_debug_only() -> void:
 func test_secrets_are_git_ignored() -> void:
 	var gi := FileAccess.get_file_as_string("res://.gitignore")
 	for pat in ["ads_ids.cfg", "export_credentials.cfg", "*.keystore", "*.jks",
-			"google-services.json", "GoogleService-Info.plist", "/ios/", "*.p8"]:
+			"google-services.json", "GoogleService-Info.plist", "/ios/*", "/ios/plugins/*", "*.p8"]:
 		assert_true(gi.split("\n").has(pat), ".gitignore : %s" % pat)
+	# Seule exception sous ios/ : la lib statique des rappels locaux.
+	for line in gi.split("\n"):
+		if line.begins_with("!/ios/"):
+			assert_true(line in ["!/ios/plugins/", "!/ios/plugins/NotificationSchedulerPlugin*"], line)
