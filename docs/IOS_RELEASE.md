@@ -19,7 +19,7 @@ Exigences vérifiées le 26/10/2026 :
 | Élément | Où |
 |---|---|
 | Bundle ID `com.smartiaservices.fruitvillage`, iPhone + iPad, iOS 15+, portrait | preset « iOS Release » (`export_presets.cfg`) |
-| Cadre 9:16 centré : rien sous l'encoche ni hors de l'écran iPad | `scripts/platform/screen_fit.gd` |
+| iPhone plein écran : décor jusqu'aux bords, interface et panier dans la zone sûre (Dynamic Island, barre d'accueil) ; iPad : cadre 9:16 centré | `scripts/platform/screen_fit.gd` |
 | App ID AdMob iOS réel en release, test Google en debug | `addons/_fv_release`, `scripts/ads/ad_ids.gd` |
 | ATT (`NSUserTrackingUsageDescription`), chiffrement exempté, plein écran iPad | preset (Info.plist) ; contrôlé par `tools/ios/check_plist.py` |
 | SKAdNetwork Google | plugin AdMob |

@@ -36,7 +36,8 @@ func _ready() -> void:
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
-	var basket := basket_screen_rect(get_viewport().get_visible_rect().size)
+	ScreenFit.fit_to_safe(_root)
+	var basket := basket_screen_rect(ScreenFit.safe_rect(get_viewport()).size)
 
 	# Logo : centré dans la bande de ciel au-dessus du cadre.
 	logo = TextureRect.new()

@@ -41,7 +41,7 @@ func _run() -> void:
 	win.size = size
 	await _frames(10)
 	if args.size() > 2 and args[2] == "ios":
-		ScreenFit.apply(win, "iOS")
+		ScreenFit.apply(win, "iOS", ScreenFit.IPHONE_INSETS)
 	print("WINDOW %s" % win.size)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE))
 	var sm = _node("SaveManager")

@@ -58,6 +58,9 @@ func _init() -> void:
 
 
 func _enter_tree() -> void:
+	# Parent souvent ramené à la zone sûre (ScreenFit) : le voile déborde sur
+	# l'encoche et la barre d'accueil (hors écran sinon, sans effet).
+	ScreenFit.bleed_to_screen(self)
 	if _capture_pending:
 		capture()
 
