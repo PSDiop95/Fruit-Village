@@ -28,6 +28,13 @@ extends Resource
 ## Masse = mass_per_area * rayon².
 @export var mass_per_area: float = 1.0
 @export var max_contacts: int = 8
+## Collision calée sur la boîte XY du modèle 3D (sinon sphère du rayon, qui
+## dépasse des fruits allongés et laisse des vides) : sphère pour les fruits
+## ronds, capsule verticale au-delà de cet allongement (hauteur / largeur).
+@export var collider_from_model: bool = true
+@export var capsule_min_elongation: float = 1.12
+## Part de la boîte du modèle couverte par la collision (< 1 : contact visuel).
+@export_range(0.8, 1.05) var collider_fit: float = 0.97
 
 @export_group("Lâcher")
 @export var drop_cooldown: float = 0.4

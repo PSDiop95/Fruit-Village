@@ -24,18 +24,49 @@ func test_modele_et_ancre_de_visage_charges() -> void:
 		assert_lt(m.face_position.length(), def.radius * 1.01, "visage dans le rayon : %s" % def.id)
 
 
-func test_collision_inchangee_par_le_modele() -> void:
+## Collision calée sur le modèle : jamais plus large que le fruit visible
+## (pas de « vide invisible »), capsule pour les fruits allongés.
+func test_collision_epouse_le_modele() -> void:
 	var config: GameConfig = preload("res://data/game_config.tres")
 	for i in catalog.count():
 		var def := catalog.get_def(i)
+		var m := FruitModels.get_model(def.id)
 		var f := Fruit.new()
 		f.setup(i, def, config, juice)
 		var shapes := f.find_children("*", "CollisionShape3D", false, false)
 		assert_eq(shapes.size(), 1)
-		var s := (shapes[0] as CollisionShape3D).shape as SphereShape3D
-		assert_not_null(s, "collision sphère : %s" % def.id)
-		assert_almost_eq(s.radius, def.radius, 0.0001)
+		var s := f.collision_shape()
+		if m == null:
+			assert_almost_eq((s as SphereShape3D).radius, def.radius, 0.0001)
+			f.free()
+			continue
+		var box := m.mesh.get_aabb()
+		var half_w: float = s.radius
+		var half_max := maxf(box.size.x, box.size.y) * 0.5
+		assert_lt(half_w, half_max + 0.001, "pas plus large que le modèle : %s" % def.id)
+		assert_lt(half_w, def.radius + 0.001, "jamais plus large qu'avant : %s" % def.id)
+		assert_gt(half_w, box.size.x * 0.5 * 0.85, "assez large : %s" % def.id)
+		var elongated := box.size.y >= box.size.x * config.capsule_min_elongation
+		assert_eq(s is CapsuleShape3D, elongated, "capsule si allongé : %s" % def.id)
+		assert_almost_eq(f.size_factor(), 1.0, 0.0001)
+		f.set_size_factor(0.7)
+		assert_almost_eq(s.radius, half_w * 0.7, 0.0001, "grandit avec le fruit")
 		f.free()
+	var mango := catalog.get_def(6)
+	assert_eq(mango.id, &"mangue")
+	assert_ne(FruitModels.collider_dims(mango, config).y, 0.0, "mangue en capsule")
+
+
+func test_top_y_suit_l_inclinaison_de_la_capsule() -> void:
+	var config: GameConfig = preload("res://data/game_config.tres")
+	var f := Fruit.new()
+	f.setup(6, catalog.get_def(6), config, juice)
+	add_child_autofree(f)
+	var d := FruitModels.collider_dims(catalog.get_def(6), config)
+	f.global_position = Vector3.ZERO
+	assert_almost_eq(f.top_y(), d.z + d.y * 0.5, 0.001, "debout : demi-hauteur")
+	f.rotation.z = PI * 0.5
+	assert_almost_eq(f.top_y(), d.x, 0.001, "couchée : rayon")
 
 
 func test_halo_seulement_sur_pain_de_singe() -> void:

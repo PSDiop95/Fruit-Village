@@ -54,6 +54,22 @@ static func get_model(id: StringName) -> Model:
 	return m
 
 
+## Collision calée sur le modèle : (rayon, hauteur totale ou 0 pour une
+## sphère, décalage vertical du centre), en mètres. Sans modèle : sphère du
+## rayon du fruit.
+static func collider_dims(def: FruitDef, cfg: GameConfig) -> Vector3:
+	var m := get_model(def.id) if cfg.collider_from_model else null
+	if m == null:
+		return Vector3(def.radius, 0.0, 0.0)
+	var box := m.mesh.get_aabb()
+	var w := box.size.x * cfg.collider_fit
+	var h := box.size.y * cfg.collider_fit
+	var cy := box.get_center().y
+	if h < w * cfg.capsule_min_elongation:
+		return Vector3((w + h) * 0.25, 0.0, cy)
+	return Vector3(w * 0.5, h, cy)
+
+
 static func _extract(scene: PackedScene) -> Model:
 	if scene == null:
 		return null
@@ -110,7 +126,8 @@ static func set_quality(level: int) -> void:
 	quality = level
 	_ensure_materials()
 	var cfg := get_config()
-	var outline: Material = _outline if level >= cfg.outline_min_quality else null
+	var outline: Material = _outline \
+		if cfg.fruit_outline and level >= cfg.outline_min_quality else null
 	_material.next_pass = outline
 	_material_low.next_pass = outline
 
