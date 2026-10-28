@@ -104,7 +104,8 @@ func test_quality_setting_applies_to_game() -> void:
 	assert_false(m.game.juice().auto_quality_allowed, "réglage manuel : pas de baisse auto")
 	assert_null(FruitModels.fruit_material().next_pass, "Bas : pas de contour")
 	m.game.set_quality(JuiceConfig.Quality.HIGH)
-	assert_not_null(FruitModels.fruit_material().next_pass, "Haut : contour")
+	assert_eq(FruitModels.fruit_material().next_pass != null, FruitModels.get_config().fruit_outline,
+		"Haut : contour seulement si activé (fruits sans contour par défaut)")
 
 
 func test_auto_quality_rules() -> void:

@@ -350,6 +350,36 @@ func test_music_crossfades_without_gap() -> void:
 	Audio.stop_music()
 
 
+## Temps figé (ralenti, pause) : la playlist continue de boucler (avant : les
+## deux morceaux s'achevaient pendant un fondu bloqué, puis silence).
+func test_music_keeps_looping_when_time_is_frozen() -> void:
+	var a := _silent_track(1.2)
+	var b := _silent_track(1.2)
+	Audio.stop_music()
+	Audio.play_music_playlist([a, b] as Array[AudioStream], null, 1.0, 0.4)
+	Engine.time_scale = 0.0
+	var silent_frames := 0
+	var t0 := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - t0 < 4500:
+		await get_tree().process_frame
+		if not (Audio._music.playing or Audio._next_music.playing):
+			silent_frames += 1
+	Engine.time_scale = 1.0
+	assert_eq(silent_frames, 0, "jamais de silence, plus de 3 morceaux enchaînés")
+	Audio.stop_music()
+
+
+func test_title_screen_starts_music() -> void:
+	Audio.stop_music()
+	var main := (load("res://scenes/Main.tscn") as PackedScene).instantiate()
+	add_child_autofree(main)
+	await wait_process_frames(5)
+	assert_true(Audio._music.playing, "musique dès le menu")
+	var cfg: JuiceConfig = load("res://data/juice.tres")
+	assert_eq(Audio._music.stream, cfg.sounds.music_tracks[0])
+	Audio.stop_music()
+
+
 # ---------------------------------------------------------------- Clôture de partie
 
 func test_finalize_gives_coins_xp_and_events_once() -> void:

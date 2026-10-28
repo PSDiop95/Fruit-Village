@@ -204,6 +204,9 @@ extends Resource
 @export_group("Qualité")
 ## Contour et rim light activés à partir de ce niveau (JuiceConfig.Quality).
 @export var outline_min_quality: int = 1
+## Contour des fruits (passe d'inversion de normales). Coupé : il n'apparaissait
+## qu'en qualité Moyen/Haut, d'où des fruits tantôt cernés de noir, tantôt non.
+@export var fruit_outline: bool = false
 @export var rim_min_quality: int = 1
 ## Résolution 3D (part de l'écran, upscale FSR) par niveau Bas / Moyen / Haut.
 ## Mesures Galaxy A23 (Adreno 610) : 80 % → 38 FPS, 70 % → 45 FPS.

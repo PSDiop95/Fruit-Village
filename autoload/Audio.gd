@@ -26,6 +26,7 @@ var _fade_time: float = 1.5
 var _next_music: AudioStreamPlayer
 var _crossfade: float = 4.0
 var _xfade: float = -1.0
+var _last_usec: int = 0
 var _lowpass: AudioEffectLowPassFilter
 var _rng := RandomNumberGenerator.new()
 var _rate: Dictionary = {}  # clé -> PackedFloat64Array (instants des derniers sons, s)
@@ -160,6 +161,17 @@ func play_music_playlist(tracks: Array[AudioStream], tension: AudioStream = null
 	_apply_music_volumes()
 
 
+## Musique de fond du jeu (morceaux + tension) selon `cfg` : lancée dès l'écran
+## titre (Main) et reprise sans coupure en partie (Juice).
+func start_game_music(cfg: JuiceConfig) -> void:
+	var s := cfg.sounds
+	if s and not s.music_tracks.is_empty():
+		play_music_playlist(s.music_tracks, s.music_tension, cfg.tension_fade_time,
+			cfg.music_crossfade_time)
+	else:
+		play_music(s.music if s else null)
+
+
 ## true : la piste de tension prend le dessus (fondu), false : retour au calme.
 func set_tension(on: bool) -> void:
 	_tension_target = 1.0 if on and _tension_stream else 0.0
@@ -178,20 +190,31 @@ func stop_music() -> void:
 	_xfade = -1.0
 
 
-## Filet de sécurité (morceau plus court que le fondu, stream sans longueur).
+## Filet de sécurité (morceau plus court que le fondu, stream sans longueur) :
+## jamais de silence durable, même si un fondu n'a pas pu se terminer.
 func _on_music_finished(player: AudioStreamPlayer) -> void:
-	if player != _music or _xfade >= 0.0:
+	if player != _music:
 		return
+	if _xfade >= 0.0:
+		if _next_music.playing:
+			_finish_crossfade()
+			return
+		_xfade = -1.0
 	if not _playlist.is_empty():
 		_track = (_track + 1) % _playlist.size()
 		_music.stream = _playlist[_track]
 	_music.play()
 
 
-func _process(delta: float) -> void:
-	_update_crossfade(delta)
+func _process(_delta: float) -> void:
+	# Temps réel : le ralenti (Engine.time_scale) et la pause ne figent jamais
+	# la musique.
+	var now := Time.get_ticks_usec()
+	var real_dt := minf((now - _last_usec) / 1000000.0, 0.25) if _last_usec > 0 else 0.0
+	_last_usec = now
+	_update_crossfade()
 	if not is_equal_approx(_tension_level, _tension_target):
-		_tension_level = move_toward(_tension_level, _tension_target, delta / _fade_time)
+		_tension_level = move_toward(_tension_level, _tension_target, real_dt / _fade_time)
 		if _tension_level > 0.0 and not _tension.playing and _tension_stream:
 			_tension.stream = _tension_stream
 			_tension.play()
@@ -202,10 +225,13 @@ func _process(delta: float) -> void:
 
 ## Fondu croisé : `_crossfade` s avant la fin du morceau, le suivant démarre
 ## dans le second lecteur ; à la fin du fondu, les lecteurs s'échangent.
-func _update_crossfade(delta: float) -> void:
-	if _playlist.size() == 0 or not _music.playing or _crossfade <= 0.0:
+## Avancement lu sur la position de lecture du morceau entrant (horloge audio).
+func _update_crossfade() -> void:
+	if _playlist.size() == 0 or _crossfade <= 0.0:
 		return
 	if _xfade < 0.0:
+		if not _music.playing:
+			return
 		var left := _music.stream.get_length() - _music.get_playback_position()
 		if _music.stream.get_length() > _crossfade * 2.0 and left <= _crossfade:
 			_track = (_track + 1) % _playlist.size()
@@ -213,13 +239,17 @@ func _update_crossfade(delta: float) -> void:
 			_next_music.play()
 			_xfade = 0.0
 		return
-	_xfade = minf(_xfade + delta / _crossfade, 1.0)
-	if _xfade >= 1.0:
-		_music.stop()
-		var p := _music
-		_music = _next_music
-		_next_music = p
-		_xfade = -1.0
+	_xfade = minf(_next_music.get_playback_position() / _crossfade, 1.0)
+	if _xfade >= 1.0 or not _music.playing:
+		_finish_crossfade()
+
+
+func _finish_crossfade() -> void:
+	_music.stop()
+	var p := _music
+	_music = _next_music
+	_next_music = p
+	_xfade = -1.0
 
 
 ## Volumes : fondu croisé entre morceaux × part « calme » face à la tension

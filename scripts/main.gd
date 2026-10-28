@@ -55,6 +55,10 @@ func show_title() -> void:
 	add_child(title)
 	title.play_pressed.connect(start_game)
 	curtain.reveal()
+	# Musique dès l'écran titre ; la partie la reprend sans coupure.
+	Audio.start_game_music(load("res://data/juice.tres"))
+	Audio.set_tension(false)
+	Audio.set_danger_filter(0.0)
 
 
 func start_game() -> void:

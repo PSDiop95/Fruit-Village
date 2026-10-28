@@ -13,7 +13,11 @@ var merging: bool = false
 ## Secondes depuis l'apparition (pour la tolérance de la ligne de danger).
 var age: float = 0.0
 
-var _shape: SphereShape3D
+var _shape: Shape3D
+var _col: CollisionShape3D
+## Collision au facteur 1 : rayon, hauteur totale (0 = sphère), centre en y.
+var _dims := Vector3(0.3, 0.0, 0.0)
+var _size_factor: float = 1.0
 var _visual: FruitVisual
 var _prev_velocity := Vector3.ZERO
 var _impact_min_speed: float = INF
@@ -42,12 +46,14 @@ func setup(p_rank: int, def: FruitDef, config: GameConfig, juice: JuiceConfig) -
 	mat.friction = config.friction
 	physics_material_override = mat
 
-	# Collision : forme propre à chaque fruit pour pouvoir la faire grandir.
-	_shape = SphereShape3D.new()
-	_shape.radius = radius
-	var col := CollisionShape3D.new()
-	col.shape = _shape
-	add_child(col)
+	# Collision calée sur le modèle (sphère ou capsule), propre à chaque fruit
+	# pour pouvoir la faire grandir.
+	_dims = FruitModels.collider_dims(def, config)
+	_shape = SphereShape3D.new() if _dims.y <= 0.0 else CapsuleShape3D.new()
+	_col = CollisionShape3D.new()
+	_col.shape = _shape
+	add_child(_col)
+	_apply_shape(1.0)
 
 	# Visuel (placeholder M2 : sphère + visage)
 	_impact_min_speed = juice.impact_min_speed
@@ -101,12 +107,28 @@ func vanish_toward(point: Vector3, duration: float) -> void:
 
 ## Facteur de taille appliqué au visuel ET à la collision.
 func set_size_factor(f: float) -> void:
-	_shape.radius = radius * f
+	_apply_shape(f)
 	_visual.scale = Vector3.ONE * f
 
 
 func size_factor() -> float:
-	return _shape.radius / radius
+	return _size_factor
+
+
+func _apply_shape(f: float) -> void:
+	_size_factor = f
+	if _shape is CapsuleShape3D:
+		var cap := _shape as CapsuleShape3D
+		cap.radius = _dims.x * f
+		cap.height = _dims.y * f
+	else:
+		(_shape as SphereShape3D).radius = _dims.x * f
+	_col.position = Vector3(0, _dims.z * f, 0)
+
+
+## Forme de collision (tests, réglages).
+func collision_shape() -> Shape3D:
+	return _shape
 
 
 ## Apparition après fusion : grossit de `start` à 1 en `duration` s.
@@ -118,8 +140,12 @@ func grow_in(start: float, duration: float) -> void:
 
 
 ## Haut du fruit (y monde).
+## Capsule : selon l'inclinaison (seule la rotation Z est libre).
 func top_y() -> float:
-	return global_position.y + _shape.radius
+	var up := global_transform.basis.y
+	var center_y := global_position.y + up.y * _dims.z * _size_factor
+	var half_seg := maxf(_dims.y * 0.5 - _dims.x, 0.0) * _size_factor
+	return center_y + absf(up.y) * half_seg + _dims.x * _size_factor
 
 
 ## Fusion possible avec `other` ?

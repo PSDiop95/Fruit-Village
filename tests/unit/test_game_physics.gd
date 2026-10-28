@@ -53,8 +53,9 @@ func test_different_fruits_do_not_merge() -> void:
 
 
 func test_triple_contact_does_not_duplicate() -> void:
-	# Trois bissaps qui se touchent simultanément dès la 1re frame.
-	var r := game.catalog.get_def(1).radius
+	# Trois bissaps qui se touchent simultanément dès la 1re frame (rayon de
+	# collision, calé sur le modèle).
+	var r := FruitModels.collider_dims(game.catalog.get_def(1), game.config).x
 	_spawn(1, -2.0 * r, r)
 	_spawn(1, 0.0, r)
 	_spawn(1, 2.0 * r, r)
