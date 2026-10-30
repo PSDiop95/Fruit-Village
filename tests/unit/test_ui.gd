@@ -40,6 +40,9 @@ func test_play_then_menu_returns_to_title() -> void:
 	var m := await _main()
 	m.title.play_button.pressed.emit()
 	await wait_process_frames(2)
+	assert_null(m.game, "rideau d'abord : la partie se construit écran couvert")
+	assert_true(m.curtain.is_covering())
+	await wait_seconds(0.3)
 	assert_not_null(m.game, "Jouer lance une partie")
 	assert_null(m.title, "le titre disparaît")
 	m.game.hud().menu_requested.emit()
@@ -106,6 +109,23 @@ func test_quality_setting_applies_to_game() -> void:
 	m.game.set_quality(JuiceConfig.Quality.HIGH)
 	assert_eq(FruitModels.fruit_material().next_pass != null, FruitModels.get_config().fruit_outline,
 		"Haut : contour seulement si activé (fruits sans contour par défaut)")
+
+
+## Chargement : ressources, scripts, scènes et shaders gardés pour la session
+## (« Jouer » ne recharge rien du disque) ; shaders précompilés à l'export
+## (sinon premier lancement très long sur Android d'entrée de gamme).
+func test_loading_keeps_cache_and_bakes_shaders() -> void:
+	var ls := LoadingScreen.new()
+	add_child_autofree(ls)
+	assert_true(ls._paths.has("res://scenes/Game.tscn"))
+	assert_true(ls._paths.has("res://scripts/game.gd"), "scripts compilés au chargement")
+	assert_true(ls._paths.has("res://assets/shaders/toon.gdshader"))
+	assert_true(ls._paths.has("res://scripts/juice/juice.gd"), "sous-dossiers parcourus")
+	var cf := ConfigFile.new()
+	assert_eq(cf.load("res://export_presets.cfg"), OK)
+	for sec in cf.get_sections():
+		if sec.ends_with(".options"):
+			assert_true(cf.get_value(sec, "shader_baker/enabled", false), "%s : shader baker" % sec)
 
 
 func test_auto_quality_rules() -> void:

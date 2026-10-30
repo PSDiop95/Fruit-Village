@@ -101,5 +101,11 @@ class Curtain extends CanvasLayer:
 		tw.tween_property(_rect, "modulate:a", 0.0, duration).set_trans(Tween.TRANS_SINE) \
 			.set_ease(Tween.EASE_OUT)
 
+	## Ferme le rideau (avant une construction lourde : la pause est masquée).
+	func cover(duration := 0.15) -> void:
+		var tw := create_tween().set_ignore_time_scale(true)
+		tw.tween_property(_rect, "modulate:a", 1.0, duration).set_trans(Tween.TRANS_SINE) 			.set_ease(Tween.EASE_IN)
+		await tw.finished
+
 	func is_covering() -> bool:
 		return _rect.modulate.a > 0.01

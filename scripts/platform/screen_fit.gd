@@ -3,9 +3,10 @@ extends RefCounted
 ## Cadrage de l'écran. L'interface est conçue en 1080x1920 (9:16) avec des
 ## positions absolues ; le mode « keep_width » du projet ajoute de la hauteur
 ## sur les téléphones allongés (le décor 3D la remplit), mais :
-## - sur iPhone, le haut et le bas passent sous l'encoche / Dynamic Island et
-##   l'indicateur d'accueil : l'interface et le cadrage du panier se placent
-##   dans la zone sûre (safe_rect), le décor reste plein écran ;
+## - sur iPhone (et Android à encoche ou caméra perforée), le haut et le bas
+##   passent sous l'encoche / Dynamic Island et l'indicateur d'accueil :
+##   l'interface et le cadrage du panier se placent dans la zone sûre
+##   (safe_rect), le décor reste plein écran ;
 ## - sur un écran plus large que 9:16 (iPad, tablettes), il manque de la
 ##   hauteur : cadre 9:16 centré (bandes noires ; Godot 4 ne permet pas de les
 ##   décorer).
@@ -15,19 +16,39 @@ const ASPECT_TOLERANCE := 0.01
 ## Zone sûre d'un iPhone à Dynamic Island (59 pt en haut, 34 pt en bas sur
 ## 852 pt de haut), en fraction de la hauteur d'écran : captures « ios ».
 const IPHONE_INSETS := Vector2(59.0 / 852.0, 34.0 / 852.0)
+## Marge maximale admise (haut ou bas), en fraction de la hauteur.
+const MAX_INSET := 0.12
 
 ## Marges de la zone sûre (haut, bas) en fraction de la hauteur d'écran :
-## lues au démarrage sur iOS, nulles ailleurs.
+## lues au démarrage sur mobile, nulles ailleurs.
 static var safe_insets := Vector2.ZERO
 ## Cadrage fait une fois par exécution : Main ne défait pas celui des captures.
 static var _applied := false
 
 
-## `screen` : taille de l'écran en pixels (largeur, hauteur).
+## `screen` : taille de l'écran en pixels. Jeu en portrait : la mesure ignore
+## l'orientation (au lancement, iOS peut encore annoncer une fenêtre paysage).
 static func needs_letterbox(screen: Vector2) -> bool:
 	if screen.x <= 0.0 or screen.y <= 0.0:
 		return false
-	return screen.x / screen.y > BASE_ASPECT + ASPECT_TOLERANCE
+	return minf(screen.x, screen.y) / maxf(screen.x, screen.y) > BASE_ASPECT + ASPECT_TOLERANCE
+
+
+static func is_mobile(os_name: String = OS.get_name()) -> bool:
+	return os_name in ["iOS", "Android"]
+
+
+## Au lancement sur mobile, la fenêtre peut être encore en paysage et la zone
+## sûre vide pendant quelques images (iPhone XR) : on attend le portrait.
+static func wait_until_portrait(window: Window, max_frames: int = 60) -> void:
+	if not is_mobile():
+		return
+	var tree := window.get_tree()
+	for i in max_frames:
+		var s := Vector2(window.size)
+		if s.y > s.x and s.x > 0.0:
+			break
+		await tree.process_frame
 
 
 ## À appeler au démarrage (Main). `os_name` : forçable pour les captures, qui
@@ -43,7 +64,7 @@ static func apply(window: Window, os_name: String = OS.get_name(),
 		return true
 	if insets.x >= 0.0:
 		safe_insets = insets
-	elif os_name == "iOS":
+	elif is_mobile(os_name):
 		safe_insets = _read_insets()
 	else:
 		safe_insets = Vector2.ZERO
@@ -51,11 +72,20 @@ static func apply(window: Window, os_name: String = OS.get_name(),
 
 
 static func _read_insets() -> Vector2:
-	var screen := Vector2(DisplayServer.screen_get_size())
-	if screen.y <= 0.0:
+	return insets_from(Vector2(DisplayServer.screen_get_size()),
+		Rect2(DisplayServer.get_display_safe_area()))
+
+
+## Marges (haut, bas) en fraction de la hauteur, depuis l'écran et sa zone sûre
+## (pixels). Zone sûre vide ou incohérente : aucune marge plutôt qu'un cadrage
+## faux. Plafonnées (une zone sûre aberrante ne doit pas écraser l'interface).
+static func insets_from(screen: Vector2, safe: Rect2) -> Vector2:
+	if screen.y <= 0.0 or safe.size.y <= 0.0 or safe.size.x <= 0.0:
 		return Vector2.ZERO
-	var safe := Rect2(DisplayServer.get_display_safe_area())
-	return Vector2(safe.position.y, screen.y - safe.end.y).max(Vector2.ZERO) / screen.y
+	if screen.x > screen.y:  # encore en paysage : les marges ne sont pas fiables
+		return Vector2.ZERO
+	var m := Vector2(safe.position.y, screen.y - safe.end.y).max(Vector2.ZERO) / screen.y
+	return m.min(Vector2(MAX_INSET, MAX_INSET))
 
 
 ## Partie du canevas hors encoche et barre d'accueil (unités du canevas).
