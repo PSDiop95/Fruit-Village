@@ -432,3 +432,75 @@ func test_notification_plan_max_two_per_day() -> void:
 	var cfg := daily_cfg.duplicate() as DailyRewardsConfig
 	cfg.notifications_max_per_day = 0
 	assert_true(NotificationPlanner.plan(clock, cfg, false, 3).is_empty())
+
+
+# ---------------------------------------------------------------- Firebase / push
+
+class FakeCore extends RefCounted:
+	signal core_initialized(ok: bool)
+	var calls: int = 0
+
+	func initialize() -> void:
+		calls += 1
+
+
+class FakeMessaging extends RefCounted:
+	signal messaging_permission_granted
+	signal messaging_permission_denied
+	signal messaging_token_received(token: String)
+	signal messaging_error(message: String)
+	var log: Array[String] = []
+
+	func initialize() -> void:
+		log.append("initialize")
+
+	func request_permission() -> void:
+		log.append("request_permission")
+
+	func get_token() -> void:
+		log.append("get_token")
+
+
+## Core initialisé une seule fois pour Analytics et Messaging (deux
+## initialize() = plantage iOS), les modules servis dans l'ordre.
+func test_firebase_core_initialized_once() -> void:
+	FirebaseBoot.reset()
+	var core := FakeCore.new()
+	FirebaseBoot.core_override = core
+	var got: Array = []
+	FirebaseBoot.when_ready(func(ok: bool) -> void: got.append(["analytics", ok]))
+	FirebaseBoot.when_ready(func(ok: bool) -> void: got.append(["push", ok]))
+	assert_eq(core.calls, 1, "un seul initialize()")
+	assert_eq(got, [], "rien avant core_initialized")
+	core.core_initialized.emit(true)
+	assert_eq(got, [["analytics", true], ["push", true]])
+	FirebaseBoot.when_ready(func(ok: bool) -> void: got.append(["tard", ok]))
+	assert_eq(got.back(), ["tard", true], "déjà prêt : réponse immédiate")
+	assert_eq(core.calls, 1)
+	FirebaseBoot.reset()
+
+
+## Push : permission demandée avant que Core soit prêt = différée ; accord
+## puis jeton ; refus = pas de jeton.
+func test_push_permission_then_token() -> void:
+	FirebaseBoot.reset()
+	var core := FakeCore.new()
+	FirebaseBoot.core_override = core
+	var push := FirebasePush.new()
+	var m := FakeMessaging.new()
+	push.messaging = m
+	add_child_autofree(push)
+	push.request_permission()
+	assert_eq(m.log, [] as Array[String], "Core pas prêt : rien encore")
+	core.core_initialized.emit(true)
+	assert_eq(m.log, ["initialize", "request_permission"] as Array[String])
+	m.messaging_permission_granted.emit()
+	assert_true(push.granted)
+	assert_eq(m.log.back(), "get_token")
+	watch_signals(push)
+	m.messaging_token_received.emit("tok123")
+	assert_eq(push.token, "tok123")
+	assert_signal_emitted_with_parameters(push, "token_received", ["tok123"])
+	m.messaging_permission_denied.emit()
+	assert_false(push.granted)
+	FirebaseBoot.reset()

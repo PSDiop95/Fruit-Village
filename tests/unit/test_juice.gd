@@ -342,14 +342,20 @@ func test_merge_sucks_then_removes_with_joy() -> void:
 	var r := catalog.get_def(1).radius
 	var a := g.spawn_fruit(1, Vector3(-r * 0.6, 2.0, 0))
 	var b := g.spawn_fruit(1, Vector3(r * 0.6, 2.0, 0))
-	var saw_joy := false
-	for i in 30:
-		await wait_physics_frames(1)
-		if is_instance_valid(a) and a.merging:
-			saw_joy = a.visual().face.mood == FruitFace.Mood.JOY
+	# État relevé au moment même de la fusion (signal synchrone) : sous charge,
+	# une attente d'une image peut couvrir plusieurs pas physiques et le fruit
+	# être déjà supprimé quand on le regarde.
+	var seen := {}
+	g.merged.connect(func(_r: int, _p: Vector3, _pts: int, _c: int) -> void:
+		if seen.is_empty() and is_instance_valid(a):
+			seen["joy"] = a.visual().face.mood == FruitFace.Mood.JOY
+			seen["layer"] = a.collision_layer)
+	for i in 60:
+		if not seen.is_empty():
 			break
-	assert_true(saw_joy, "yeux fermés de joie juste avant la fusion")
-	assert_eq(a.collision_layer, 0, "plus de collision pendant l'aspiration")
+		await wait_physics_frames(1)
+	assert_true(seen.get("joy", false), "yeux fermés de joie juste avant la fusion")
+	assert_eq(seen.get("layer", -1), 0, "plus de collision pendant l'aspiration")
 	await wait_seconds(cfg.merge_suck_time + 0.15)
 	assert_false(is_instance_valid(a) or is_instance_valid(b), "supprimés après l'aspiration")
 

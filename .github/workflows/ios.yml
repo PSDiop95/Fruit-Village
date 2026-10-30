@@ -37,7 +37,7 @@ jobs:
           path: |
             ${{ runner.temp }}/fv-ios/*.zip
             ${{ runner.temp }}/fv-ios/*.tpz
-          key: fv-ios-godot-4.7.2-admob-5.1.0-firebase-3.1.0
+          key: fv-ios-godot-4.7.2-admob-5.1.0-firebase-3.1.0-sdk-12.16.0
 
       - name: Secrets (mode upload)
         if: env.MODE == 'upload'

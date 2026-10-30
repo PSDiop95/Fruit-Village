@@ -1,38 +1,34 @@
 class_name FirebaseAnalytics
 extends AnalyticsBackend
 ## Production : Firebase Analytics via le plugin Godotx Firebase
-## (github.com/godot-x/firebase, singletons GodotxFirebaseCore /
-## GodotxFirebaseAnalytics). Accès dynamique : le projet compile sans le plugin.
+## (github.com/godot-x/firebase, singleton GodotxFirebaseAnalytics ; Core
+## initialisé une seule fois par FirebaseBoot). Accès dynamique : le projet
+## compile sans le plugin.
 ## Paramètres envoyés en texte/nombre ; événements perdus tant que le SDK
 ## n'est pas initialisé (pas de file : volume négligeable au lancement).
 
-const CORE := "GodotxFirebaseCore"
 const ANALYTICS := "GodotxFirebaseAnalytics"
 
-var _core: Object
 var _fa: Object
 var _sdk_ready: bool = false
 var _enabled: bool = false
 
 
 static func available() -> bool:
-	return Engine.has_singleton(CORE) and Engine.has_singleton(ANALYTICS)
+	return FirebaseBoot.available() and Engine.has_singleton(ANALYTICS)
 
 
 func _init() -> void:
 	if not available():
 		return
-	_core = Engine.get_singleton(CORE)
 	_fa = Engine.get_singleton(ANALYTICS)
 	if _fa.has_signal("analytics_initialized"):
 		_fa.connect("analytics_initialized", func(ok: bool) -> void:
 			_sdk_ready = ok
 			set_collection_enabled(_enabled))
-	if _core.has_signal("core_initialized"):
-		_core.connect("core_initialized", func(ok: bool) -> void:
-			if ok:
-				_fa.call("initialize"))
-	_core.call("initialize")
+	FirebaseBoot.when_ready(func(ok: bool) -> void:
+		if ok:
+			_fa.call("initialize"))
 
 
 func backend_name() -> String:
