@@ -147,6 +147,19 @@ else
 	"$GODOT" --headless --path . --export-debug "$PRESET" "$OUT_DIR/FruitVillage.ipa" > "$OUT_DIR/export.log" 2>&1 || true
 fi
 [ -d "$PROJECT" ] || { tail -40 "$OUT_DIR/export.log"; die "projet Xcode non produit"; }
+# Godot recopie les xcframeworks sans leurs liens symboliques (tranches macOS :
+# Versions/Current, Headers…) : la signature Google ne correspond plus et
+# Xcode refuse la compilation. On remet les originaux à l'identique (cp -R de
+# macOS garde les liens), puis on revérifie leur signature.
+for xcf in ios/plugins/firebase_*/*.xcframework; do
+	case "$(basename "$xcf")" in Godotx*) continue ;; esac
+	dest="$OUT_DIR/FruitVillage/dylibs/$xcf"
+	[ -d "$dest" ] || die "xcframework absent du projet exporté : $dest"
+	rm -rf "$dest"
+	cp -R "$xcf" "$dest"
+	codesign -v "$dest" 2>/dev/null || die "signature invalide après copie : $dest"
+done
+echo "SDK Firebase : copies signées intactes dans le projet Xcode"
 SCHEME="$(xcodebuild -list -json -project "$PROJECT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["project"]["schemes"][0])')"
 # Nom exact (un GoogleService-Info.plist peut aussi se trouver dans ce dossier).
 PLIST="$OUT_DIR/FruitVillage/FruitVillage-Info.plist"

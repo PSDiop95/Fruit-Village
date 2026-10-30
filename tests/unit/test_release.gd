@@ -280,6 +280,8 @@ func test_ios_build_uses_signed_firebase_sdk() -> void:
 	assert_string_contains(sh, "TeamIdentifier=EQHXZ8M8AV")
 	assert_string_contains(sh, "_Privacy.bundle/PrivacyInfo.xcprivacy")
 	assert_string_contains(sh, "aps-environment")
+	assert_string_contains(sh, 'dest="$OUT_DIR/FruitVillage/dylibs/$xcf"',
+		"originaux signés remis après l'export Godot (liens symboliques perdus)")
 	var py := FileAccess.get_file_as_string("res://tools/ios/firebase_ios.py")
 	assert_string_contains(py, 'gdip_set(text, "embedded", [])', "plus rien d'embarqué")
 	assert_string_contains(py, 'gdip_set(text, "linked", deps)')
