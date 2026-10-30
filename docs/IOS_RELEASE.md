@@ -25,7 +25,7 @@ Exigences vérifiées le 26/10/2026 :
 | SKAdNetwork Google | plugin AdMob |
 | Manifeste de confidentialité (`PrivacyInfo.xcprivacy`) | preset, section privacy (cohérent avec §5) |
 | `NSPrivacyTracking` **false**, aucun `NSPrivacyTrackingDomains` : à true sans domaine, Apple invalide le binaire (ITMS-91064, build 22) ; des domaines seraient bloqués par iOS sans accord ATT (plus de pubs). Le SDK Google déclare son propre suivi | preset (`privacy/tracking_*`), contrôlé par `tools/ios/check_plist.py` |
-| **Pas de Firebase sur iOS en 1.0** : les SDK du plugin godotx ne sont pas signés par Google, Apple refuse alors l'app à la soumission (ITMS-91065 / 91061, « binaire non valide »). Statistiques iOS via AdMob seulement ; Firebase reviendra avec le SDK officiel signé | preset (`plugins/GodotxFirebase*=false`), contrôlé par `build_ios.sh` |
+| **Firebase iOS (Analytics + push FCM)** avec le SDK **officiel signé par Google** (12.16.0, empreinte épinglée), lié en statique : le SDK du plugin godotx, non signé, était refusé (ITMS-91065). Signature Google, manifestes de confidentialité et droit push vérifiés à chaque build | `tools/ios/firebase_ios.py`, `build_ios.sh` |
 | Icône 1024 opaque | `assets/ui/icon_ios_1024.png` (`tools/store/make_icon.py`) |
 | Fiche : textes FR/EN, captures iPhone 6,9" et iPad 13" | `store/ios/` |
 
@@ -78,9 +78,21 @@ App Store Connect → **Clés d'équipe** → **+** :
      l'écran de suivi d'Apple (ATT) après le consentement. Sans lui, pas
      d'identifiant publicitaire sur iOS (pubs moins bien payées) et Apple peut
      refuser l'app, puisque le jeu déclare suivre l'utilisateur.
-3. *(Pas nécessaire en 1.0, Firebase est désactivé sur iOS.)* **Firebase** → projet `fruitvillage` → Ajouter une application → iOS →
+3. **Firebase** → projet `fruitvillage` → Ajouter une application → iOS →
    bundle ID `com.smartiaservices.fruitvillage` → télécharge
-   `GoogleService-Info.plist` (ignoré par git ; il ne sert que de secret CI).
+   `GoogleService-Info.plist` (ignoré par git ; il ne sert que de secret CI
+   `GOOGLE_SERVICE_INFO_PLIST_B64`).
+4. **Push (FCM)** :
+   - developer.apple.com → Certificates, IDs & Profiles → Identifiers →
+     `com.smartiaservices.fruitvillage` → coche **Push Notifications** →
+     Save ;
+   - Keys → **+** → nom « FCM Fruit Village » → coche **Apple Push
+     Notifications service (APNs)** → télécharge le `.p8` (une seule fois),
+     note le **Key ID** ;
+   - console Firebase → Paramètres du projet → Cloud Messaging → app iOS →
+     **Clé d'authentification APNs** → Importer le `.p8` + Key ID + Team ID ;
+   - envoi d'un push : Firebase → Messaging → Nouvelle campagne →
+     Notifications → cible l'app iOS et/ou Android.
 
 ### 5. Secrets GitHub (dépôt PSDiop95/Fruit-Village)
 
@@ -188,6 +200,7 @@ politique en ligne :
 | Données d'utilisation → **Données publicitaires** | Publicité tierce | Non | **Oui** |
 | Diagnostics → **Données de performances** | Analyse | Non | Non |
 | Diagnostics → **Autres données de diagnostic** | Analyse | Non | Non |
+| Identifiants → **Identifiant de l'appareil** (jeton push FCM) | Fonctionnalités de l'app | Non | Non |
 
 « Suivi » = oui, à cause de la publicité AdMob avec IDFA : c'est ce qui rend
 l'écran ATT obligatoire. Rien d'autre : pas de compte, pas de nom, pas
