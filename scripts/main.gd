@@ -12,6 +12,7 @@ var curtain := UiJuice.Curtain.new()
 
 
 func _ready() -> void:
+	await ScreenFit.wait_until_portrait(get_window())
 	ScreenFit.apply(get_window())
 	add_child(curtain)
 	Wallet.coins_changed.connect(_on_coins_changed)
@@ -53,8 +54,16 @@ func show_title() -> void:
 	add_child(_backdrop)
 	title = TitleScreen.new()
 	add_child(title)
-	title.play_pressed.connect(start_game)
+	title.play_pressed.connect(_on_play_pressed, CONNECT_ONE_SHOT)
 	curtain.reveal()
+
+
+## « Jouer » : rideau fermé PUIS construction de la partie (lourde sur
+## téléphone) : l'attente passe pour la transition, pas pour un gel.
+func _on_play_pressed() -> void:
+	await curtain.cover()
+	await get_tree().process_frame  # une image entièrement couverte à l'écran
+	start_game()
 
 
 func start_game() -> void:

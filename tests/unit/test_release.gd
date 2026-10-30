@@ -269,6 +269,27 @@ func test_screen_fit_letterbox_rules() -> void:
 	assert_false(ScreenFit.needs_letterbox(Vector2(1080, 2408)), "téléphone Android : inchangé")
 	assert_false(ScreenFit.needs_letterbox(Vector2(1080, 1920)))
 	assert_false(ScreenFit.needs_letterbox(Vector2.ZERO))
+	# Au lancement, iOS peut annoncer la fenêtre en paysage (iPhone XR) : un
+	# téléphone ne doit jamais passer en cadre 9:16 à bandes noires.
+	assert_false(ScreenFit.needs_letterbox(Vector2(1792, 828)), "iPhone XR encore en paysage")
+	assert_true(ScreenFit.needs_letterbox(Vector2(2752, 2064)), "iPad en paysage : toujours cadré")
+
+
+## Zone sûre : iPhone XR (encoche 44 pt / barre 34 pt sur 896 pt), Android à
+## caméra perforée ; valeurs absentes, paysage ou aberrantes : pas de marge fausse.
+func test_safe_insets_from_display() -> void:
+	var xr := ScreenFit.insets_from(Vector2(828, 1792), Rect2(0, 88, 828, 1636))
+	assert_almost_eq(xr.x, 44.0 / 896.0, 0.0001, "XR : encoche")
+	assert_almost_eq(xr.y, 34.0 / 896.0, 0.0001, "XR : barre d'accueil")
+	var punch := ScreenFit.insets_from(Vector2(1080, 2400), Rect2(0, 96, 1080, 2304))
+	assert_almost_eq(punch.x, 96.0 / 2400.0, 0.0001, "Android : caméra perforée")
+	assert_eq(punch.y, 0.0)
+	assert_eq(ScreenFit.insets_from(Vector2(828, 1792), Rect2()), Vector2.ZERO, "zone sûre pas encore connue")
+	assert_eq(ScreenFit.insets_from(Vector2(1792, 828), Rect2(88, 0, 1636, 807)), Vector2.ZERO, "paysage")
+	assert_almost_eq(ScreenFit.insets_from(Vector2(1080, 2400), Rect2(0, 1200, 1080, 600)).x,
+		ScreenFit.MAX_INSET, 0.0001, "marge plafonnée")
+	assert_true(ScreenFit.is_mobile("Android") and ScreenFit.is_mobile("iOS"))
+	assert_false(ScreenFit.is_mobile("Windows"))
 
 
 ## iPhone : interface et cadrage dans la zone sûre, décor plein écran ; le

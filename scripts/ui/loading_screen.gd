@@ -20,6 +20,10 @@ const FILES := ["res://scenes/Game.tscn", "res://data/visual.tres", "res://data/
 	"res://data/sounds.tres", "res://data/fruits.tres", "res://assets/ui/theme.tres",
 	"res://data/ambiances.tres"]
 const DIRS := ["res://assets/models", "res://assets/ui/hud", "res://assets/sfx"]
+## Dossiers parcourus récursivement : scripts compilés, scènes et shaders prêts
+## avant « Jouer » (sinon compilés au premier lancement de partie : pause).
+const DEEP_DIRS := ["res://scripts", "res://scenes", "res://assets/shaders"]
+const DEEP_EXTENSIONS := ["gd", "tscn", "gdshader"]
 ## Part de la jauge pour les chargements ; le reste : préparation des modèles.
 const LOAD_SHARE := 0.85
 ## Avance visuelle maximale de la jauge (part par seconde) : pas de saut sec.
@@ -27,8 +31,9 @@ const BAR_SPEED := 1.6
 
 var bar: TextureProgressBar
 var progress: float = 0.0
-## Ressources gardées en mémoire (cache) jusqu'à la fin du chargement.
-var loaded: Array[Resource] = []
+## Ressources gardées en mémoire pour toute la session (statique : l'écran de
+## chargement est libéré, mais « Jouer » ne doit rien recharger du disque).
+static var cache: Array[Resource] = []
 
 var _paths: PackedStringArray = []
 var _shown: float = 0.0
@@ -83,6 +88,17 @@ func _collect() -> void:
 			var p: String = d.path_join(f)
 			if not f.ends_with("/") and ResourceLoader.exists(p):
 				_paths.append(p)
+	for d in DEEP_DIRS:
+		_collect_deep(d)
+
+
+func _collect_deep(dir: String) -> void:
+	for f in ResourceLoader.list_directory(dir):
+		var p: String = dir.path_join(f.trim_suffix("/"))
+		if f.ends_with("/"):
+			_collect_deep(p)
+		elif p.get_extension() in DEEP_EXTENSIONS and not _paths.has(p) and ResourceLoader.exists(p):
+			_paths.append(p)
 
 
 func _process(delta: float) -> void:
@@ -106,7 +122,7 @@ func _process(delta: float) -> void:
 			for p in _paths:
 				var r := ResourceLoader.load_threaded_get(p)
 				if r:
-					loaded.append(r)
+					cache.append(r)
 			_warm_up.call_deferred()
 	_shown = move_toward(_shown, progress, delta * BAR_SPEED)
 	bar.value = _shown
