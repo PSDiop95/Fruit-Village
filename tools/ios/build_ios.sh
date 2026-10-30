@@ -16,9 +16,10 @@
 #   ASC_KEY_PATH         chemin du fichier AuthKey_<ID>.p8
 #   BUILD_NUMBER         numéro de build (CFBundleVersion), croissant
 #   ads_ids.cfg (section [ios]) présent à la racine du projet.
-# Pas de Firebase sur iOS en 1.0 : les xcframeworks du plugin godotx ne sont
-# pas signés par Google ; Apple refuse alors l'app à la soumission
-# (ITMS-91065 / 91061, « binaire non valide »).
+# Firebase (Core, Analytics, Messaging) : le plugin godotx livre un SDK non
+# signé, qu'Apple refuse (ITMS-91065). tools/ios/firebase_ios.py le remplace
+# par le Firebase.zip officiel de la même version (signé par Google) et le lie
+# en statique ; la signature Google est vérifiée avant l'export.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 MODE="${1:-check}"
@@ -36,8 +37,28 @@ TEMPLATES_TPZ="Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
 TEMPLATES_SHA512="ca4d71c4d7b81dfc15d1a98baa07534aa95b03fdda78a0075b06672e1648d2e5f40980c9adc28d23e1b92e732ee7bf3461997aa804af74ec2fcd7a93ccb84079"
 ADMOB_URL="https://github.com/poingstudios/godot-admob-plugin/releases/download/v5.1.0/ios-template-v${GODOT_VERSION}.zip"
 ADMOB_SHA256="6e7f1c807761f9c0ad45d335ac4c74acd4bba7a31f9e1c7cd16a5220010cce71"
+FIREBASE_URL="https://github.com/godot-x/firebase/releases/download/3.1.0/godotx_firebase.zip"
+FIREBASE_SHA256="da7273def2ff744efacaab70e2ad863d65a4225ec401f5335de40a19df8170c1"
+# SDK iOS officiel, même version que celle du plugin godotx 3.1.0.
+FIREBASE_SDK_URL="https://github.com/firebase/firebase-ios-sdk/releases/download/12.16.0/Firebase.zip"
+FIREBASE_SDK_SHA256="f4c409ce42aa5c0506f12842bf524ce23ea1a2a6705bfdbc4b16e9e0845c13ba"
 
 die() { echo "ERREUR : $*" >&2; exit 1; }
+# Firebase lié en statique : aucun framework Firebase / Google copié dans
+# l'app (ils y seraient re-signés par nous : refus ITMS-91065), mais leurs
+# manifestes de confidentialité présents (ITMS-91061) et le droit push.
+check_app() {
+	local app="$1"
+	[ -d "$app" ] || die "app introuvable : $app"
+	if ls "$app/Frameworks" 2>/dev/null | grep -qE "^(Firebase|GoogleUtilities|GoogleAppMeasurement|GoogleDataTransport|nanopb|FBLPromises|GoogleAdsOnDeviceConversion)"; then
+		die "frameworks Firebase copiés dans l'app : ils doivent être liés en statique"
+	fi
+	for b in FirebaseCore FirebaseCoreInternal FirebaseInstallations FirebaseMessaging GoogleUtilities GoogleDataTransport nanopb FBLPromises; do
+		[ -f "$app/${b}_Privacy.bundle/PrivacyInfo.xcprivacy" ] || die "manifeste de confidentialité absent : ${b}_Privacy.bundle"
+	done
+	grep -q "aps-environment" "$OUT_DIR/FruitVillage/FruitVillage.entitlements" || die "droit push (aps-environment) absent"
+	echo "App : Firebase lié en statique, manifestes de confidentialité présents"
+}
 fetch() {  # fetch <url> <fichier> <algo> <empreinte>
 	[ -f "$2" ] || curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -o "$2" "$1"
 	echo "$4  $2" | shasum -a "$3" -c - > /dev/null || die "empreinte invalide : $2"
@@ -74,6 +95,26 @@ if [ ! -d addons/admob/ios/bin/ads/libs ]; then
 	mkdir -p addons/admob/ios/bin
 	unzip -q -o "$WORK/admob-ios.zip" -d addons/admob/ios/bin
 fi
+if [ ! -f ios/plugins/firebase_core/firebase_core.gdip ]; then
+	fetch "$FIREBASE_URL" "$WORK/godotx_firebase.zip" 256 "$FIREBASE_SHA256"
+	fetch "$FIREBASE_SDK_URL" "$WORK/Firebase.zip" 256 "$FIREBASE_SDK_SHA256"
+	rm -rf "$WORK/fb" "$WORK/fbsdk"
+	unzip -q -o "$WORK/godotx_firebase.zip" "godotx_firebase/ios/plugins/firebase_core/*" \
+		"godotx_firebase/ios/plugins/firebase_analytics/*" \
+		"godotx_firebase/ios/plugins/firebase_messaging/*" -d "$WORK/fb"
+	unzip -q -o "$WORK/Firebase.zip" "Firebase/FirebaseAnalytics/*" "Firebase/FirebaseMessaging/*" -d "$WORK/fbsdk"
+	mkdir -p ios/plugins
+	cp -R "$WORK/fb/godotx_firebase/ios/plugins/." ios/plugins/
+	python3 tools/ios/firebase_ios.py ios/plugins "$WORK/fbsdk/Firebase"
+fi
+# Chaque SDK Firebase / Google doit porter la signature de Google (ITMS-91065).
+for xcf in ios/plugins/firebase_*/*.xcframework; do
+	case "$(basename "$xcf")" in Godotx*) continue ;; esac
+	codesign -v "$xcf" 2>/dev/null || die "SDK non signé : $xcf"
+	codesign -dv --verbose=2 "$xcf" 2>&1 | grep -qE "Authority=.*Google LLC|TeamIdentifier=EQHXZ8M8AV" \
+		|| die "SDK non signé par Google : $xcf"
+done
+echo "SDK Firebase : signés par Google"
 
 # ---- Import (cache .godot) puis tests
 "$GODOT" --headless --path . --import > "$OUT_DIR/import.log" 2>&1 || true
@@ -106,6 +147,19 @@ else
 	"$GODOT" --headless --path . --export-debug "$PRESET" "$OUT_DIR/FruitVillage.ipa" > "$OUT_DIR/export.log" 2>&1 || true
 fi
 [ -d "$PROJECT" ] || { tail -40 "$OUT_DIR/export.log"; die "projet Xcode non produit"; }
+# Godot recopie les xcframeworks sans leurs liens symboliques (tranches macOS :
+# Versions/Current, Headers…) : la signature Google ne correspond plus et
+# Xcode refuse la compilation. On remet les originaux à l'identique (cp -R de
+# macOS garde les liens), puis on revérifie leur signature.
+for xcf in ios/plugins/firebase_*/*.xcframework; do
+	case "$(basename "$xcf")" in Godotx*) continue ;; esac
+	dest="$OUT_DIR/FruitVillage/dylibs/$xcf"
+	[ -d "$dest" ] || die "xcframework absent du projet exporté : $dest"
+	rm -rf "$dest"
+	cp -R "$xcf" "$dest"
+	codesign -v "$dest" 2>/dev/null || die "signature invalide après copie : $dest"
+done
+echo "SDK Firebase : copies signées intactes dans le projet Xcode"
 SCHEME="$(xcodebuild -list -json -project "$PROJECT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["project"]["schemes"][0])')"
 # Nom exact (un GoogleService-Info.plist peut aussi se trouver dans ce dossier).
 PLIST="$OUT_DIR/FruitVillage/FruitVillage-Info.plist"
@@ -125,8 +179,9 @@ python3 tools/ios/check_plist.py "$PLIST" "$MODE"
 
 if [ "$MODE" != "upload" ]; then
 	xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Debug \
-		-destination "generic/platform=iOS" CODE_SIGNING_ALLOWED=NO build \
+		-destination "generic/platform=iOS" -derivedDataPath "$OUT_DIR/dd" CODE_SIGNING_ALLOWED=NO build \
 		> "$OUT_DIR/xcodebuild.log" 2>&1 || { tail -60 "$OUT_DIR/xcodebuild.log"; die "compilation Xcode en échec"; }
+	check_app "$(ls -d "$OUT_DIR"/dd/Build/Products/Debug-iphoneos/*.app)"
 	echo "Compilation iOS (sans signature) : OK"
 	exit 0
 fi
@@ -145,12 +200,8 @@ xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Release \
 	DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-" \
 	AD_HOC_CODE_SIGNING_ALLOWED=YES PROVISIONING_PROFILE_SPECIFIER="" PROVISIONING_PROFILE="" \
 	> "$OUT_DIR/archive.log" 2>&1 || { tail -60 "$OUT_DIR/archive.log"; die "archive en échec"; }
-# Aucun SDK Firebase / Google non signé dans l'app (refus Apple ITMS-91065).
-APP_FW="$(ls -d "$OUT_DIR"/FruitVillage.xcarchive/Products/Applications/*.app/Frameworks)"
-ls "$APP_FW"
-if ls "$APP_FW" | grep -qE "^(Firebase|GoogleUtilities|GoogleAppMeasurement|nanopb|FBLPromises|GoogleAdsOnDeviceConversion)"; then
-	die "frameworks Firebase présents dans l'app (non signés : refus Apple)"
-fi
+ls "$(ls -d "$OUT_DIR"/FruitVillage.xcarchive/Products/Applications/*.app)/Frameworks" || true
+check_app "$(ls -d "$OUT_DIR"/FruitVillage.xcarchive/Products/Applications/*.app)"
 # Chaque binaire embarqué doit porter une signature avant l'export.
 unsigned=0
 for f in "$OUT_DIR"/FruitVillage.xcarchive/Products/Applications/*.app/Frameworks/*.framework; do

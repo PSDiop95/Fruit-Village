@@ -302,7 +302,10 @@ func test_voices_rate_limited_priority_passes() -> void:
 	var j := g.juice()
 	assert_not_null(j.play_voice(s.voice_waaw))
 	assert_null(j.play_voice(s.voice_good), "une voix toutes les quelques secondes au plus")
-	await wait_seconds(g.juice_config.voice_priority_gap + 0.1)
+	# Recul de l'horloge plutôt qu'une vraie attente (une voix jouée par la
+	# partie pendant l'attente rendait le test instable).
+	j._last_voice = Time.get_ticks_msec() / 1000.0 - g.juice_config.voice_priority_gap - 0.1
+	assert_null(j.play_voice(s.voice_good), "voix ordinaire : écart minimal pas encore atteint")
 	assert_not_null(j.play_voice(s.voice_ca_cest_fort, true), "voix prioritaire (Baobab)")
 
 

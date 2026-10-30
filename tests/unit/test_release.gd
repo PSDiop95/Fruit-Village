@@ -234,10 +234,15 @@ func test_ios_preset() -> void:
 	# (ITMS-91064, build 22). Le SDK Google déclare son suivi dans son manifeste.
 	assert_false(o["privacy/tracking_enabled"], "NSPrivacyTracking false (ITMS-91064)")
 	assert_eq(Array(o["privacy/tracking_domains"]), [], "aucun domaine de suivi")
-	# Pas de Firebase sur iOS en 1.0 : les xcframeworks du plugin godotx ne sont
-	# pas signés par Google (refus automatique Apple ITMS-91065 / 91061).
-	assert_false(o["plugins/GodotxFirebaseCore"], "pas de Firebase iOS (SDK non signés)")
-	assert_false(o["plugins/GodotxFirebaseAnalytics"], "pas de Firebase iOS (SDK non signés)")
+	# Firebase iOS : SDK officiel signé par Google, lié en statique par
+	# tools/ios/firebase_ios.py (le SDK du plugin godotx, non signé, était
+	# refusé : ITMS-91065). Push : droit aps-environment de production.
+	for plugin in ["GodotxFirebaseCore", "GodotxFirebaseAnalytics", "GodotxFirebaseMessaging"]:
+		assert_true(o["plugins/%s" % plugin], plugin)
+	assert_eq(o["firebase/ios_config_file"], "res://GoogleService-Info.plist", "fourni par la CI (secret)")
+	assert_true(o["firebase/privacy_safe_defaults"], "collecte coupée jusqu'au consentement")
+	assert_eq(o["entitlements/push_notifications"], "Production")
+	assert_string_contains(plist, "<key>UIBackgroundModes</key><array><string>remote-notification</string></array>")
 	# Game Center activé sur l'app dans App Store Connect : Apple refuse le
 	# binaire sans ce droit (« INVALID_BINARY »), même sans fonction Game Center.
 	assert_true(o["entitlements/game_center"], "droit Game Center")
@@ -264,6 +269,39 @@ func test_release_plugin_loads_before_admob() -> void:
 
 ## Rappels locaux Android + iOS : plugin Notification Scheduler activé, lib iOS
 ## statique (rien à signer), icône Android monochrome, permissions Play évitées.
+## Build iOS : SDK Firebase officiel (empreinte épinglée), signature Google
+## vérifiée, liaison statique, manifestes de confidentialité et droit push
+## contrôlés dans l'app.
+func test_ios_build_uses_signed_firebase_sdk() -> void:
+	var sh := FileAccess.get_file_as_string("res://tools/ios/build_ios.sh")
+	assert_string_contains(sh, "firebase-ios-sdk/releases/download/12.16.0/Firebase.zip")
+	assert_string_contains(sh, 'FIREBASE_SDK_SHA256="f4c409ce42aa5c0506f12842bf524ce23ea1a2a6705bfdbc4b16e9e0845c13ba"')
+	assert_string_contains(sh, "python3 tools/ios/firebase_ios.py")
+	assert_string_contains(sh, "TeamIdentifier=EQHXZ8M8AV")
+	assert_string_contains(sh, "_Privacy.bundle/PrivacyInfo.xcprivacy")
+	assert_string_contains(sh, "aps-environment")
+	assert_string_contains(sh, 'dest="$OUT_DIR/FruitVillage/dylibs/$xcf"',
+		"originaux signés remis après l'export Godot (liens symboliques perdus)")
+	var py := FileAccess.get_file_as_string("res://tools/ios/firebase_ios.py")
+	assert_string_contains(py, 'gdip_set(text, "embedded", [])', "plus rien d'embarqué")
+	assert_string_contains(py, 'gdip_set(text, "linked", deps)')
+
+
+## Push FCM Android : module messaging exporté, icône et canal des rappels.
+func test_android_push_ready() -> void:
+	var all := _presets()
+	for name in all:
+		var o: Dictionary = all[name]["options"]
+		if o.get("firebase/enable_core", false):
+			assert_true(o.get("firebase/enable_messaging", false), "%s : messaging" % name)
+	for v in ["debug", "release"]:
+		assert_true(FileAccess.file_exists("res://android/firebase_messaging/firebase_messaging.%s.aar" % v))
+	var meta: Dictionary = preload("res://addons/_fv_release/release_export.gd").FCM_META
+	assert_string_contains(meta["com.google.firebase.messaging.default_notification_channel_id"],
+		'"%s"' % MobileNotifications.CHANNEL, "canal = celui des rappels locaux")
+	assert_string_contains(meta["com.google.firebase.messaging.default_notification_icon"], "ic_notification")
+
+
 func test_notifications_plugin_ready() -> void:
 	var enabled: PackedStringArray = ProjectSettings.get_setting("editor_plugins/enabled")
 	assert_true(enabled.has("res://addons/NotificationSchedulerPlugin/plugin.cfg"), "plugin éditeur activé")

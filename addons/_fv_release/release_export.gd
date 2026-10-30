@@ -75,6 +75,21 @@ func _get_android_manifest_element_contents(_platform_arg: EditorExportPlatform,
 	return "\n".join(lines) + "\n"
 
 
+## Push FCM reçus app fermée (affichés par Android) : icône monochrome et
+## canal des rappels locaux, comme les notifications du jeu.
+const FCM_META := {
+	"com.google.firebase.messaging.default_notification_icon": 'android:resource="@drawable/ic_notification"',
+	"com.google.firebase.messaging.default_notification_channel_id": 'android:value="fv_daily"',  # MobileNotifications.CHANNEL
+}
+
+
+func _get_android_manifest_application_element_contents(_platform_arg: EditorExportPlatform, _debug_arg: bool) -> String:
+	var lines := PackedStringArray()
+	for k in FCM_META:
+		lines.append('        <meta-data android:name="%s" %s />' % [k, FCM_META[k]])
+	return "\n".join(lines) + "\n"
+
+
 func _export_file(path: String, _type: String, _features: PackedStringArray) -> void:
 	if not _platform.is_empty() and _debug and path == AdIds.FILE:
 		skip()
