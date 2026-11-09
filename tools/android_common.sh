@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Fonctions communes aux builds Android (sourcé par build_android.sh et
 # build_release.sh). Windows / Git Bash.
-# Prérequis : JDK 17, SDK, bundletool dans C:/Users/hp/android-tools ou, à
-# défaut, %LOCALAPPDATA%/Android (jdk/jdk-17*, Sdk, bundletool) ; modèles
+# Prérequis : JDK 17, SDK, bundletool dans ~/android-tools (jdk-17*, sdk,
+# bundletool), sinon C:/Users/hp/android-tools ou %LOCALAPPDATA%/Android
+# (jdk/jdk-17*, Sdk). Pas dans AppData si le terminal de l'app Claude
+# (empaquetée, AppData virtualisé) doit les voir aussi ; modèles
 # d'export Godot 4.7.2, google-services.json à la racine pour Firebase.
 
 GODOT="${GODOT:-/c/Program Files/Godot/Godot.exe}"
 if [ -z "${ANDROID_TOOLS:-}" ]; then
-	ANDROID_TOOLS=/c/Users/hp/android-tools
+	ANDROID_TOOLS="$HOME/android-tools"
+	[ -d "$ANDROID_TOOLS" ] || ANDROID_TOOLS=/c/Users/hp/android-tools
 	[ -d "$ANDROID_TOOLS" ] || ANDROID_TOOLS="$(cygpath -u "${LOCALAPPDATA:-C:/}")/Android"
 fi
 export JAVA_HOME="${JAVA_HOME:-$(cygpath -w "$(ls -d "$ANDROID_TOOLS"/jdk-17* "$ANDROID_TOOLS"/jdk/jdk-17* 2>/dev/null | head -1)")}"
