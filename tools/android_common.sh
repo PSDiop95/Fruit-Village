@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 # Fonctions communes aux builds Android (sourcé par build_android.sh et
 # build_release.sh). Windows / Git Bash.
-# Prérequis : C:/Users/hp/android-tools (JDK 17, SDK, bundletool), modèles
+# Prérequis : JDK 17, SDK, bundletool dans C:/Users/hp/android-tools ou, à
+# défaut, %LOCALAPPDATA%/Android (jdk/jdk-17*, Sdk, bundletool) ; modèles
 # d'export Godot 4.7.2, google-services.json à la racine pour Firebase.
 
 GODOT="${GODOT:-/c/Program Files/Godot/Godot.exe}"
-ANDROID_TOOLS="${ANDROID_TOOLS:-/c/Users/hp/android-tools}"
-export JAVA_HOME="${JAVA_HOME:-$(cygpath -w "$(ls -d "$ANDROID_TOOLS"/jdk-17* | head -1)")}"
+if [ -z "${ANDROID_TOOLS:-}" ]; then
+	ANDROID_TOOLS=/c/Users/hp/android-tools
+	[ -d "$ANDROID_TOOLS" ] || ANDROID_TOOLS="$(cygpath -u "${LOCALAPPDATA:-C:/}")/Android"
+fi
+export JAVA_HOME="${JAVA_HOME:-$(cygpath -w "$(ls -d "$ANDROID_TOOLS"/jdk-17* "$ANDROID_TOOLS"/jdk/jdk-17* 2>/dev/null | head -1)")}"
 JAVA="$(cygpath -u "$JAVA_HOME")/bin/java"
 BUILD_TOOLS="$(ls -d "$ANDROID_TOOLS"/sdk/build-tools/* | sort -V | tail -1)"
-BUNDLETOOL="${BUNDLETOOL:-$(ls "$ANDROID_TOOLS"/bundletool/bundletool-all-*.jar 2>/dev/null | sort -V | tail -1)}"
+BUNDLETOOL="${BUNDLETOOL:-$(ls "$ANDROID_TOOLS"/bundletool/bundletool-all-*.jar 2>/dev/null | sort -V | tail -1 || true)}"
 
 # Seuls les daemons Gradle : ils verrouillent android/build/build entre deux builds.
 stop_gradle() {
