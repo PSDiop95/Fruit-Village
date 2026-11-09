@@ -31,6 +31,8 @@ ALLOWED_PERMISSIONS = {
     "android.permission.VIBRATE": "vibrations de jeu (désactivables)",
     "android.permission.POST_NOTIFICATIONS": "rappels quotidiens (Android 13+)",
     "android.permission.WAKE_LOCK": "WorkManager/Firebase : envoi différé des événements",
+    "android.permission.RECEIVE_BOOT_COMPLETED": "rappels : reprogrammés après redémarrage (NotificationScheduler)",
+    "com.google.android.c2dm.permission.RECEIVE": "notifications push (Firebase Cloud Messaging)",
     "com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE":
         "Firebase : source d'installation (campagnes)",
     "<package>.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION": "AndroidX : interne, signature",

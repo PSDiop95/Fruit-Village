@@ -26,4 +26,6 @@ case "$FILE" in
 			&& echo "zipalign -P 16 : OK" || echo "zipalign -P 16 : ÉCHEC" ;;
 	*) echo "fichier .aab ou .apk attendu"; exit 1 ;;
 esac
-uv run --no-project python tools/inspect_build.py "$FILE" "$MODE" "$TMP/manifest.txt"
+# Bibliothèque standard seulement : uv si présent, sinon python3/python.
+if command -v uv > /dev/null; then PY=(uv run --no-project python); else PY=("$(command -v python3 || command -v python)"); fi
+"${PY[@]}" tools/inspect_build.py "$FILE" "$MODE" "$TMP/manifest.txt"
