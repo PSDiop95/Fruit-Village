@@ -79,7 +79,11 @@ prepare_gradle_project() {
 	ensure_godot_android_setup || return 1
 	stop_gradle
 	rm -rf android/build/build
-	[ -f android/build/build.gradle ] || "$GODOT" --headless --path . --install-android-build-template --quit
+	# Template complet requis : seuls build.gradle et GodotApp.java sont versionnés.
+	[ -f android/build/gradlew.bat ] || "$GODOT" --headless --path . --install-android-build-template --quit
+	# Godot ne doit pas importer les ressources du template (.import refusés par Gradle).
+	touch android/build/.gdignore
+	find android/build/res -name "*.import" -delete 2>/dev/null || true
 	patch_firebase_gradle
 	patch_launch_gradle
 	# Lancement sans écran noir : ressources Android (tools/android_res) et
