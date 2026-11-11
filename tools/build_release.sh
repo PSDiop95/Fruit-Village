@@ -74,6 +74,8 @@ export GODOT_ANDROID_KEYSTORE_RELEASE_USER="$FV_UPLOAD_ALIAS"
 export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="$FV_UPLOAD_PASSWORD"
 echo "Export $PRESET…"
 "$GODOT" --headless --path . --export-release "$PRESET" "$OUT" > build/release/export.log 2>&1 || true
+# Godot écrit la ligne Gradle complète (mot de passe du keystore compris) : masqué.
+awk '{ p = ENVIRON["FV_UPLOAD_PASSWORD"]; while (p != "" && (i = index($0, p)) > 0) $0 = substr($0, 1, i - 1) "***" substr($0, i + length(p)); print }' 	build/release/export.log > build/release/export.log.tmp && mv build/release/export.log.tmp build/release/export.log
 stop_gradle
 grep -E "BUILD SUCCESSFUL|BUILD FAILED|What went wrong|FV_RELEASE" build/release/export.log | head -5 || true
 grep -q "FV_RELEASE" build/release/export.log && die "identifiants AdMob de release invalides (voir ci-dessus)"

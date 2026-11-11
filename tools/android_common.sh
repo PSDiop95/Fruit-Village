@@ -1,15 +1,22 @@
 #!/usr/bin/env bash
 # Fonctions communes aux builds Android (sourcé par build_android.sh et
 # build_release.sh). Windows / Git Bash.
-# Prérequis : C:/Users/hp/android-tools (JDK 17, SDK, bundletool), modèles
+# Prérequis : JDK 17, SDK, bundletool dans ~/android-tools (jdk-17*, sdk,
+# bundletool), sinon C:/Users/hp/android-tools ou %LOCALAPPDATA%/Android
+# (jdk/jdk-17*, Sdk). Pas dans AppData si le terminal de l'app Claude
+# (empaquetée, AppData virtualisé) doit les voir aussi ; modèles
 # d'export Godot 4.7.2, google-services.json à la racine pour Firebase.
 
 GODOT="${GODOT:-/c/Program Files/Godot/Godot.exe}"
-ANDROID_TOOLS="${ANDROID_TOOLS:-/c/Users/hp/android-tools}"
-export JAVA_HOME="${JAVA_HOME:-$(cygpath -w "$(ls -d "$ANDROID_TOOLS"/jdk-17* | head -1)")}"
+if [ -z "${ANDROID_TOOLS:-}" ]; then
+	ANDROID_TOOLS="$HOME/android-tools"
+	[ -d "$ANDROID_TOOLS" ] || ANDROID_TOOLS=/c/Users/hp/android-tools
+	[ -d "$ANDROID_TOOLS" ] || ANDROID_TOOLS="$(cygpath -u "${LOCALAPPDATA:-C:/}")/Android"
+fi
+export JAVA_HOME="${JAVA_HOME:-$(cygpath -w "$(ls -d "$ANDROID_TOOLS"/jdk-17* "$ANDROID_TOOLS"/jdk/jdk-17* 2>/dev/null | head -1)")}"
 JAVA="$(cygpath -u "$JAVA_HOME")/bin/java"
 BUILD_TOOLS="$(ls -d "$ANDROID_TOOLS"/sdk/build-tools/* | sort -V | tail -1)"
-BUNDLETOOL="${BUNDLETOOL:-$(ls "$ANDROID_TOOLS"/bundletool/bundletool-all-*.jar 2>/dev/null | sort -V | tail -1)}"
+BUNDLETOOL="${BUNDLETOOL:-$(ls "$ANDROID_TOOLS"/bundletool/bundletool-all-*.jar 2>/dev/null | sort -V | tail -1 || true)}"
 
 # Seuls les daemons Gradle : ils verrouillent android/build/build entre deux builds.
 stop_gradle() {
@@ -72,7 +79,11 @@ prepare_gradle_project() {
 	ensure_godot_android_setup || return 1
 	stop_gradle
 	rm -rf android/build/build
-	[ -f android/build/build.gradle ] || "$GODOT" --headless --path . --install-android-build-template --quit
+	# Template complet requis : seuls build.gradle et GodotApp.java sont versionnés.
+	[ -f android/build/gradlew.bat ] || "$GODOT" --headless --path . --install-android-build-template --quit
+	# Godot ne doit pas importer les ressources du template (.import refusés par Gradle).
+	touch android/build/.gdignore
+	find android/build/res -name "*.import" -delete 2>/dev/null || true
 	patch_firebase_gradle
 	patch_launch_gradle
 	# Lancement sans écran noir : ressources Android (tools/android_res) et
