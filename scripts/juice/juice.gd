@@ -442,14 +442,14 @@ func _on_merged(rank_created: int, pos: Vector3, points: int, combo: int) -> voi
 		play_merge_sound(rank_created)
 	vibrate(config.vibrate_merge_ms)
 
-	# Voix : grosse fusion « Good ! », sinon combo « Waaw ! » / « Wóoy ! ».
+	# Voix variées : grosse fusion, gros combo ou combo (listes de SoundBank).
 	var vs := config.sounds
 	if vs and not top and rank_created >= config.big_merge_min_rank:
-		play_voice(vs.voice_good)
+		play_voice(pick_voice(vs.voice_big_merge_pool, vs.voice_good))
 	elif vs and combo >= config.voice_big_combo:
-		play_voice(vs.voice_wooy)
+		play_voice(pick_voice(vs.voice_big_combo_pool, vs.voice_wooy))
 	elif vs and combo >= config.combo_min:
-		play_voice(vs.voice_waaw)
+		play_voice(pick_voice(vs.voice_combo_pool, vs.voice_waaw))
 	if combo >= config.combo_min:
 		_show_big_text("COMBO x%d !" % combo, config.combo_fill_bottom, config.combo_text_font_size, 0.6,
 			combo - config.combo_min, config.combo_fill_top)
@@ -739,6 +739,22 @@ func _update_tension(dt: float) -> void:
 	Audio.set_tension(_tension_on)
 
 
+## Voix au hasard dans `pool`, différente de la dernière jouée (variété).
+## Pool vide : `fallback`. Hasard propre à l'audio : n'affecte pas la partie.
+var _voice_rng := RandomNumberGenerator.new()
+var _last_voice_stream: AudioStream
+
+
+func pick_voice(pool: Array[AudioStream], fallback: AudioStream) -> AudioStream:
+	var choices: Array[AudioStream] = []
+	for s in pool:
+		if s != null and s != _last_voice_stream:
+			choices.append(s)
+	if choices.is_empty():
+		return fallback if pool.is_empty() else pool[0]
+	return choices[_voice_rng.randi_range(0, choices.size() - 1)]
+
+
 ## Voix de la vendeuse : au plus une toutes les voice_min_gap s ; les voix
 ## prioritaires (Baobab, nouveau fruit, record) n'attendent que voice_priority_gap.
 func play_voice(stream: AudioStream, priority: bool = false) -> AudioStreamPlayer:
@@ -749,6 +765,7 @@ func play_voice(stream: AudioStream, priority: bool = false) -> AudioStreamPlaye
 	if now - _last_voice < gap:
 		return null
 	_last_voice = now
+	_last_voice_stream = stream
 	return Audio.play(stream, config.voice_volume_db)
 
 

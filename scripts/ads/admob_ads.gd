@@ -22,6 +22,11 @@ var _initialized: bool = false
 var _ads: Dictionary = {}  # kind -> objet pub du plugin
 var _keep: Array = []  # callbacks du plugin (gardés en vie)
 var _presenting: StringName = &""
+## UMP en erreur (ex. aucun message configuré dans AdMob pour cet App ID) :
+## pubs demandées quand même, Google applique alors ses propres règles
+## (pas de pub personnalisée sans consentement, EEE comprise). Statistiques
+## refusées faute de consentement connu.
+var _consent_error: bool = false
 
 
 static func _class_path(cls: String) -> String:
@@ -99,8 +104,10 @@ func _on_info_updated() -> void:
 		_finish_consent()
 
 
-func _on_info_failed(_err: Variant) -> void:
-	# Google : tenter quand même can_request_ads (consentement d'une session passée).
+func _on_info_failed(err: Variant) -> void:
+	push_warning("FV_ADS: consentement UMP indisponible (%s) : pubs demandées sans consentement personnalisé"
+		% (str(err.get("message")) if err is Object else str(err)))
+	_consent_error = true
 	_finish_consent()
 
 
@@ -130,13 +137,14 @@ func _can_request_ads() -> bool:
 
 
 func _finish_consent() -> void:
-	var can := _can_request_ads()
+	var consent_ok := _can_request_ads()
+	var can := consent_ok or _consent_error
 	if can and not _initialized:
 		_initialized = true
 		var mobile_ads := _script("MobileAds")
 		if mobile_ads:
 			mobile_ads.call("initialize")
-	consent_resolved.emit.call_deferred(can, can)
+	consent_resolved.emit.call_deferred(can, consent_ok)
 
 
 func privacy_options_required() -> bool:

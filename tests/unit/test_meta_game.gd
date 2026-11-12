@@ -309,6 +309,23 @@ func test_voices_rate_limited_priority_passes() -> void:
 	assert_not_null(j.play_voice(s.voice_ca_cest_fort, true), "voix prioritaire (Baobab)")
 
 
+func test_combo_voices_vary_never_repeat() -> void:
+	var g := await _game()
+	var s: SoundBank = g.juice_config.sounds
+	var j := g.juice()
+	for pool in [s.voice_combo_pool, s.voice_big_combo_pool, s.voice_big_merge_pool]:
+		assert_gte(pool.size(), 3, "plusieurs voix par situation")
+		var seen := {}
+		var last: AudioStream = null
+		for i in 40:
+			var v := j.pick_voice(pool, null)
+			assert_ne(v, last, "jamais deux fois la même voix d'affilée")
+			seen[v] = true
+			last = v
+			j._last_voice_stream = v
+		assert_eq(seen.size(), pool.size(), "toutes les voix finissent par sortir")
+
+
 func test_music_playlist_and_tension_crossfade() -> void:
 	var cfg: JuiceConfig = load("res://data/juice.tres")
 	var s: SoundBank = cfg.sounds
@@ -491,3 +508,33 @@ func test_daily_claim_credits_wallet() -> void:
 	assert_null(DailyRewards.claim(), "une fois par jour")
 	assert_eq(analytics.last(&"daily_claimed")["day"], 1)
 	DailyRewards.use_clock(MetaClock.new())
+
+
+class FakeConsentInfo:
+	extends RefCounted
+	func get_can_request_ads() -> bool:
+		return false
+
+
+## Prod : nouvel App ID AdMob sans message de consentement configuré, UMP en
+## erreur → les pubs restent demandées (sinon boutons rewarded jamais affichés).
+func test_admob_requests_ads_when_ump_misconfigured() -> void:
+	var a := AdMobAds.new()
+	add_child_autofree(a)
+	a._info = FakeConsentInfo.new()
+	a._initialized = true  # pas d'appel au SDK natif en test
+	var got := []
+	a.consent_resolved.connect(func(can: bool, analytics_ok: bool) -> void: got.append([can, analytics_ok]))
+	a._on_info_failed("Publisher misconfiguration")
+	await wait_physics_frames(2)
+	assert_eq(got, [[true, false]], "pubs demandées, statistiques sans consentement")
+	# Consentement refusé normalement (pas d'erreur) : aucune pub.
+	var b := AdMobAds.new()
+	add_child_autofree(b)
+	b._info = FakeConsentInfo.new()
+	b._initialized = true
+	var got_b := []
+	b.consent_resolved.connect(func(can: bool, analytics_ok: bool) -> void: got_b.append([can, analytics_ok]))
+	b._finish_consent()
+	await wait_physics_frames(2)
+	assert_eq(got_b, [[false, false]])

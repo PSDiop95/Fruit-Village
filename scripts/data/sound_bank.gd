@@ -40,6 +40,11 @@ extends Resource
 @export var voice_cest_doux: AudioStream
 @export var voice_ca_cest_fort: AudioStream
 @export var voice_gaaw: AudioStream
+## Voix tirées au hasard (jamais deux fois la même d'affilée) : combo x2-x3,
+## gros combo, grosse fusion. Vide : voix fixe de l'ancien comportement.
+@export var voice_combo_pool: Array[AudioStream] = []
+@export var voice_big_combo_pool: Array[AudioStream] = []
+@export var voice_big_merge_pool: Array[AudioStream] = []
 
 
 func note_for_rank(rank: int) -> AudioStream:
