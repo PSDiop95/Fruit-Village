@@ -55,6 +55,21 @@ func test_rewarded_button_hidden_until_loaded() -> void:
 	assert_false(AdsManager.can_request, "consentement refusé : aucune requête")
 
 
+func test_ads_start_deferred_until_begin() -> void:
+	# ANR 1.0.0 (5) : le SDK ne démarre pas pendant l'écran de chargement.
+	var m := mock_copy(true)
+	AdsManager.use_provider(m, false)
+	await wait_process_frames(2)
+	assert_false(AdsManager.consent_known, "rien avant begin()")
+	AdsManager.begin()
+	await wait_seconds(AdsManager.START_DELAY + 0.3)
+	assert_true(AdsManager.consent_known, "démarré après begin()")
+	assert_true(AdsManager.can_request)
+	AdsManager.begin()  # idempotent (retour au titre)
+	await wait_process_frames(2)
+	assert_true(AdsManager.can_request)
+
+
 func mock_copy(granted: bool) -> MockAds:
 	var m := MockAds.new()
 	m.manual = true
@@ -538,3 +553,26 @@ func test_admob_requests_ads_when_ump_misconfigured() -> void:
 	b._finish_consent()
 	await wait_physics_frames(2)
 	assert_eq(got_b, [[false, false]])
+
+
+## Android Vitals 1.0.0 (5) : IllegalStateException du SDK AdMob quand une pub
+## est chargée avant la FIN de MobileAds.initialize(). Les chargements ne
+## partent qu'au rappel d'initialisation terminée.
+func test_admob_loads_only_after_sdk_initialized() -> void:
+	var a := AdMobAds.new()
+	add_child_autofree(a)
+	a._info = FakeConsentInfo.new()
+	a._consent_error = true
+	var got := []
+	a.consent_resolved.connect(func(can: bool, analytics_ok: bool) -> void: got.append([can, analytics_ok]))
+	a._finish_consent()  # lance l'initialisation (plugin absent : jamais terminée)
+	await wait_physics_frames(2)
+	assert_eq(got, [], "pas de feu vert avant la fin de l'initialisation")
+	assert_false(a._initialized)
+	a.load_ad(AdProvider.REWARDED)
+	assert_false(a.is_loaded(AdProvider.REWARDED), "aucun chargement avant l'initialisation")
+	a._finish_consent()  # second appel pendant l'initialisation : ignoré
+	a._on_sdk_ready(false)
+	await wait_physics_frames(2)
+	assert_eq(got, [[true, false]], "feu vert une seule fois, à l'initialisation terminée")
+	assert_true(a._initialized)

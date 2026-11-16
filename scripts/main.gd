@@ -49,6 +49,7 @@ func _on_coins_changed(_coins: int, delta: int, reason: StringName) -> void:
 
 
 func show_title() -> void:
+	AdsManager.begin()
 	_free_game()
 	_backdrop = _make_backdrop()
 	add_child(_backdrop)

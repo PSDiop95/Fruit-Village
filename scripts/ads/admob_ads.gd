@@ -18,7 +18,8 @@ const PRIVACY_OPTIONS_REQUIRED := 2
 
 var _ids: Dictionary = {}
 var _info: Object
-var _initialized: bool = false
+var _initialized: bool = false  # SDK prêt (initialisation TERMINÉE)
+var _initializing: bool = false
 var _ads: Dictionary = {}  # kind -> objet pub du plugin
 var _keep: Array = []  # callbacks du plugin (gardés en vie)
 var _presenting: StringName = &""
@@ -140,11 +141,37 @@ func _finish_consent() -> void:
 	var consent_ok := _can_request_ads()
 	var can := consent_ok or _consent_error
 	if can and not _initialized:
-		_initialized = true
-		var mobile_ads := _script("MobileAds")
-		if mobile_ads:
-			mobile_ads.call("initialize")
+		# SDK « next-gen » : charger une pub avant la FIN de l'initialisation
+		# lève IllegalStateException (plantage natif, Android Vitals 1.0.0 (5)).
+		# Le consentement n'est annoncé (donc les chargements lancés) qu'au
+		# rappel d'initialisation terminée.
+		if not _initializing:
+			_start_sdk(consent_ok)
+		return
 	consent_resolved.emit.call_deferred(can, consent_ok)
+
+
+func _start_sdk(consent_ok: bool) -> void:
+	var mobile_ads := _script("MobileAds")
+	var listener := _new("OnInitializationCompleteListener")
+	if mobile_ads == null or listener == null:
+		consent_resolved.emit.call_deferred(false, consent_ok)
+		return
+	_initializing = true
+	# Rappel du plugin (statique) : peut arriver après la libération de ce
+	# fournisseur (changement de fournisseur) → référence faible.
+	var me: WeakRef = weakref(self)
+	listener.set("on_initialization_complete", func(_status: Variant) -> void:
+		var p: AdMobAds = me.get_ref()
+		if p:
+			p._on_sdk_ready(consent_ok))
+	mobile_ads.call("initialize", listener)
+
+
+func _on_sdk_ready(consent_ok: bool) -> void:
+	_initializing = false
+	_initialized = true
+	consent_resolved.emit(true, consent_ok)
 
 
 func privacy_options_required() -> bool:

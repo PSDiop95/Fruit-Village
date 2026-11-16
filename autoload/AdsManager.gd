@@ -21,6 +21,11 @@ signal ad_finished(kind: StringName)
 const CLOSE_GRACE := 0.3
 ## Pub annoncée mais jamais ouverte après le retour au premier plan (s).
 const WATCHDOG := 8.0
+## Démarrage du SDK après l'écran de chargement (begin) : son initialisation
+## (WebView) bloquait le thread principal pendant le préchargement → ANR
+## (Android Vitals 1.0.0 (5)). Délai après begin, et filet si begin n'arrive pas.
+const START_DELAY := 1.5
+const START_FALLBACK := 20.0
 
 var config: AdsConfig = preload("res://data/ads.tres")
 var provider: AdProvider
@@ -38,6 +43,7 @@ var _was_muted: bool = false
 var _retry: Dictionary = {}  # kind -> nombre d'échecs consécutifs
 var _show_started: float = 0.0
 var _ids: Dictionary = {}
+var _started: bool = false
 
 
 func _ready() -> void:
@@ -52,7 +58,21 @@ func _ready() -> void:
 		p = MockAds.new()
 	else:
 		p = AdProvider.new()
-	use_provider(p)
+	use_provider(p, false)
+	get_tree().create_timer(START_FALLBACK, true).timeout.connect(_start_provider)
+
+
+## Jeu prêt (écran titre affiché) : démarrage du consentement et du SDK peu après.
+func begin() -> void:
+	if not _started:
+		get_tree().create_timer(START_DELAY, true).timeout.connect(_start_provider)
+
+
+func _start_provider() -> void:
+	if _started:
+		return
+	_started = true
+	provider.start(config, _ids)
 
 
 func save_state() -> Dictionary:
@@ -63,8 +83,9 @@ func load_state(d: Dictionary) -> void:
 	policy.from_dict(d)
 
 
-## Change de fournisseur (tests : MockAds en mode manuel) et relance le consentement.
-func use_provider(p: AdProvider) -> void:
+## Change de fournisseur (tests : MockAds en mode manuel) et relance le
+## consentement (immédiatement, sauf start = false : attente de begin()).
+func use_provider(p: AdProvider, start: bool = true) -> void:
 	if provider:
 		provider.queue_free()
 	provider = p
@@ -81,7 +102,9 @@ func use_provider(p: AdProvider) -> void:
 	provider.closed.connect(_on_closed)
 	provider.show_failed.connect(_on_show_failed)
 	_ids = ad_ids()
-	provider.start(config, _ids)
+	_started = false
+	if start:
+		_start_provider()
 
 
 func use_clock(c: MetaClock) -> void:
