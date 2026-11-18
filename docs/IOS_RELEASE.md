@@ -53,7 +53,7 @@ Exigences vérifiées le 26/10/2026 :
    **explicite** `com.smartiaservices.fruitvillage`. Aucune capacité
    particulière à cocher.
 2. App Store Connect → Apps → **+** Nouvelle app : plateforme iOS, nom
-   « Fruit Village : Fusion Fruits », langue principale **Français (France)**,
+   « Fruit Village : Puzzle Baobab », langue principale **Français (France)**,
    bundle ID ci-dessus, SKU `fruitvillage-ios`, accès complet.
 
 ### 3. Clé API App Store Connect (signature et envoi par la CI)
