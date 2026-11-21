@@ -27,6 +27,9 @@ var _events: Array = []
 func before_each() -> void:
 	SaveManager.erase_files(SAVE)
 	SaveManager.use_path(SAVE)
+	# Les signalements sont différés (une image) : on laisse partir ceux des
+	# tests précédents avant d'écouter, sinon ils arrivent pendant ce test.
+	await wait_process_frames(1)
 	_events.clear()
 	Analytics.event_logged.connect(_on_event)
 
