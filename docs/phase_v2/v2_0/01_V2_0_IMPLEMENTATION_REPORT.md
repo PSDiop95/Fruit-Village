@@ -1,6 +1,6 @@
 # V2-0 — Rapport d'implémentation
 
-Branche `feature/fruit-village-v2-0` (depuis `main` 20f4afa), PR #31 (CI verte). Aucune publication store.
+Branche `feature/fruit-village-v2-0` (depuis `main` 20f4afa), PR #31 (fusionnée) et #32. Aucune publication store.
 
 ## V2-0.1 Localisation FR / EN
 - Système natif Godot (CSV → `.translation`), 202 clés, FR par défaut et en repli.

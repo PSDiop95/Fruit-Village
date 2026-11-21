@@ -1,6 +1,6 @@
 # V2-0 — Rapport de clôture (actualisé le 21/11/2026)
 
-Branche `feature/fruit-village-v2-0`, PR #31 vers `main`. Aucune publication store, aucun développement V2-1.
+Branche `feature/fruit-village-v2-0` : PR #31 (fondations, fusionnée), PR #32 (Crashlytics, relecture, checklist). Aucune publication store, aucun développement V2-1.
 
 ## Critères d'acceptation
 | ID | Critère | Statut | Preuve |
@@ -41,6 +41,6 @@ Branche `feature/fruit-village-v2-0`, PR #31 vers `main`. Aucune publication sto
 1. Dérouler la checklist Galaxy A23 (10) et reporter les résultats.
 2. Faire valider par un anglophone les 14 points de `09_ENGLISH_REVIEW.md`.
 3. Mettre à jour la politique de confidentialité / Data safety (rapports de plantage) avant toute release.
-4. Relire et fusionner la PR #31.
+4. Relire et fusionner la PR #32 (CI à vérifier).
 
 La V2-1 n'est pas commencée : elle attend la validation explicite du propriétaire.
