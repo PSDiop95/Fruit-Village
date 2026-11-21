@@ -6,10 +6,10 @@ Environnement : Windows 11, Godot 4.7.2 headless, GUT. Référence V1 = worktree
 ## Synthèse
 | | V1 (référence) | V2-0 |
 |---|---|---|
-| Tests | 193 | **236** (193 V1 + 43 nouveaux) |
-| Réussis | 193 | **236** |
+| Tests | 193 | **244** (193 V1 + 51 nouveaux) |
+| Réussis | 193 | **244** |
 | Échoués / en attente | 0 / 0 | 0 / 0 |
-| Assertions | 4004 | 5571 |
+| Assertions | 4004 | 5657 |
 | Erreurs GDScript (journaux) | — | 0 (`tools/ci/gut_summary.py`) |
 
 ## Tests V1 (G0-01, G0-03)
@@ -45,10 +45,19 @@ double** (cadeau du jour), version future (en-tête FV3 et `version: 3`), écrit
 est impossible (fichier jamais écrasé, même après relance), signal + statistique sans données, chargement
 normal silencieux, règles pures `SaveCodec.header_version`, `SaveRecovery.fence`, `SaveRecovery.salvage`.
 
+### `tests/unit/test_crashlytics.gd` — 8 tests, 38 assertions
+Inerte sans plugin, initialisation après Core (Core une seule fois), échec de Core, collecte liée au
+consentement et au réglage, fil d'Ariane sans paramètres + troncature, jamais `set_user_id`, plantage de test
+réservé au debug, configuration d'export (presets, AAR, plugin Gradle, pas de NDK, iOS inchangé).
+
+## CI GitHub (PR #31)
+`tests` PASS (236 tests avant Crashlytics), `android-debug` PASS, `ios` PASS — détail dans 06.
+
 ## Contrôles hors GUT
 | Contrôle | Résultat |
 |---|---|
-| `tools/ci/check_config.py` | OK (12 contrôles) |
+| `tools/ci/check_config.py` | OK (dont 3 contrôles Crashlytics) |
+| Build Gradle APK AdMob test + Crashlytics + `check_build.sh debug` | OK (05) |
 | `tools/ci/gut_summary.py` sur le run complet | OK |
 | Export APK debug « Android MockAds » (V1 et V2-0) + `tools/check_build.sh … debug` | OK (après correction du contrôle App ID absent) |
 | Captures FR / EN (`tools/capture_m4.gd`) : 13 écrans | aucun texte coupé, carte Réglages entière |
@@ -57,7 +66,6 @@ normal silencieux, règles pures `SaveCodec.header_version`, `SaveRecovery.fence
 ## Non exécuté
 | Test | Raison |
 |---|---|
-| Workflows GitHub (`tests.yml`, `ios.yml`) | nécessite un push / une PR (à autoriser) |
 | Démarrage, ANR, hors-ligne sur Galaxy A23 | pas d'appareil connecté |
 | AAB release Android, build iOS | secrets et signature (hors périmètre), macOS |
-| Crashlytics | BLOCKED (voir 05) |
+| Transmission Crashlytics | NOT TESTED : appareil + console Firebase (checklist 10 §6) |

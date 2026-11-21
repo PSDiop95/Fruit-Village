@@ -1,6 +1,6 @@
 # V2-0 — Rapport d'implémentation
 
-Branche `v2-0-foundations` (depuis `main` 20f4afa). Rien n'est commité ni poussé à la date du rapport.
+Branche `feature/fruit-village-v2-0` (depuis `main` 20f4afa), PR #31 (fusionnée) et #32. Aucune publication store.
 
 ## V2-0.1 Localisation FR / EN
 - Système natif Godot (CSV → `.translation`), 202 clés, FR par défaut et en repli.
@@ -27,16 +27,23 @@ Branche `v2-0-foundations` (depuis `main` 20f4afa). Rien n'est commité ni pouss
 - `unregister_system`, enregistrement tardif, règles et ordre d'initialisation documentés.
 - Guide : 04_SAVE_SYSTEM_RULES.md.
 
-## V2-0.4 Crashlytics (TD-20)
-- Audit : AAR natif et plugin Gradle absents → **BLOCKED**, options A–D (05_CRASHLYTICS_GUIDE.md).
-  Aucun drapeau ni dépendance modifiés.
+## V2-0.4 Crashlytics (TD-20) — option A (Android), autorisée le 21/11/2026
+- AAR `android/firebase_crashlytics/` (godotx 3.1.0, même release que Core / Analytics / Messaging),
+  `firebase-crashlytics` 20.1.0, plugin Gradle `firebase-crashlytics-gradle` 3.0.8, sans NDK.
+- `firebase/enable_crashlytics=true` sur les presets « Android AdMob test » et « Android Release » ;
+  MockAds et iOS inchangés (option C iOS non autorisée).
+- `scripts/analytics/crash_reporter.gd` : initialisation après Core, collecte seulement avec consentement UMP
+  **et** réglage « Statistiques d'usage » ; fil d'Ariane = noms d'événements ; jamais d'identifiant utilisateur.
+  `privacy_safe_defaults` conservé (collecte coupée dans le manifeste jusqu'au consentement).
+- Plantage de test dans le menu debug, refusé hors build debug. 8 tests (`test_crashlytics.gd`).
+- Guide : 05_CRASHLYTICS_GUIDE.md.
 
 ## V2-0.5 CI
 - `.github/workflows/tests.yml` : contrôles de configuration, import, GUT (JUnit + résumé + erreurs GDScript),
   export APK debug MockAds + `inspect_build.py`. Aucun secret.
 - `tools/ci/check_config.py`, `tools/ci/gut_summary.py`.
 - `tools/inspect_build.py` : en debug, un App ID AdMob **absent** n'est plus compté comme réel.
-- Non exécuté sur GitHub (push à autoriser). Guide : 06_CI_GUIDE.md.
+- Exécuté sur GitHub (PR #31) : `tests`, `android-debug`, `ios` verts. Guide : 06_CI_GUIDE.md.
 
 ## V2-0.6 Performance
 - Démarrage PC jusqu'au titre : +1,7 % (médianes 3030 → 3083 ms ; bruit de mesure ±15 %).
@@ -49,14 +56,16 @@ Branche `v2-0-foundations` (depuis `main` 20f4afa). Rien n'est commité ni pouss
 **Créés** : `autoload/Locale.gd`, `scripts/locale/{locale_core,loc}.gd`, `localization/translations.csv`,
 `scripts/meta/save_recovery.gd`, `tests/unit/{test_locale,test_save_recovery}.gd`, `tests/hooks/pre_run.gd`,
 `tests/fixtures/saves/*` (9 fixtures + générateur), `.github/workflows/tests.yml`,
-`tools/ci/{check_config,gut_summary}.py`, `tools/startup_probe.gd`, `docs/phase_v2/v2_0/*` (8).
+`tools/ci/{check_config,gut_summary}.py`, `tools/startup_probe.gd`, `scripts/analytics/crash_reporter.gd`,
+`tests/unit/test_crashlytics.gd`, `android/firebase_crashlytics/*.aar`, `docs/phase_v2/v2_0/*` (10).
 
 **Modifiés** : `project.godot` (autoload Locale, traductions), `.gutconfig.json` (hook FR),
 `autoload/{SaveManager,Missions,Notifications}.gd`, `scripts/meta/save_codec.gd`,
 `scripts/data/daily_rewards_config.gd`, `scripts/platform/notification_planner.gd`,
 `scripts/{game_hud,juice/juice,visual/visual_quality}.gd`, `scripts/ui/{settings_panel,title_screen,
 game_over_screen,fruit_catalog_names}.gd`, `scripts/ui/meta/*` (8 fichiers), 6 fichiers de tests,
-`tools/{capture_m4.gd,inspect_build.py}`, `CLAUDE.md`.
+`tools/{capture_m4.gd,inspect_build.py,android_common.sh}`, `autoload/Analytics.gd`, `scripts/juice/debug_menu.gd`,
+`android/build/build.gradle` (plugin Crashlytics), `export_presets.cfg` (`firebase/enable_crashlytics` seul), `CLAUDE.md`.
 
-**Non touchés** : physique, fusion, spawner, données d'équilibrage, économie, identifiants, presets
-d'export, signatures, plugins natifs. `assets/ui/letterbox_*.png` (non suivis, antérieurs) préservés.
+**Non touchés** : physique, fusion, spawner, données d'équilibrage, économie, identifiants, signatures,
+autres options des presets, plugins natifs existants. `assets/ui/letterbox_*.png` (non suivis, antérieurs) préservés.

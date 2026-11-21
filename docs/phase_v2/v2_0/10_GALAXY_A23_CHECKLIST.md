@@ -1,0 +1,63 @@
+# V2-0 — Checklist de validation sur Galaxy A23
+
+Appareil de référence V1 : Galaxy A23, Android 14. Build à tester : **APK « AdMob test »** de la branche
+`feature/fruit-village-v2-0` (`tools/build_android.sh admob` : debug, pubs de test Google, Firebase +
+Crashlytics). Pour la mesure de démarrage, refaire aussi l'AAB release local (`tools/build_release.sh`)
+installé avec bundletool **sans publication**. Noter pour chaque ligne : PASS / FAIL + valeur mesurée.
+
+## 0. Préparation
+- [ ] `adb devices` voit l'appareil ; `adb logcat -c`.
+- [ ] Désinstaller l'app, réinstaller l'APK V2-0. Garder aussi l'APK V1 (code 6) pour la mise à jour.
+- [ ] Journaux pendant tous les tests : `adb logcat -s godot:V AndroidRuntime:E ActivityManager:I FirebaseCrashlytics:V`.
+
+## 1. Démarrage à froid (critère : ≤ 110 % de V1, soit ≤ 4,95 s jusqu'au titre ; 1re image ≤ 2,9 s)
+- [ ] Mode avion, appli fermée (`adb shell am force-stop com.smartiaservices.fruitvillage`).
+- [ ] 5 lancements : `adb shell am start -W -n com.smartiaservices.fruitvillage/com.godot.game.GodotApp` (valeur `TotalTime` = 1re image).
+- [ ] Chronométrer jusqu'à l'écran titre jouable (vidéo d'écran `adb shell screenrecord`, ou balise logcat « title »). Moyenne et maximum.
+- [ ] Premier lancement après installation mesuré à part (préchauffage des shaders).
+- [ ] Faire la même série avec l'APK V1 (même appareil, même jour) pour comparer.
+
+## 2. Mode avion (jeu V1 hors ligne)
+- [ ] Lancement, titre, partie complète, fusion jusqu'à la Papaye, fin de partie : aucun blocage.
+- [ ] Bouton pub (Continuer, Doubler) : message « pas de pub », aucun gel.
+- [ ] Cadeau du jour, missions, album, power-ups : fonctionnent.
+- [ ] Retour réseau en cours de partie : rien ne casse.
+
+## 3. Sauvegardes
+- [ ] **Mise à jour V1 → V2-0** : installer V1, jouer (record, pièces, album, série), installer V2-0 par-dessus (`adb install -r`) : tout est conservé.
+- [ ] Fermeture forcée en pleine partie puis relance : record et pièces intacts.
+- [ ] Copie de secours présente : `adb shell run-as com.smartiaservices.fruitvillage ls files/` → `save.json`, `save.json.bak`.
+- [ ] Fichier modifié : `run-as … sh -c "sed -i 's/\"coins\":[0-9]*/\"coins\":999999/' files/save.json"`, relance → solde légitime, `save.json.tampered` présent, logcat « Sauvegarde modifiée ».
+- [ ] Fichier supprimé (`rm files/save.json`), relance → progression rechargée depuis `.bak`.
+- [ ] Cadeau du jour réclamé, puis fichier modifié, relance → le cadeau n'est **pas** réclamable une 2e fois.
+
+## 4. Changement de langue
+- [ ] Téléphone en anglais, 1re installation → jeu en anglais. Téléphone en français → français. Téléphone en wolof / allemand → français.
+- [ ] Réglages → EN : tous les écrans ouverts basculent sans redémarrage (titre, réglages, pause, HUD).
+- [ ] Relance : la langue choisie est conservée même si la langue du téléphone change.
+- [ ] Parcours complet en anglais : titre, cadeau (y compris état « horloge suspecte » si reproductible), missions, album + carte de fruit + partage, power-ups (offre, pilon), pause, fin de partie, niveau supérieur, notification de rappel (avancer l'heure).
+- [ ] Aucun texte coupé ni débordant (écran 1080×2408, plus long que 9:16) ; carte Réglages entière avec la barre de navigation.
+
+## 5. Stabilité et ANR
+- [ ] Session de 20 min (≈ 6 parties) : aucun plantage, aucun « L'application ne répond pas ».
+- [ ] 20 allers-retours arrière-plan / premier plan (bouton accueil) dont pendant une pub de test : pas d'ANR.
+- [ ] Rotation verrouillée, écran éteint / rallumé en partie : reprise correcte.
+- [ ] Après la session : Play Console « Android vitals » (si build interne) ou `adb shell dumpsys activity anr` vide.
+- [ ] FPS en partie (menu debug F1 / 3 doigts → FPS) : ≥ 30 en qualité auto, comme en V1.
+
+## 6. Crashlytics (option A)
+- [ ] Consentement **refusé** (UMP de test) : menu debug → « Test plantage (Crashlytics) » → l'app se ferme ; relancer : **aucun** rapport dans la console Firebase sous 10 min.
+- [ ] Consentement **accepté** + « Statistiques d'usage » activé : test de plantage, relance → rapport visible dans la console Firebase (Crashlytics) sous 10 min, avec version 1.0.0 (6) et fil d'Ariane (noms d'événements).
+- [ ] Rapport : aucun identifiant utilisateur, aucune donnée personnelle dans les clés et journaux.
+- [ ] « Statistiques d'usage » coupé dans les réglages : nouveau plantage de test → pas de rapport.
+- [ ] Release (AAB local) : le menu debug et le bouton de plantage sont absents.
+
+## Résultat
+| Section | Statut | Valeurs / remarques |
+|---|---|---|
+| 1. Démarrage | | |
+| 2. Mode avion | | |
+| 3. Sauvegardes | | |
+| 4. Langue | | |
+| 5. Stabilité / ANR | | |
+| 6. Crashlytics | | |

@@ -40,7 +40,16 @@ python tools/ci/check_config.py
 python tools/ci/gut_summary.py build/ci/junit.xml build/ci/tests.log
 ```
 
-## Statut
-Workflow écrit, étapes exécutées localement (Windows) ; **jamais exécuté sur GitHub** : il faut pousser la
-branche / ouvrir une PR (action à autoriser par le propriétaire). Les versions d'actions (`checkout@v7`,
-`cache@v6`, `upload-artifact@v7`) sont celles de `ios.yml` ; `setup-java@v5` est nouveau.
+## Statut : exécuté sur GitHub (PR #31, branche `feature/fruit-village-v2-0`)
+| Job | Résultat | Détail |
+|---|---|---|
+| `tests` | **PASS** (2 min 44) | 236 tests : 235 réussis + 1 en attente (`ads_ids.cfg` absent, voulu), 0 échec, 5 589 assertions, 0 erreur GDScript |
+| `android-debug` | **PASS** (1 min 02) | APK MockAds 45,6 Mo, `zipalign -P 16` OK, `inspect_build` OK |
+| `ios` | **PASS** (3 min 01) | SDK Firebase signés Google, liés statiquement ; Info.plist (App ID de test, 50 SKAdNetwork, portrait) ; PrivacyInfo `NSPrivacyTracking=false` ; pas d'`ads_ids.cfg` dans le pck ; compilation non signée OK |
+
+Régression trouvée au 1er run Linux (PR #30) et corrigée (51a9b72) : signalements `save_recovery` différés
+d'un test précédent reçus pendant `test_integrity_issue_signalled_without_data` ; `before_each` attend une image.
+
+Les versions d'actions (`checkout@v7`, `cache@v6`, `upload-artifact@v7`) sont celles de `ios.yml` ;
+`setup-java@v5` est nouveau. Le job `android-debug` utilise le preset MockAds (sans Firebase) : il ne couvre
+**pas** Crashlytics, contrôlé par le build Gradle local (05).

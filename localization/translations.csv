@@ -87,7 +87,7 @@ CARD_NAMES,EN : %s,FR: %s
 CARD_NAMES_WOLOF,EN : %s   ·   Wolof : %s,FR: %s   ·   Wolof: %s
 CARD_BENEFITS,BIENFAITS,BENEFITS
 CARD_SHARE,Partager,Share
-SHARE_FRUIT_TEXT,J'ai débloqué %s dans Fruit Village ! %s,I unlocked %s in Fruit Village! %s
+SHARE_FRUIT_TEXT,J'ai débloqué %s dans Fruit Village ! %s,I unlocked the %s in Fruit Village! %s
 SETTINGS_SECTION_SOUND,SON,SOUND
 SETTINGS_SECTION_DISPLAY,AFFICHAGE,DISPLAY
 SETTINGS_SECTION_PRIVACY,VIE PRIVÉE,PRIVACY
@@ -131,11 +131,11 @@ FRUIT_BISSAP_COUNT_OTHER,bissaps,hibiscus
 LORE_BISSAP_TEXT,"Ce ne sont pas des fruits mais les calices rouges d'une fleur d'hibiscus. Infusés et sucrés, ils donnent le bissap, servi à toutes les fêtes.","These are not fruits but the red calyces of a hibiscus flower. Steeped and sweetened, they make bissap, served at every celebration."
 LORE_BISSAP_BENEFITS,Ses calices rouges sont riches en antioxydants (anthocyanes). Une boisson rafraîchissante et sans caféine.,"Its red calyces are rich in antioxidants (anthocyanins). A refreshing, caffeine-free drink."
 FRUIT_TAMARIN_NAME,Tamarin,Tamarind
-FRUIT_TAMARIN_FACT,"Le tamarin, « dakhar » en wolof, parfume jus et sauces de sa pulpe acidulée.","Tamarind, « dakhar » in Wolof, flavors juices and sauces with its tangy pulp."
+FRUIT_TAMARIN_FACT,"Le tamarin, « dakhar » en wolof, parfume jus et sauces de sa pulpe acidulée.","Tamarind, ""dakhar"" in Wolof, flavors juices and sauces with its tangy pulp."
 FRUIT_TAMARIN_GOAL,le Tamarin,the Tamarind
 FRUIT_TAMARIN_COUNT_ONE,tamarin,tamarind
 FRUIT_TAMARIN_COUNT_OTHER,tamarins,tamarinds
-LORE_TAMARIN_TEXT,"Sa pulpe brune et acidulée parfume jus, bonbons et sauces. Le quartier de Dakar-Plateau aurait tiré son nom des tamariniers, « dakhar » en wolof.","Its brown, tangy pulp flavors juices, candies and sauces. The Dakar-Plateau district may owe its name to tamarind trees, « dakhar » in Wolof."
+LORE_TAMARIN_TEXT,"Sa pulpe brune et acidulée parfume jus, bonbons et sauces. Le quartier de Dakar-Plateau aurait tiré son nom des tamariniers, « dakhar » en wolof.","Its brown, tangy pulp flavors juices, candies and sauces. The Dakar-Plateau district may owe its name to tamarind trees, ""dakhar"" in Wolof."
 LORE_TAMARIN_BENEFITS,"Sa pulpe apporte fibres, potassium et magnésium. On l'utilise traditionnellement pour aider la digestion.","Its pulp provides fiber, potassium and magnesium. It is traditionally used to aid digestion."
 FRUIT_DITAKH_NAME,Ditakh,Detar
 FRUIT_DITAKH_FACT,Le ditakh cache une chair verte très riche en vitamine C : son jus est un trésor.,Detar hides green flesh packed with vitamin C: its juice is a treasure.
@@ -187,12 +187,12 @@ FRUIT_COCO_COUNT_OTHER,noix de coco,coconuts
 LORE_COCO_TEXT,"Sur la plage, on boit l'eau de coco directement dans la noix ouverte à la machette. La chair râpée parfume desserts et sauces.","On the beach, coconut water is drunk straight from the nut, opened with a machete. The grated flesh flavors desserts and sauces."
 LORE_COCO_BENEFITS,L'eau de coco apporte du potassium et des minéraux qui hydratent ; la chair est riche en fibres.,Coconut water provides potassium and minerals that hydrate; the flesh is rich in fiber.
 FRUIT_PAIN_DE_SINGE_NAME,Pain de singe,Baobab fruit
-FRUIT_PAIN_DE_SINGE_FACT,"Le pain de singe est le fruit du baobab, l'arbre à palabres. Sa pulpe donne le bouye, une boisson douce.","Monkey bread is the fruit of the baobab, the palaver tree. Its pulp makes bouye, a sweet drink."
+FRUIT_PAIN_DE_SINGE_FACT,"Le pain de singe est le fruit du baobab, l'arbre à palabres. Sa pulpe donne le bouye, une boisson douce.","Baobab fruit, or monkey bread, grows on the baobab, the palaver tree. Its pulp makes bouye, a sweet drink."
 FRUIT_PAIN_DE_SINGE_GOAL,le Pain de singe,the Baobab fruit
 FRUIT_PAIN_DE_SINGE_COUNT_ONE,pain de singe,baobab fruit
 FRUIT_PAIN_DE_SINGE_COUNT_OTHER,pains de singe,baobab fruits
 LORE_PAIN_DE_SINGE_TEXT,"C'est le fruit du baobab, l'arbre à palabres où l'on se réunit pour discuter. Sa pulpe blanche donne le bouye, une boisson douce et onctueuse.","It is the fruit of the baobab, the palaver tree where people gather to talk. Its white pulp makes bouye, a sweet and creamy drink."
-LORE_PAIN_DE_SINGE_BENEFITS,"Sa pulpe est riche en vitamine C, en calcium et en fibres : on la surnomme souvent « superfruit ».","Its pulp is rich in vitamin C, calcium and fiber: it is often called a « superfruit »."
+LORE_PAIN_DE_SINGE_BENEFITS,"Sa pulpe est riche en vitamine C, en calcium et en fibres : on la surnomme souvent « superfruit ».","Its pulp is rich in vitamin C, calcium and fiber: it is often called a ""superfruit""."
 POWERUP_SHAKE_NAME,Secouer,Shake
 POWERUP_SHAKE_DESC,Secoue le panier : les fruits se déplacent et fusionnent souvent.,Shakes the basket: the fruits move around and often merge.
 POWERUP_PESTLE_NAME,Pilon,Pestle
