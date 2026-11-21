@@ -9,13 +9,13 @@ var catalog: FruitCatalog = load("res://data/fruits.tres")
 
 
 func before_all() -> void:
-	DirAccess.remove_absolute(TEST_SAVE)
+	SaveManager.erase_files(TEST_SAVE)
 	SaveManager.use_path(TEST_SAVE)
 
 
 func after_all() -> void:
 	Engine.time_scale = 1.0
-	DirAccess.remove_absolute(TEST_SAVE)
+	SaveManager.erase_files(TEST_SAVE)
 	SaveManager.use_path(SaveManager.DEFAULT_SAVE_PATH)
 
 

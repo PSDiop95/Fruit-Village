@@ -451,7 +451,7 @@ func _on_merged(rank_created: int, pos: Vector3, points: int, combo: int) -> voi
 	elif vs and combo >= config.combo_min:
 		play_voice(pick_voice(vs.voice_combo_pool, vs.voice_waaw))
 	if combo >= config.combo_min:
-		_show_big_text("COMBO x%d !" % combo, config.combo_fill_bottom, config.combo_text_font_size, 0.6,
+		_show_big_text(Loc.f("JUICE_COMBO", [combo]), config.combo_fill_bottom, config.combo_text_font_size, 0.6,
 			combo - config.combo_min, config.combo_fill_top)
 		for i in mini(combo - config.combo_min, 3) * config.combo_extra_star_bursts:
 			(star_pool.acquire() as ParticleBurst).burst(fx_pos + Vector3(0, def.radius * 0.5 * i, 0))
@@ -485,7 +485,7 @@ func _on_discovered(rank: int) -> void:
 	if game.hud():
 		game.hud().show_fact(rank)
 	else:
-		_show_banner("Nouveau : %s !" % def.display_name, def.color)
+		_show_banner(Loc.f("FRUIT_DISCOVERED", [Loc.fruit_name_key(def.id)]), def.color)
 	Audio.play(config.sounds.discover, config.discover_volume_db)
 	play_voice(config.sounds.voice_dafa_neex, true)
 	if _last_merge_fruit and is_instance_valid(_last_merge_fruit) and _last_merge_fruit.rank == rank:
@@ -501,7 +501,7 @@ func _on_top_merge(pos: Vector3) -> void:
 	vibrate(config.vibrate_baobab_ms)
 	Audio.play(config.sounds.baobab, config.baobab_volume_db)
 	play_voice(config.sounds.voice_ca_cest_fort, true)
-	_show_big_text("BAOBAB !", config.baobab_text_color, config.baobab_text_font_size, 1.6)
+	_show_big_text(Loc.t("JUICE_BAOBAB"), config.baobab_text_color, config.baobab_text_font_size, 1.6)
 	var top_y := game.config.basket_height + 3.5
 	(leaves_pool.acquire() as ParticleBurst).burst(Vector3(0, top_y, FX_Z))
 	(coins_pool.acquire() as ParticleBurst).burst(Vector3(0, top_y, FX_Z))

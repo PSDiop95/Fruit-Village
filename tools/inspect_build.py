@@ -113,7 +113,8 @@ def main() -> int:
     if release:
         if not REAL_ID.match(app_id):
             fail("release : App ID AdMob absent, modèle ou de test dans le manifeste")
-    elif not app_id.startswith(TEST_PUBLISHER):
+    elif app_id and not app_id.startswith(TEST_PUBLISHER):
+        # Absent = build sans AdMob (preset « Android MockAds », CI) : accepté.
         fail("debug : le manifeste contient un App ID AdMob réel (attendu : test Google)")
 
     # ---- ads_ids.cfg embarqué ?

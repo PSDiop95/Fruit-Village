@@ -86,7 +86,7 @@ func setup(p_cfg: JuiceConfig) -> void:
 		_rays.pivot_offset = _rays.size * 0.5
 		_rays.position = c - _rays.size * 0.5)
 	var cap := Label.new()
-	cap.text = "PLUS GROS FRUIT"
+	Loc.set_text(cap, "GAMEOVER_BIGGEST_FRUIT")
 	cap.theme_type_variation = &"LabelCaption"
 	cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(cap)
@@ -105,7 +105,7 @@ func setup(p_cfg: JuiceConfig) -> void:
 	score_label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	score_box.add_child(score_label)
 	stamp = _big_label(44, Color.WHITE, 12)
-	stamp.text = "NOUVEAU RECORD !"
+	Loc.set_text(stamp, "GAMEOVER_NEW_RECORD")
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = UiTheme.WAX_RED
 	sb.set_corner_radius_all(18)
@@ -132,7 +132,7 @@ func setup(p_cfg: JuiceConfig) -> void:
 	var stats := HBoxContainer.new()
 	stats.add_theme_constant_override("separation", 16)
 	box.add_child(stats)
-	for title in ["Fusions", "Combo max", "Durée"]:
+	for title in ["GAMEOVER_STAT_MERGES", "GAMEOVER_STAT_COMBO", "GAMEOVER_STAT_TIME"]:
 		var chip := PanelContainer.new()
 		chip.theme_type_variation = &"PanelSection"
 		chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -141,7 +141,7 @@ func setup(p_cfg: JuiceConfig) -> void:
 		v.add_theme_constant_override("separation", -6)
 		chip.add_child(v)
 		var t := Label.new()
-		t.text = title
+		Loc.set_text(t, title)
 		t.theme_type_variation = &"LabelCaption"
 		t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(t)
@@ -168,28 +168,30 @@ func setup(p_cfg: JuiceConfig) -> void:
 	continue_box.add_theme_constant_override("separation", 12)
 	continue_box.visible = false
 	box.add_child(continue_box)
-	continue_button = MetaUi.ad_button("Continuer", Vector2(600, 180), func() -> void:
+	continue_button = MetaUi.ad_button("", Vector2(600, 180), func() -> void:
 		_close_offer()
 		continue_accepted.emit(), 72)
+	MetaUi.set_ad_text(continue_button, "GAMEOVER_CONTINUE")
 	continue_box.add_child(continue_button)
 	var hint := Label.new()
-	hint.text = "Retire les 3 fruits les plus hauts"
+	Loc.set_text(hint, "GAMEOVER_CONTINUE_HINT", [AdsManager.config.continue_remove_count])
 	hint.theme_type_variation = &"LabelCaption"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	continue_box.add_child(hint)
 	_offer_bar = MetaUi.progress_bar(24, UiTheme.WAX_ORANGE)
 	_offer_bar.max_value = 1.0
 	continue_box.add_child(_offer_bar)
-	decline_button = MetaUi.button("Non merci", &"ButtonCream", Vector2(340, 112), func() -> void:
+	decline_button = MetaUi.button("", &"ButtonCream", Vector2(340, 112), func() -> void:
 		_close_offer()
 		continue_declined.emit())
+	Loc.set_text(decline_button, "GAMEOVER_NO_THANKS")
 	continue_box.add_child(decline_button)
 
 	var spacer := Control.new()
 	spacer.custom_minimum_size = Vector2(0, 4)
 	box.add_child(spacer)
 	replay_button = Button.new()
-	replay_button.text = "Rejouer"
+	Loc.set_text(replay_button, "GAMEOVER_REPLAY")
 	replay_button.theme_type_variation = &"ButtonGreenBig"
 	replay_button.add_theme_font_size_override("font_size", 84)
 	replay_button.custom_minimum_size = Vector2(600, 180)
@@ -197,7 +199,7 @@ func setup(p_cfg: JuiceConfig) -> void:
 	replay_button.pressed.connect(func() -> void: replay_pressed.emit())
 	box.add_child(replay_button)
 	menu_button = Button.new()
-	menu_button.text = "Menu"
+	Loc.set_text(menu_button, "GAMEOVER_MENU")
 	menu_button.theme_type_variation = &"ButtonCream"
 	menu_button.custom_minimum_size = Vector2(340, 112)
 	menu_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -250,12 +252,12 @@ func show_results(score: int, rank: int, def: FruitDef, is_record: bool, best: i
 		merges: int, best_combo: int, seconds: float) -> void:
 	_score = score
 	_record = is_record
-	_ribbon_label.text = "Bravo !" if is_record else "Le panier déborde !"
+	Loc.set_text(_ribbon_label, "GAMEOVER_RIBBON_RECORD" if is_record else "GAMEOVER_RIBBON_OVER")
 	(_ribbon.get_theme_stylebox("panel") as StyleBoxFlat).bg_color = \
 		Color("e8a800") if is_record else UiTheme.WAX_ORANGE
 	_thumb.set_fruit(rank)
-	_fruit_name.text = def.display_name
-	_best_label.text = "Record : %d" % maxi(best, score)
+	Loc.set_text(_fruit_name, "%s", [Loc.fruit_name_key(def.id)])
+	Loc.set_text(_best_label, "HUD_RECORD", [maxi(best, score)])
 	_chip_values[0].text = str(merges)
 	_chip_values[1].text = "x%d" % maxi(best_combo, 1)
 	_chip_values[2].text = "%d:%02d" % [int(seconds) / 60, int(seconds) % 60]
@@ -276,7 +278,7 @@ func show_results(score: int, rank: int, def: FruitDef, is_record: bool, best: i
 func show_continue_offer(seconds: float) -> void:
 	_offer_total = maxf(seconds, 0.5)
 	_offer_left = _offer_total
-	_ribbon_label.text = "Continuer ?"
+	Loc.set_text(_ribbon_label, "GAMEOVER_RIBBON_CONTINUE")
 	continue_box.visible = true
 	replay_button.visible = false
 	menu_button.visible = false
@@ -295,7 +297,7 @@ func _close_offer() -> void:
 ## missions du jour. `can_double` faux : bouton absent (aucune pub prête).
 func show_rewards(summary: Dictionary, can_double: bool) -> void:
 	_close_offer()
-	_ribbon_label.text = "Bravo !" if _record else "Le panier déborde !"
+	Loc.set_text(_ribbon_label, "GAMEOVER_RIBBON_RECORD" if _record else "GAMEOVER_RIBBON_OVER")
 	replay_button.visible = true
 	menu_button.visible = true
 	for c in rewards_box.get_children():
@@ -313,11 +315,12 @@ func show_rewards(summary: Dictionary, can_double: bool) -> void:
 	(coins_pill.find_child("Amount", true, false) as Label).text = "+%d" % coins
 	row.add_child(coins_pill)
 	if can_double and coins > 0:
-		double_button = MetaUi.ad_button("Doubler", Vector2(330, 112), func() -> void:
+		double_button = MetaUi.ad_button("", Vector2(330, 112), func() -> void:
 			double_pressed.emit(), 44)
+		MetaUi.set_ad_text(double_button, "GAMEOVER_DOUBLE")
 		row.add_child(double_button)
 	var xp := Label.new()
-	xp.text = "+%d XP  ·  Niveau %d" % [int(summary.get("xp", 0)), Progression.level()]
+	Loc.set_text(xp, "GAMEOVER_XP_LINE", [int(summary.get("xp", 0)), Progression.level()])
 	xp.theme_type_variation = &"LabelCaption"
 	xp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rewards_box.add_child(xp)
@@ -332,7 +335,8 @@ func show_rewards(summary: Dictionary, can_double: bool) -> void:
 		line.add_theme_constant_override("separation", 12)
 		rewards_box.add_child(line)
 		var t := Label.new()
-		t.text = ("✓ " if int(m["progress"]) >= int(m["target"]) else "") + Missions.describe(i)
+		var done := int(m["progress"]) >= int(m["target"])
+		Loc.set_text(t, "MISSION_LINE_DONE" if done else "%s", [Missions.describe.bind(i)])
 		t.theme_type_variation = &"LabelSmall"
 		t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		t.clip_text = true

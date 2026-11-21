@@ -1,0 +1,155 @@
+# Contrôles Fruit Village (V2-0) sur runner Linux, sans aucun secret.
+# - tests : configuration (IDs, secrets non suivis, traductions), import Godot,
+#   tests GUT headless (JUnit + résumé), erreurs GDScript dans les journaux.
+# - android-debug : export APK debug « Android MockAds » (pubs simulées, sans
+#   Firebase ni AdMob réels, clé debug jetable) puis contrôle du paquet
+#   (tools/inspect_build.py, alignement 16 Ko, taille).
+# Rien n'est signé pour la production ni publié.
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: "4.7.2"
+  GODOT_URL: https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable
+  GODOT_ZIP: Godot_v4.7.2-stable_linux.x86_64.zip
+  TEMPLATES_TPZ: Godot_v4.7.2-stable_export_templates.tpz
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Contrôles de configuration
+        run: python3 tools/ci/check_config.py
+
+      - name: Cache Godot
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/godot
+          key: godot-linux-${{ env.GODOT_VERSION }}
+
+      - name: Godot ${{ env.GODOT_VERSION }} (somme SHA-512 vérifiée)
+        run: |
+          mkdir -p "$RUNNER_TEMP/godot" && cd "$RUNNER_TEMP/godot"
+          if [ ! -f "$GODOT_ZIP" ]; then
+            curl -fsSL -o "$GODOT_ZIP" "$GODOT_URL/$GODOT_ZIP"
+            curl -fsSL -o SHA512-SUMS.txt "$GODOT_URL/SHA512-SUMS.txt"
+          fi
+          grep " $GODOT_ZIP\$" SHA512-SUMS.txt | sha512sum -c -
+          unzip -q -o "$GODOT_ZIP"
+          echo "GODOT=$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" >> "$GITHUB_ENV"
+
+      - name: Import du projet
+        run: |
+          mkdir -p build/ci
+          # 1er passage : génère les traductions (.translation) et le cache ;
+          # le 2e doit être propre.
+          "$GODOT" --headless --path . --import > build/ci/import1.log 2>&1 || true
+          "$GODOT" --headless --path . --import > build/ci/import.log 2>&1 || true
+          ls localization/*.translation
+
+      - name: Tests GUT
+        run: |
+          "$GODOT" --headless --path . -s addons/gut/gut_cmdln.gd -gexit \
+            -gjunit_xml_file=build/ci/junit.xml > build/ci/tests.log 2>&1 || true
+          tail -n 25 build/ci/tests.log
+
+      - name: Résumé des tests et erreurs GDScript
+        run: python3 tools/ci/gut_summary.py build/ci/junit.xml build/ci/import.log build/ci/tests.log
+
+      - name: Journaux
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tests-logs
+          path: build/ci/
+          if-no-files-found: ignore
+
+  android-debug:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    needs: tests
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Godot et modèles d'export
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/godot
+          key: godot-linux-templates-${{ env.GODOT_VERSION }}
+
+      - name: Godot ${{ env.GODOT_VERSION }} et modèles Android (SHA-512 vérifiées)
+        run: |
+          mkdir -p "$RUNNER_TEMP/godot" && cd "$RUNNER_TEMP/godot"
+          [ -f SHA512-SUMS.txt ] || curl -fsSL -o SHA512-SUMS.txt "$GODOT_URL/SHA512-SUMS.txt"
+          for f in "$GODOT_ZIP" "$TEMPLATES_TPZ"; do
+            [ -f "$f" ] || curl -fsSL -o "$f" "$GODOT_URL/$f"
+            grep " $f\$" SHA512-SUMS.txt | sha512sum -c -
+          done
+          unzip -q -o "$GODOT_ZIP"
+          TPL="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$TPL"
+          unzip -q -o -j "$TEMPLATES_TPZ" "templates/android_debug.apk" \
+            "templates/android_release.apk" "templates/version.txt" -d "$TPL"
+          echo "GODOT=$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Clé debug jetable et SDK Android
+        run: |
+          keytool -genkeypair -v -keystore "$RUNNER_TEMP/debug.keystore" -storepass android \
+            -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 30 \
+            -dname "CN=Android Debug,O=Android,C=US"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$RUNNER_TEMP/debug.keystore" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> "$GITHUB_ENV"
+          mkdir -p "$HOME/.config/godot"
+          printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\nexport/android/android_sdk_path = "%s"\nexport/android/java_sdk_path = "%s"\n' \
+            "$ANDROID_HOME" "$JAVA_HOME" > "$HOME/.config/godot/editor_settings-4.7.tres"
+
+      - name: Export APK debug (Android MockAds)
+        run: |
+          mkdir -p build/ci
+          "$GODOT" --headless --path . --import > build/ci/import1.log 2>&1 || true
+          "$GODOT" --headless --path . --import > build/ci/import.log 2>&1 || true
+          "$GODOT" --headless --path . --export-debug "Android MockAds" \
+            build/fruit_village_mockads.apk > build/ci/export.log 2>&1 || true
+          tail -n 30 build/ci/export.log
+          test -f build/fruit_village_mockads.apk
+
+      - name: Contrôle du paquet (inspect_build.py)
+        run: |
+          APK=build/fruit_village_mockads.apk
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          "$BT/aapt2" dump xmltree --file AndroidManifest.xml "$APK" > build/ci/manifest.txt
+          "$BT/zipalign" -c -P 16 4 "$APK" && echo "zipalign -P 16 : OK"
+          python3 tools/inspect_build.py "$APK" debug build/ci/manifest.txt | tee build/ci/inspect.txt
+          SIZE=$(stat -c%s "$APK")
+          echo "### APK debug (MockAds)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Taille : $((SIZE / 1000000)) Mo (plafond 60 Mo). Contrôles inspect_build : OK." >> "$GITHUB_STEP_SUMMARY"
+          [ "$SIZE" -lt 60000000 ]
+
+      - name: Journaux
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-debug-logs
+          path: build/ci/
+          if-no-files-found: ignore

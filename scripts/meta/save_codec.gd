@@ -13,7 +13,9 @@ const VERSION := 2
 const HEADER := "FV2"
 const SALT := "fruit-village/marche/2026"
 
-enum Status { OK, MISSING, CORRUPT, TAMPERED, MIGRATED }
+## FUTURE (V2-0) : fichier d'une version plus récente du jeu (en-tête « FV3 »…
+## ou "version" > VERSION) : jamais traité comme illisible ni écrasé sans copie.
+enum Status { OK, MISSING, CORRUPT, TAMPERED, MIGRATED, FUTURE }
 
 
 static func checksum(json_text: String) -> String:
@@ -32,7 +34,8 @@ static func decode(text: String) -> Dictionary:
 	var t := text.strip_edges(true, false)
 	if t.is_empty():
 		return {"status": Status.CORRUPT, "data": {}}
-	if t.begins_with(HEADER):
+	var future := header_version(t) > VERSION
+	if t.begins_with(HEADER + " ") or t.begins_with(HEADER + "\n") or future:
 		var nl := t.find("\n")
 		if nl < 0:
 			return {"status": Status.CORRUPT, "data": {}}
@@ -41,13 +44,25 @@ static func decode(text: String) -> Dictionary:
 		var parsed: Variant = _parse(json)
 		if not parsed is Dictionary:
 			return {"status": Status.CORRUPT, "data": {}}
+		if future:
+			return {"status": Status.FUTURE, "data": parsed}
 		if head.size() < 2 or head[1] != checksum(json):
 			return {"status": Status.TAMPERED, "data": parsed}
+		if int(parsed.get("version", VERSION)) > VERSION:
+			return {"status": Status.FUTURE, "data": parsed}
 		return {"status": Status.OK, "data": parsed}
 	var raw: Variant = _parse(t)
 	if not raw is Dictionary:
 		return {"status": Status.CORRUPT, "data": {}}
 	return {"status": Status.MIGRATED, "data": migrate(raw)}
+
+
+## Numéro d'en-tête « FV<n> » (0 si absent).
+static func header_version(text: String) -> int:
+	if not text.begins_with("FV"):
+		return 0
+	var tok := text.substr(2, text.find("\n") - 2 if text.find("\n") > 2 else -1).get_slice(" ", 0)
+	return int(tok) if tok.is_valid_int() else 0
 
 
 ## Migration vers v2 (actuellement : v1 → v2).

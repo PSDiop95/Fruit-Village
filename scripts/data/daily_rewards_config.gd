@@ -24,6 +24,4 @@ extends Resource
 @export var reminder_hour: int = 12
 ## Heure locale du rappel « série en danger » (si non réclamée).
 @export var streak_warning_hour: int = 19
-@export var reminder_title: String = "Fruit Village"
-@export var reminder_text: String = "Ta récompense du jour t'attend au marché !"
-@export var streak_text: String = "Ta série est en danger 🔥 Passe au marché avant minuit !"
+## Textes des rappels : clés NOTIF_* de localization/translations.csv (V2-0).

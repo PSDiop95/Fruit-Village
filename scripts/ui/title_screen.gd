@@ -12,6 +12,9 @@ const MENU_WIDTH := 660.0
 const PLAY_SIZE := Vector2(640, 230)
 const SETTINGS_SIZE := Vector2(500, 190)
 const PILL_SIZE := Vector2(620, 200)
+## Libellés courts des boutons Missions / Cadeau / Album (clés Loc).
+const FEATURE_SHORT := {ProgressionCore.MISSIONS: "TITLE_MISSIONS", ProgressionCore.DAILY: "TITLE_DAILY",
+	ProgressionCore.ALBUM: "TITLE_ALBUM"}
 
 var play_button: Button
 var settings_button: Button
@@ -65,7 +68,7 @@ func _ready() -> void:
 	menu.add_child(_best_pill())
 
 	play_button = Button.new()
-	play_button.text = "Jouer"
+	Loc.set_text(play_button, "MENU_PLAY")
 	play_button.theme_type_variation = &"ButtonGreenBig"
 	play_button.custom_minimum_size = PLAY_SIZE
 	play_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -73,7 +76,7 @@ func _ready() -> void:
 	menu.add_child(play_button)
 
 	settings_button = Button.new()
-	settings_button.text = "Réglages"
+	Loc.set_text(settings_button, "MENU_SETTINGS")
 	settings_button.theme_type_variation = &"ButtonOrangeBig"
 	settings_button.custom_minimum_size = SETTINGS_SIZE
 	settings_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -91,6 +94,7 @@ func _ready() -> void:
 	Progression.xp_changed.connect(_on_xp_changed)
 	Missions.changed.connect(refresh_meta)
 	DailyRewards.changed.connect(refresh_meta)
+	Locale.changed.connect(_on_locale_changed)
 	refresh_meta()
 	# Cadeau du jour disponible : la fenêtre s'ouvre d'elle-même à l'arrivée.
 	if DailyRewards.can_claim():
@@ -133,20 +137,23 @@ func _feature_row() -> Control:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 18)
-	for f in [[ProgressionCore.MISSIONS, "Missions"], [ProgressionCore.DAILY, "Cadeau"],
-			[ProgressionCore.ALBUM, "Album"]]:
-		var b := MetaUi.button(f[1], &"ButtonCream", Vector2(250, 112), open_feature.bind(f[0]), 40)
+	for f in [ProgressionCore.MISSIONS, ProgressionCore.DAILY, ProgressionCore.ALBUM]:
+		var b := MetaUi.button(FEATURE_SHORT[f], &"ButtonCream", Vector2(250, 112), open_feature.bind(f), 40)
 		row.add_child(b)
-		feature_buttons[f[0]] = b
+		feature_buttons[f] = b
 		var badge := MetaUi.badge("!")
 		badge.position = Vector2(250 - 44, -16)
 		badge.visible = false
 		b.add_child(badge)
-		_badges[f[0]] = badge
+		_badges[f] = badge
 	return row
 
 
 func _on_coins_changed(_c: int, _d: int, _r: StringName) -> void:
+	refresh_meta()
+
+
+func _on_locale_changed(_language: String) -> void:
 	refresh_meta()
 
 
@@ -158,14 +165,15 @@ func refresh_meta() -> void:
 	if coins_pill == null:
 		return
 	MetaUi.set_pill_amount(coins_pill, Wallet.coins())
-	level_label.text = "Niveau %d" % Progression.level()
+	Loc.set_text(level_label, "META_LEVEL", [Progression.level()])
 	level_bar.value = Progression.core.progress_ratio()
-	var names := {ProgressionCore.MISSIONS: "Missions", ProgressionCore.DAILY: "Cadeau",
-		ProgressionCore.ALBUM: "Album"}
 	for f in feature_buttons:
 		var b: Button = feature_buttons[f]
 		var open := Progression.is_unlocked(f)
-		b.text = names[f] if open else "Niv. %d" % Progression.unlock_level(f)
+		if open:
+			Loc.set_text(b, FEATURE_SHORT[f])
+		else:
+			Loc.set_text(b, "META_LEVEL_SHORT", [Progression.unlock_level(f)])
 		b.modulate = Color.WHITE if open else Color(1, 1, 1, 0.6)
 	_badges[ProgressionCore.MISSIONS].visible = Missions.claimable_count() > 0
 	_badges[ProgressionCore.DAILY].visible = DailyRewards.can_claim()
@@ -176,9 +184,8 @@ func open_feature(f: StringName) -> MetaModal:
 	if panel:
 		panel.close()
 	if not Progression.is_unlocked(f):
-		panel = MetaModal.new(MetaUi.feature_name(f), 820.0)
-		var l := MetaUi.label("Débloqué au niveau %d.\nJoue des parties pour gagner de l'XP !" %
-			Progression.unlock_level(f), 44)
+		panel = MetaModal.new(MetaUi.feature_key(f), 820.0)
+		var l := MetaUi.tlabel("META_LOCKED_INFO", [Progression.unlock_level(f)], 44)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		panel.body.add_child(l)
 	else:
@@ -209,9 +216,10 @@ func _best_pill() -> Control:
 	col.add_theme_constant_override("separation", -10)
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(col)
-	for line in [["Plus gros fruit :", 38], [FruitCatalogNames.name_of(SaveManager.best_rank), 60]]:
+	for line in [["TITLE_BIGGEST_FRUIT", 38, []],
+			["%s", 60, [Loc.fruit_name_key(FruitCatalogNames.def_of(SaveManager.best_rank).id)]]]:
 		var l := Label.new()
-		l.text = line[0]
+		Loc.set_text(l, line[0], line[2])
 		l.add_theme_font_override("font", UiTheme.display_font())
 		l.add_theme_font_size_override("font_size", line[1])
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

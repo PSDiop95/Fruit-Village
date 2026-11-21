@@ -63,5 +63,11 @@ static func apply_viewport(vp: Viewport, level: int, cfg: VisualConfig) -> void:
 		vp.msaa_3d = cfg.msaa_by_quality[i] as Viewport.MSAA
 
 
+## Clé de traduction du libellé (réglages).
+static func label_key(setting: int) -> String:
+	return "QUALITY_AUTO" if setting == AUTO else \
+		["QUALITY_LOW", "QUALITY_MEDIUM", "QUALITY_HIGH"][clampi(setting, 0, 2)]
+
+
 static func label(setting: int) -> String:
-	return "Auto" if setting == AUTO else ["Bas", "Moyen", "Haut"][clampi(setting, 0, 2)]
+	return Loc.t(label_key(setting))
