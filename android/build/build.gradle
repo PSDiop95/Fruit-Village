@@ -6,6 +6,8 @@ buildscript {
     }
     dependencies {
         classpath 'com.google.gms:google-services:4.4.4'
+        // Added for Crashlytics (V2-0): build ID required by the Crashlytics SDK.
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.8'
     }
 }
 
@@ -356,6 +358,8 @@ configurations.configureEach {
 
 // Added for Firebase (godotx_firebase): reads google-services.json.
 apply plugin: 'com.google.gms.google-services'
+// Added for Crashlytics (V2-0): injects the build ID (no NDK, no mapping upload: no minify).
+apply plugin: 'com.google.firebase.crashlytics'
 
 // Added for Fruit Village: launch window shows the splash image, not black
 // (Godot's generated GodotAppMainTheme forces android:windowBackground=#000000).

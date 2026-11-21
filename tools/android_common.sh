@@ -36,12 +36,15 @@ buildscript {
     }
     dependencies {
         classpath 'com.google.gms:google-services:4.4.4'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.8'
     }
 }
 
 "; cat "$f"; printf "
 // Added for Firebase (godotx_firebase): reads google-services.json.
 apply plugin: 'com.google.gms.google-services'
+// Added for Crashlytics (V2-0): injects the build ID.
+apply plugin: 'com.google.firebase.crashlytics'
 "; } > "$f.new" && mv "$f.new" "$f"
 }
 

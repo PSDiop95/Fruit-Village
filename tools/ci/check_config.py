@@ -77,9 +77,18 @@ def main():
     check("CSV : formats FR = EN", not bad, ", ".join(bad[:10]))
     check("CSV : %d clés" % len(keys), len(keys) > 0)
 
+    # Crashlytics (V2-0, option A) : si un preset l'active, le plugin Gradle
+    # et les AAR doivent suivre, et la collecte rester coupée par défaut.
     crash = re.findall(r"^firebase/enable_crashlytics=(\w+)", presets, re.M)
-    results.append(("Crashlytics (info)", True, "enable_crashlytics=%s (V2-0 : BLOCKED, voir "
-                    "docs/phase_v2/v2_0/05_CRASHLYTICS_GUIDE.md)" % ",".join(crash)))
+    if "true" in crash:
+        gradle = read("android/build/build.gradle")
+        check("Crashlytics : plugin Gradle", "firebase-crashlytics-gradle" in gradle
+              and "apply plugin: 'com.google.firebase.crashlytics'" in gradle)
+        aars = ["android/firebase_crashlytics/firebase_crashlytics.%s.aar" % v for v in ("debug", "release")]
+        check("Crashlytics : AAR godotx", all(os.path.exists(a) for a in aars))
+        check("Crashlytics : collecte coupée par défaut",
+              "firebase/privacy_safe_defaults=false" not in presets)
+    results.append(("Crashlytics (info)", True, "enable_crashlytics=%s" % ",".join(crash)))
 
     lines = ["| Contrôle | Résultat | Détail |", "|---|---|---|"]
     for rule, ok, detail in results:

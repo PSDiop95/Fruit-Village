@@ -32,8 +32,8 @@ func _build() -> void:
 	_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_panel.offset_left = -380
 	_panel.offset_right = 380
-	_panel.offset_top = -480
-	_panel.offset_bottom = 480
+	_panel.offset_top = -560
+	_panel.offset_bottom = 560
 	_panel.visible = false
 	add_child(_panel)
 	var box := VBoxContainer.new()
@@ -53,6 +53,11 @@ func _build() -> void:
 	_fps_btn = _button(box, "", func() -> void:
 		juice.set_show_fps(not juice.show_fps)
 		_refresh())
+	# V2-0 : plantage volontaire pour vérifier Crashlytics (builds debug seulement).
+	if CrashReporter.test_crash_allowed():
+		_button(box, "Test plantage (Crashlytics)", func() -> void:
+			if not Analytics.crash.test_crash():
+				push_warning("Crashlytics inactif (plugin absent, SDK non prêt)"))
 	_button(box, "Fermer", toggle)
 	_refresh()
 
