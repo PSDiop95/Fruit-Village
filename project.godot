@@ -31,6 +31,7 @@ run/disable_stdout.release=true
 [autoload]
 
 SaveManager="*res://autoload/SaveManager.gd"
+Locale="*res://autoload/Locale.gd"
 Audio="*res://autoload/Audio.gd"
 Analytics="*res://autoload/Analytics.gd"
 Wallet="*res://autoload/Wallet.gd"
@@ -54,6 +55,11 @@ window/handheld/orientation=1
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/NotificationSchedulerPlugin/plugin.cfg", "res://addons/_fv_release/plugin.cfg", "res://addons/admob/plugin.cfg", "res://addons/godotx_firebase/plugin.cfg", "res://addons/gut/plugin.cfg")
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://localization/translations.en.translation", "res://localization/translations.fr.translation")
+locale/fallback="fr"
 
 [physics]
 

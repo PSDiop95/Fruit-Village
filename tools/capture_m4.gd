@@ -1,6 +1,7 @@
 extends SceneTree
 ## Captures M4 (rendu réel, fenêtré) : méta et pub simulée.
-## Usage : Godot --path . --resolution 720x1280 -s tools/capture_m4.gd -- docs/screens
+## Usage : Godot --path . --resolution 720x1280 -s tools/capture_m4.gd -- docs/screens [fr|en]
+## (V2-0 : 2e argument = langue des captures, contrôle des débordements en anglais.)
 ##
 ## Produit : m4_titre, m4_cadeau, m4_missions, m4_album, m4_album_carte,
 ## m4_partie_powerups, m4_powerup_offre, m4_pilon, m4_continuer, m4_pub_simulee,
@@ -22,12 +23,13 @@ func _run() -> void:
 	if args.size() > 0:
 		out_dir = args[0]
 	DirAccess.make_dir_recursive_absolute(out_dir)
-	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://capture_m4_save.json"))
+	_node("SaveManager").erase_files("user://capture_m4_save.json")
 	var sm = _node("SaveManager")
 	sm.use_path("user://capture_m4_save.json")
 	sm.best_score = 4210
 	sm.best_rank = 7
 	sm.set_setting(&"quality", 2)
+	_node("Locale").set_language(args[1] if args.size() > 1 else "fr")
 	# Joueur niveau 5, 640 pièces, 8 fruits découverts, série de 3 jours.
 	_node("Progression").add_xp(_node("Progression").config.xp_for_level(5) + 40)
 	var wallet = _node("Wallet")

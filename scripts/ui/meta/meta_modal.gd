@@ -32,7 +32,8 @@ func _init(title: String, width: float = 960.0) -> void:
 	var head := HBoxContainer.new()
 	outer.add_child(head)
 	title_label = Label.new()
-	title_label.text = title
+	# `title` : clé de traduction (un texte sans clé s'affiche tel quel).
+	Loc.set_text(title_label, title)
 	title_label.theme_type_variation = &"LabelTitle"
 	title_label.add_theme_font_size_override("font_size", 72)
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL

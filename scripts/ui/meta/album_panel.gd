@@ -9,19 +9,19 @@ var detail: FruitCard
 
 
 func _init() -> void:
-	super("Album des fruits", 1000.0)
+	super("FEATURE_ALBUM", 1000.0)
 
 
 func _ready() -> void:
 	super()
 	var cat: FruitCatalog = Collection.catalog
-	var progress := MetaUi.label("%d / %d fruits" % [Collection.count(), cat.count()], 44,
+	var progress := MetaUi.tlabel("ALBUM_PROGRESS", [Collection.count(), cat.count()], 44,
 		UiTheme.INK_SOFT, true)
 	body.add_child(progress)
 	if Collection.gold_unlocked():
-		body.add_child(MetaUi.label("Album complet : panier doré débloqué !", 38, Color("b8860b"), true))
+		body.add_child(MetaUi.tlabel("ALBUM_COMPLETE", [], 38, Color("b8860b"), true))
 	else:
-		body.add_child(MetaUi.label("Complète l'album pour gagner le panier doré", 34, UiTheme.INK_SOFT))
+		body.add_child(MetaUi.tlabel("ALBUM_GOAL", [], 34, UiTheme.INK_SOFT))
 	# Rangées de 4 centrées (la dernière, incomplète, reste au milieu).
 	var row: HBoxContainer
 	for r in cat.count():
@@ -48,8 +48,8 @@ func _card(rank: int) -> Button:
 	thumb.silhouette = not found
 	b.add_child(thumb)
 	thumb.set_fruit(rank)
-	var name := MetaUi.label(Collection.catalog.get_def(rank).display_name if found else "???",
-		28, UiTheme.INK, true)
+	var name := MetaUi.tlabel(String(Loc.fruit_name_key(Collection.catalog.get_def(rank).id))
+		if found else "???", [], 28, UiTheme.INK, true)
 	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name.position = Vector2(4, 150)

@@ -46,7 +46,7 @@
 - Moteur : **Godot 4.4+ / GDScript**, **3D low-poly stylisée**, renderer **Mobile** (fallback Compatibility), portrait 1080x1920
 - Physique : **Jolt** (intégré à Godot 4.4+), **jeu en 2,5D** : objets 3D, mouvements verrouillés sur le plan X/Y (axe Z bloqué)
 - APK cible : < 60 Mo, **100 % hors ligne**
-- Langues : FR, EN, Wolof (textes courts)
+- Langues : FR, EN, Wolof (textes courts) — V2-0 : FR + EN livrés, wolof reporté
 
 ## 2. Gameplay cœur
 
@@ -221,9 +221,15 @@ res://
   scenes/    Main.tscn, Game.tscn, Fruit.tscn, Basket.tscn, ui/…
   scripts/   MergeSystem.gd, Spawner.gd, ComboTracker.gd, DangerLine.gd, Juice.gd
   assets/    models/ (.glb), shaders/ (toon, outline), textures/, vfx/, sfx/, music/, fonts/
-  locale/    fr.po, en.po, wo.po
+  localization/ translations.csv (keys,fr,en)   ← V2-0 (remplace le plan locale/*.po)
   tests/     (GUT)
 ```
+> **V2-0 (état réel)** : Godot **4.7.2**. Langues livrées **FR + EN** (FR par défaut et en repli ; wolof non
+> livré). Tout texte affiché passe par une clé du CSV via `Loc.set_text` / `Loc.t` (`scripts/locale/`) ;
+> `tests/unit/test_locale.gd` refuse une clé absente ou du français visible en anglais.
+> Sauvegardes : règles dans `docs/phase_v2/v2_0/04_SAVE_SYSTEM_RULES.md` (clé stable, sections inconnues
+> préservées, jamais de suppression sans migration) et récupération dans `03_SAVE_RECOVERY_GUIDE.md`.
+> CI : `.github/workflows/tests.yml`.
 - **Fruit** = `RigidBody3D` + `CollisionShape3D` sphère, `axis_lock_linear_z`, rotations X/Y verrouillées (rotation Z libre pour le roulé).
 - **MergeSystem** : file de fusions traitée une fois par frame physique, chaque fruit marqué `merging` pour éviter les doubles fusions (bug classique des clones).
 - **Spawner** : générateur aléatoire **seedé** (requis pour le défi du jour).

@@ -9,8 +9,7 @@ var analytics: MemoryAnalytics
 
 
 func _wipe() -> void:
-	for suffix in ["", ".tmp", ".corrupt"]:
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE + suffix))
+	SaveManager.erase_files(SAVE)
 
 
 func before_each() -> void:
@@ -459,6 +458,8 @@ func test_save_migration_v1_to_v2() -> void:
 
 
 func test_corrupt_save_gives_defaults_without_crash() -> void:
+	# Aucune copie de secours : valeurs par défaut (V2-0 : sinon récupération,
+	# voir test_save_recovery.gd).
 	_write("FV2 deadbeef\n{\"core\": [tronqué")
 	SaveManager.use_path(SAVE)
 	assert_eq(SaveManager.last_status, SaveCodec.Status.CORRUPT)
@@ -468,16 +469,22 @@ func test_corrupt_save_gives_defaults_without_crash() -> void:
 	assert_true(FileAccess.file_exists(SAVE + ".corrupt"), "copie gardée pour analyse")
 
 
-func test_tampered_save_resets_progress_keeps_settings() -> void:
+## V2-0 (TD-10) : avant, une sauvegarde modifiée remettait la progression à
+## zéro sans copie. Désormais : copie en quarantaine, progression rechargée
+## depuis la copie de secours, gain frauduleux ignoré.
+func test_tampered_save_recovers_progress_keeps_settings() -> void:
 	Wallet.earn(40)
+	var legit := Wallet.coins()
 	SaveManager.set_setting(&"music_on", false)
 	SaveManager.save_data()
 	var text := FileAccess.get_file_as_string(SAVE)
 	_write(text.replace("\"coins\":%d" % Wallet.coins(), "\"coins\":999999"))
 	SaveManager.use_path(SAVE)
 	assert_eq(SaveManager.last_status, SaveCodec.Status.TAMPERED)
-	assert_eq(Wallet.coins(), Wallet.economy.starting_coins)
+	assert_eq(SaveManager.recovery, SaveManager.Recovery.BACKUP)
+	assert_eq(Wallet.coins(), legit, "solde légitime conservé, 999999 ignoré")
 	assert_eq(SaveManager.get_setting(&"music_on"), false, "réglages conservés")
+	assert_true(FileAccess.file_exists(SAVE + ".tampered"), "fichier suspect conservé")
 
 
 func test_systems_roundtrip_through_save() -> void:

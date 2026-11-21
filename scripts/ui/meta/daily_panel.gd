@@ -10,7 +10,7 @@ var _info: Label
 
 
 func _init() -> void:
-	super("Cadeau du jour", 1000.0)
+	super("FEATURE_DAILY", 1000.0)
 
 
 func _ready() -> void:
@@ -27,8 +27,8 @@ func _rebuild() -> void:
 	claim_button = null
 	shield_button = null
 	if not DailyRewards.is_unlocked():
-		body.add_child(MetaUi.label("Débloqué au niveau %d" %
-			Progression.unlock_level(ProgressionCore.DAILY), 46))
+		body.add_child(MetaUi.tlabel("META_UNLOCKED_AT",
+			[Progression.unlock_level(ProgressionCore.DAILY)], 46))
 		return
 	var st := DailyRewards.status()
 	var streak_row := HBoxContainer.new()
@@ -37,8 +37,9 @@ func _rebuild() -> void:
 	body.add_child(streak_row)
 	streak_row.add_child(flame_icon(64))
 	var n: int = DailyRewards.core.streak if not st["broken"] else 0
-	streak_row.add_child(MetaUi.label("Série : %d jour%s" % [n, "s" if n > 1 else ""], 50,
-		UiTheme.WAX_ORANGE, true))
+	var streak_label := MetaUi.label("", 50, UiTheme.WAX_ORANGE, true)
+	Loc.set_plural(streak_label, "DAILY_STREAK", n)
+	streak_row.add_child(streak_label)
 
 	# Calendrier : 4 cases puis 3, rangées centrées.
 	var grid: HBoxContainer
@@ -68,18 +69,18 @@ func _rebuild() -> void:
 	_info.custom_minimum_size = Vector2(760, 0)
 	body.add_child(_info)
 	if st["clock_suspect"]:
-		_info.text = "L'heure du téléphone semble incorrecte : le cadeau reviendra quand elle sera remise à l'heure."
+		Loc.set_text(_info, "DAILY_CLOCK_SUSPECT")
 	elif claimed:
-		_info.text = "Reviens demain pour le jour %d !" % (DailyRewards.core.cycle + 1)
+		Loc.set_text(_info, "DAILY_COME_BACK", [DailyRewards.core.cycle + 1])
 	elif st["broken"]:
-		_info.text = "Tu as manqué un jour : ta série repart de zéro…"
+		Loc.set_text(_info, "DAILY_STREAK_LOST")
 		if st["shield_available"] and AdsManager.is_rewarded_ready(AdsConfig.STREAK_SHIELD):
-			_info.text = "Tu as manqué un jour ! Protège ta série de %d jours." % DailyRewards.core.streak
+			Loc.set_plural(_info, "DAILY_STREAK_PROTECT", DailyRewards.core.streak)
 			AdsManager.offer(AdsConfig.STREAK_SHIELD)
-			shield_button = MetaUi.ad_button("Protéger ma série", Vector2(640, 116), _shield, 44)
+			shield_button = MetaUi.ad_button("DAILY_SHIELD", Vector2(640, 116), _shield, 44)
 			body.add_child(shield_button)
 	if st["can_claim"]:
-		claim_button = MetaUi.button("Récupérer" if shield_button == null else "Recommencer au jour 1",
+		claim_button = MetaUi.button("DAILY_CLAIM" if shield_button == null else "DAILY_RESTART",
 			&"ButtonGreen" if shield_button == null else &"ButtonCream", Vector2(560, 120),
 			func() -> void: DailyRewards.claim(false), 48)
 		body.add_child(claim_button)
@@ -107,11 +108,11 @@ func _cell(i: int, r: DailyRewardDef, state: String) -> PanelContainer:
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_theme_constant_override("separation", 2)
 	p.add_child(v)
-	var head := MetaUi.label("Jour %d" % (i + 1), 34, UiTheme.INK, true)
+	var head := MetaUi.tlabel("DAILY_DAY", [i + 1], 34, UiTheme.INK, true)
 	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(head)
 	if r.is_chest:
-		v.add_child(_center(MetaUi.label("Coffre", 40, UiTheme.WAX_RED, true)))
+		v.add_child(_center(MetaUi.tlabel("DAILY_CHEST", [], 40, UiTheme.WAX_RED, true)))
 	if r.coins > 0:
 		var row := HBoxContainer.new()
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -129,10 +130,10 @@ func _cell(i: int, r: DailyRewardDef, state: String) -> PanelContainer:
 			t.custom_minimum_size = Vector2(84, 84)
 			t.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			v.add_child(t)
-			v.add_child(_center(MetaUi.label(def.display_name, 30)))
+			v.add_child(_center(MetaUi.tlabel(Loc.powerup_key(def.id, "NAME"), [], 30)))
 		elif def:
 			v.add_child(_center(MetaUi.label(def.glyph, 54, def.color.darkened(0.2), true)))
-			v.add_child(_center(MetaUi.label(def.display_name, 30)))
+			v.add_child(_center(MetaUi.tlabel(Loc.powerup_key(def.id, "NAME"), [], 30)))
 	if state == "done":
 		v.add_child(_center(MetaUi.label("✓", 44, UiTheme.WAX_GREEN, true)))
 	return p

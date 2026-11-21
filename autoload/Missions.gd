@@ -92,18 +92,25 @@ func claim(index: int, doubled: bool = false) -> int:
 	return coins
 
 
-## Texte affiché d'une mission (« Atteins 2 mangues »).
+## Texte affiché d'une mission (« Atteins 2 mangues »), dans la langue
+## courante : clé par type de mission (MISSION_KIND_*), au singulier ou au
+## pluriel selon l'objectif. MissionDef.text reste le modèle français de
+## référence (données), il n'est plus affiché.
 func describe(index: int) -> String:
 	var def := core.def_of(index)
 	if def == null:
 		return ""
 	var target := int(core.active[index]["target"])
+	var key := Loc.plural_key(kind_key(def.kind), target)
 	if def.kind == MissionDef.Kind.CREATE_RANK:
-		var n := FruitCatalogNames.name_of(def.rank).to_lower()
-		if target > 1 and not n.ends_with("s"):
-			n += "s"
-		return def.text % [target, n]
-	return def.text % target
+		var fruit := Loc.plural_key(String(Loc.data_key("FRUIT",
+			FruitCatalogNames.def_of(def.rank).id, "COUNT")), target)
+		return Loc.f(key, [target, StringName(fruit)])
+	return Loc.f(key, [target])
+
+
+static func kind_key(kind: MissionDef.Kind) -> String:
+	return "MISSION_KIND_%s" % MissionDef.Kind.keys()[kind]
 
 
 func _on_completed(index: int) -> void:

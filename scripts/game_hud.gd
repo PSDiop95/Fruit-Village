@@ -64,7 +64,7 @@ func bind(game: Game) -> void:
 	game.fruit_discovered.connect(func(_r: int) -> void: _refresh_goal())
 	game.revived.connect(_on_revived)
 	_score.text = "0"
-	_best.text = "Record : %d" % SaveManager.best_score
+	Loc.set_text(_best, "HUD_RECORD", [SaveManager.best_score])
 	_refresh_goal()
 	# Fenêtres méta en partie (offre de power-up, niveau supérieur) : calque
 	# au-dessus des textes Juice (calque 5).
@@ -130,7 +130,7 @@ func _build() -> void:
 	_next_thumb.size = Vector2(140, 140)
 	ring.add_child(_next_thumb)
 	var nt := _wood_label(42, UiTheme.CREAM, 12)
-	nt.text = "Suivant"
+	Loc.set_text(nt, "HUD_NEXT")
 	nt.position = Vector2(-20, -54)
 	nt.size = Vector2(276, 60)
 	ring.add_child(nt)
@@ -220,8 +220,8 @@ func show_fact(rank: int) -> void:
 	var def := _game.catalog.get_def(rank)
 	if _fact == null:
 		_build_fact_card()
-	_fact_title.text = "Nouveau : %s !" % def.display_name
-	_fact_text.text = def.fun_fact if not def.fun_fact.is_empty() else "Un nouveau fruit au marché !"
+	Loc.set_text(_fact_title, "FRUIT_DISCOVERED", [Loc.fruit_name_key(def.id)])
+	Loc.set_text(_fact_text, "%s", [Loc.data_key("FRUIT", def.id, "FACT")])
 	_fact_thumb.set_fruit(rank)
 	_fact_thumb.pop()
 	if _fact_tween:
@@ -272,7 +272,7 @@ func _build_fact_card() -> void:
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(col)
 	var head := Label.new()
-	head.text = "Le savais-tu ?"
+	Loc.set_text(head, "HUD_DID_YOU_KNOW")
 	head.add_theme_font_size_override("font_size", 34)
 	head.add_theme_color_override("font_color", UiTheme.INK_SOFT)
 	col.add_child(head)
@@ -385,7 +385,7 @@ func _centered_panel(width: float) -> PanelContainer:
 
 func _button(text: String, variation: StringName, cb: Callable) -> Button:
 	var b := Button.new()
-	b.text = text
+	Loc.set_text(b, text)
 	b.theme_type_variation = variation
 	b.custom_minimum_size = Vector2(560, 124)
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -402,14 +402,14 @@ func _build_pause() -> void:
 	box.add_theme_constant_override("separation", 30)
 	_pause_panel.add_child(box)
 	var t := Label.new()
-	t.text = "Pause"
+	Loc.set_text(t, "PAUSE_TITLE")
 	t.theme_type_variation = &"LabelTitle"
 	t.add_theme_font_size_override("font_size", 80)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(t)
-	box.add_child(_button("Reprendre", &"ButtonGreen", close_pause))
-	box.add_child(_button("Réglages", &"Button", open_settings))
-	box.add_child(_button("Menu", &"ButtonCream", func() -> void:
+	box.add_child(_button("PAUSE_RESUME", &"ButtonGreen", close_pause))
+	box.add_child(_button("MENU_SETTINGS", &"Button", open_settings))
+	box.add_child(_button("GAMEOVER_MENU", &"ButtonCream", func() -> void:
 		close_pause()
 		menu_requested.emit()))
 	UiJuice.bounce_all(_pause_panel)
@@ -483,7 +483,7 @@ func _notification(what: int) -> void:
 func set_next(rank: int, def: FruitDef) -> void:
 	if _next == null:
 		return
-	_next.text = def.display_name
+	Loc.set_text(_next, "%s", [Loc.fruit_name_key(def.id)])
 	if _next_thumb.current_rank() != rank:
 		_next_thumb.set_fruit(rank)
 		_next_thumb.pop()
@@ -503,20 +503,13 @@ func _refresh_goal() -> void:
 	var target := mini(best + 1, cat.max_rank())
 	_goal_rank = target
 	if best >= cat.max_rank():
-		_goal_label.text = "Prochain : fais pousser un Baobab !"
+		Loc.set_text(_goal_label, "HUD_GOAL_BAOBAB")
 	else:
-		_goal_label.text = "Prochain : atteins %s !" % _with_article(cat.get_def(target).display_name)
+		Loc.set_text(_goal_label, "HUD_GOAL_REACH",
+			[Loc.data_key("FRUIT", cat.get_def(target).id, "GOAL")])
 	_goal_bar.max_value = float(target)
 	_goal_bar.value = float(_game.max_rank_reached)
 
-
-static func _with_article(name: String) -> String:
-	var fem := ["Goyave", "Mangue", "Papaye", "Noix de coco"]
-	if name in fem:
-		return "la " + name
-	if name in ["Ananas"]:
-		return "l'" + name
-	return "le " + name
 
 
 ## Score affiché = valeur qui roule vers le vrai score (interpolation).
@@ -527,7 +520,7 @@ func displayed_score() -> int:
 func _on_score(s: int) -> void:
 	_target_score = s
 	_roll_speed = maxf((s - _shown_score) / maxf(_cfg.score_roll_time, 0.01), 1.0)
-	_best.text = "Record : %d" % maxi(SaveManager.best_score, s)
+	Loc.set_text(_best, "HUD_RECORD", [maxi(SaveManager.best_score, s)])
 	_goal_bar.value = float(_game.max_rank_reached)
 	# Pulse à chaque gain
 	if _pulse_tween:

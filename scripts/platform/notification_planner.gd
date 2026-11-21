@@ -12,6 +12,12 @@ const ID_REMINDER := 1
 const ID_STREAK := 2
 
 
+## Textes (V2-0) : clés de traduction, traduites dans la langue courante.
+const TITLE_KEY := "NOTIF_TITLE"
+const REMINDER_KEY := "NOTIF_REMINDER"
+const STREAK_KEY := "NOTIF_STREAK"
+
+
 ## Renvoie [{id, delay (s), title, text}], trié par délai.
 static func plan(clock: MetaClock, cfg: DailyRewardsConfig, claimed_today: bool,
 		streak: int) -> Array[Dictionary]:
@@ -24,14 +30,14 @@ static func plan(clock: MetaClock, cfg: DailyRewardsConfig, claimed_today: bool,
 	if reminder <= 0:
 		reminder = clock.seconds_until(day + 1, cfg.reminder_hour)
 		day += 1
-	out.append({"id": ID_REMINDER, "delay": reminder, "title": cfg.reminder_title,
-		"text": cfg.reminder_text})
+	out.append({"id": ID_REMINDER, "delay": reminder, "title": Loc.t(TITLE_KEY),
+		"text": Loc.t(REMINDER_KEY)})
 	if streak > 0 and cfg.notifications_max_per_day >= 2:
 		var warn_day := today + 1 if claimed_today else today
 		var warn := clock.seconds_until(warn_day, cfg.streak_warning_hour)
 		if warn <= 0:
 			warn = clock.seconds_until(warn_day + 1, cfg.streak_warning_hour)
-		out.append({"id": ID_STREAK, "delay": warn, "title": cfg.reminder_title,
-			"text": cfg.streak_text})
+		out.append({"id": ID_STREAK, "delay": warn, "title": Loc.t(TITLE_KEY),
+			"text": Loc.t(STREAK_KEY)})
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["delay"] < b["delay"])
 	return out

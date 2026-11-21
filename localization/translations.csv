@@ -1,0 +1,203 @@
+keys,fr,en
+MENU_PLAY,Jouer,Play
+MENU_SETTINGS,Réglages,Settings
+TITLE_MISSIONS,Missions,Missions
+TITLE_DAILY,Cadeau,Gift
+TITLE_ALBUM,Album,Album
+TITLE_BIGGEST_FRUIT,Plus gros fruit :,Biggest fruit:
+META_LEVEL,Niveau %d,Level %d
+META_LEVEL_SHORT,Niv. %d,Lv. %d
+META_LOCKED_INFO,Débloqué au niveau %d.\nJoue des parties pour gagner de l'XP !,Unlocks at level %d.\nPlay games to earn XP!
+META_UNLOCKED_AT,Débloqué au niveau %d,Unlocks at level %d
+FEATURE_MISSIONS,Missions du jour,Daily missions
+FEATURE_POWERUPS,Power-ups,Power-ups
+FEATURE_DAILY,Cadeau du jour,Daily gift
+FEATURE_ALBUM,Album des fruits,Fruit album
+COMMON_OK,OK,OK
+COMMON_CANCEL,Annuler,Cancel
+HUD_NEXT,Suivant,Next
+HUD_RECORD,Record : %d,Best: %d
+HUD_DID_YOU_KNOW,Le savais-tu ?,Did you know?
+HUD_GOAL_REACH,Prochain : atteins %s !,Next: reach %s!
+HUD_GOAL_BAOBAB,Prochain : fais pousser un Baobab !,Next: grow a Baobab!
+FRUIT_DISCOVERED,Nouveau : %s !,New: %s!
+PAUSE_TITLE,Pause,Pause
+PAUSE_RESUME,Reprendre,Resume
+JUICE_COMBO,COMBO x%d !,COMBO x%d!
+JUICE_BAOBAB,BAOBAB !,BAOBAB!
+GAMEOVER_BIGGEST_FRUIT,PLUS GROS FRUIT,BIGGEST FRUIT
+GAMEOVER_NEW_RECORD,NOUVEAU RECORD !,NEW RECORD!
+GAMEOVER_STAT_MERGES,Fusions,Merges
+GAMEOVER_STAT_COMBO,Combo max,Best combo
+GAMEOVER_STAT_TIME,Durée,Time
+GAMEOVER_CONTINUE,Continuer,Continue
+GAMEOVER_CONTINUE_HINT,Retire les %d fruits les plus hauts,Removes the %d highest fruits
+GAMEOVER_NO_THANKS,Non merci,No thanks
+GAMEOVER_REPLAY,Rejouer,Play again
+GAMEOVER_MENU,Menu,Menu
+GAMEOVER_RIBBON_RECORD,Bravo !,Well done!
+GAMEOVER_RIBBON_OVER,Le panier déborde !,The basket overflows!
+GAMEOVER_RIBBON_CONTINUE,Continuer ?,Continue?
+GAMEOVER_DOUBLE,Doubler,Double
+GAMEOVER_XP_LINE,+%d XP  ·  Niveau %d,+%d XP  ·  Level %d
+MISSION_LINE_DONE,✓ %s,✓ %s
+MISSION_RECEIVED,✓ Reçu,✓ Claimed
+MISSION_RECEIVED_X2,✓ Reçu x2,✓ Claimed x2
+MISSION_NEW_IN,Nouvelles missions dans %d h %02d,New missions in %dh %02d
+MISSION_KIND_GAMES_ONE,Joue %d partie,Play %d game
+MISSION_KIND_GAMES_OTHER,Joue %d parties,Play %d games
+MISSION_KIND_COMBOS_ONE,Fais %d combo,Make %d combo
+MISSION_KIND_COMBOS_OTHER,Fais %d combos,Make %d combos
+MISSION_KIND_MERGES_ONE,Fais %d fusion,Make %d merge
+MISSION_KIND_MERGES_OTHER,Fais %d fusions,Make %d merges
+MISSION_KIND_SCORE_SINGLE_ONE,Marque %d point en une partie,Score %d point in one game
+MISSION_KIND_SCORE_SINGLE_OTHER,Marque %d points en une partie,Score %d points in one game
+MISSION_KIND_CREATE_RANK_ONE,Atteins %d %s,Make %d %s
+MISSION_KIND_CREATE_RANK_OTHER,Atteins %d %s,Make %d %s
+MISSION_KIND_POWERUPS_ONE,Utilise %d power-up,Use %d power-up
+MISSION_KIND_POWERUPS_OTHER,Utilise %d power-ups,Use %d power-ups
+DAILY_STREAK_ONE,Série : %d jour,Streak: %d day
+DAILY_STREAK_OTHER,Série : %d jours,Streak: %d days
+DAILY_DAY,Jour %d,Day %d
+DAILY_CHEST,Coffre,Chest
+DAILY_CLAIM,Récupérer,Claim
+DAILY_RESTART,Recommencer au jour 1,Restart at day 1
+DAILY_SHIELD,Protéger ma série,Protect my streak
+DAILY_CLOCK_SUSPECT,L'heure du téléphone semble incorrecte : le cadeau reviendra quand elle sera remise à l'heure.,Your phone's clock looks wrong: the gift will come back once it is set right.
+DAILY_COME_BACK,Reviens demain pour le jour %d !,Come back tomorrow for day %d!
+DAILY_STREAK_LOST,Tu as manqué un jour : ta série repart de zéro…,You missed a day: your streak starts over…
+DAILY_STREAK_PROTECT_ONE,Tu as manqué un jour ! Protège ta série de %d jour.,You missed a day! Protect your %d-day streak.
+DAILY_STREAK_PROTECT_OTHER,Tu as manqué un jour ! Protège ta série de %d jours.,You missed a day! Protect your %d-day streak.
+POWERUP_BUY,Acheter  %d,Buy  %d
+POWERUP_COOLDOWN,%d s,%d s
+POWERUP_FREE_AD,%s Pub,%s Ad
+POWERUP_FREE_WITH_AD,Gratuit avec une pub,Free with an ad
+POWERUP_LOCKED_INFO,"Secouer, Pilon, Échange, Agrandir : débloqués au niveau %d.\nUn de chaque offert !","Shake, Pestle, Swap, Grow: unlocked at level %d.\nOne of each for free!"
+POWERUP_PESTLE_AIM,Touche un fruit à écraser,Tap a fruit to crush it
+POWERUP_YOU_HAVE,Tu as  ,You have  
+LEVELUP_TITLE,Niveau supérieur !,Level up!
+LEVELUP_REWARD,Récompense :  ,Reward:  
+LEVELUP_UNLOCKED,Débloqué : %s,Unlocked: %s
+LEVELUP_POWERUP_GIFT,1 de chaque power-up offert !,1 of each power-up for free!
+LEVELUP_OK,Super !,Great!
+ALBUM_PROGRESS,%d / %d fruits,%d / %d fruits
+ALBUM_COMPLETE,Album complet : panier doré débloqué !,Album complete: golden basket unlocked!
+ALBUM_GOAL,Complète l'album pour gagner le panier doré,Complete the album to win the golden basket
+CARD_NAMES,EN : %s,FR: %s
+CARD_NAMES_WOLOF,EN : %s   ·   Wolof : %s,FR: %s   ·   Wolof: %s
+CARD_BENEFITS,BIENFAITS,BENEFITS
+CARD_SHARE,Partager,Share
+SHARE_FRUIT_TEXT,J'ai débloqué %s dans Fruit Village ! %s,I unlocked %s in Fruit Village! %s
+SETTINGS_SECTION_SOUND,SON,SOUND
+SETTINGS_SECTION_DISPLAY,AFFICHAGE,DISPLAY
+SETTINGS_SECTION_PRIVACY,VIE PRIVÉE,PRIVACY
+SETTINGS_MUSIC,Musique,Music
+SETTINGS_SFX,Sons,Sounds
+SETTINGS_VIBRATION,Vibrations,Vibrations
+SETTINGS_REDUCED_EFFECTS,Effets réduits,Reduced effects
+SETTINGS_QUALITY,Qualité,Quality
+SETTINGS_AMBIANCE,Ambiance,Scenery
+SETTINGS_LANGUAGE,Langue,Language
+SETTINGS_REMINDERS,Rappels quotidiens,Daily reminders
+SETTINGS_ANALYTICS,Statistiques d'usage,Usage statistics
+SETTINGS_CONSENT,Consentement,Consent
+SETTINGS_PRIVACY_POLICY,Confidentialité,Privacy
+QUALITY_AUTO,Auto,Auto
+QUALITY_LOW,Bas,Low
+QUALITY_MEDIUM,Moyen,Medium
+QUALITY_HIGH,Haut,High
+LANGUAGE_NAME_FR,Français,Français
+LANGUAGE_NAME_EN,English,English
+LANGUAGE_CODE_FR,FR,FR
+LANGUAGE_CODE_EN,EN,EN
+NOTIF_TITLE,Fruit Village,Fruit Village
+NOTIF_REMINDER,Ta récompense du jour t'attend au marché !,Your daily reward is waiting at the market!
+NOTIF_STREAK,Ta série est en danger 🔥 Passe au marché avant minuit !,Your streak is in danger 🔥 Visit the market before midnight!
+AMBIANCE_JOUR_SHORT,Jour,Day
+AMBIANCE_COUCHER_SHORT,Soir,Evening
+AMBIANCE_NUIT_SHORT,Nuit,Night
+FRUIT_SIDEM_NAME,Sidem,Jujube
+FRUIT_SIDEM_FACT,"Le sidem est le fruit du jujubier : on le croque frais ou séché, sucré comme une petite pomme.","Sidem is the fruit of the jujube tree: eaten fresh or dried, it is as sweet as a little apple."
+FRUIT_SIDEM_GOAL,le Sidem,the Jujube
+FRUIT_SIDEM_COUNT_ONE,sidem,jujube
+FRUIT_SIDEM_COUNT_OTHER,sidems,jujubes
+LORE_SIDEM_TEXT,"Le sidem est le fruit du jujubier, un arbuste épineux qui pousse jusque dans le Sahel. On le croque frais ou séché, et on en fait aussi une pâte sucrée.","Sidem is the fruit of the jujube tree, a thorny shrub that grows all the way into the Sahel. It is eaten fresh or dried, and also made into a sweet paste."
+LORE_SIDEM_BENEFITS,"Riche en vitamine C et en fibres. Séché, c'est un en-cas plein d'énergie.","Rich in vitamin C and fiber. Dried, it makes an energy-packed snack."
+FRUIT_BISSAP_NAME,Bissap,Hibiscus
+FRUIT_BISSAP_FACT,"Avec les calices rouges du bissap, on prépare la boisson nationale du Sénégal.",The red calyces of bissap make the national drink of Senegal.
+FRUIT_BISSAP_GOAL,le Bissap,the Hibiscus
+FRUIT_BISSAP_COUNT_ONE,bissap,hibiscus
+FRUIT_BISSAP_COUNT_OTHER,bissaps,hibiscus
+LORE_BISSAP_TEXT,"Ce ne sont pas des fruits mais les calices rouges d'une fleur d'hibiscus. Infusés et sucrés, ils donnent le bissap, servi à toutes les fêtes.","These are not fruits but the red calyces of a hibiscus flower. Steeped and sweetened, they make bissap, served at every celebration."
+LORE_BISSAP_BENEFITS,Ses calices rouges sont riches en antioxydants (anthocyanes). Une boisson rafraîchissante et sans caféine.,"Its red calyces are rich in antioxidants (anthocyanins). A refreshing, caffeine-free drink."
+FRUIT_TAMARIN_NAME,Tamarin,Tamarind
+FRUIT_TAMARIN_FACT,"Le tamarin, « dakhar » en wolof, parfume jus et sauces de sa pulpe acidulée.","Tamarind, « dakhar » in Wolof, flavors juices and sauces with its tangy pulp."
+FRUIT_TAMARIN_GOAL,le Tamarin,the Tamarind
+FRUIT_TAMARIN_COUNT_ONE,tamarin,tamarind
+FRUIT_TAMARIN_COUNT_OTHER,tamarins,tamarinds
+LORE_TAMARIN_TEXT,"Sa pulpe brune et acidulée parfume jus, bonbons et sauces. Le quartier de Dakar-Plateau aurait tiré son nom des tamariniers, « dakhar » en wolof.","Its brown, tangy pulp flavors juices, candies and sauces. The Dakar-Plateau district may owe its name to tamarind trees, « dakhar » in Wolof."
+LORE_TAMARIN_BENEFITS,"Sa pulpe apporte fibres, potassium et magnésium. On l'utilise traditionnellement pour aider la digestion.","Its pulp provides fiber, potassium and magnesium. It is traditionally used to aid digestion."
+FRUIT_DITAKH_NAME,Ditakh,Detar
+FRUIT_DITAKH_FACT,Le ditakh cache une chair verte très riche en vitamine C : son jus est un trésor.,Detar hides green flesh packed with vitamin C: its juice is a treasure.
+FRUIT_DITAKH_GOAL,le Ditakh,the Detar
+FRUIT_DITAKH_COUNT_ONE,ditakh,detar
+FRUIT_DITAKH_COUNT_OTHER,ditakhs,detars
+LORE_DITAKH_TEXT,Sous sa coque verte se cache une pulpe farineuse très riche en vitamine C. Son jus vert est un classique des marchés de Dakar.,Under its green shell hides a mealy pulp very rich in vitamin C. Its green juice is a classic of the Dakar markets.
+LORE_DITAKH_BENEFITS,"Très riche en vitamine C, il apporte aussi des fibres et des minéraux.","Very rich in vitamin C, it also provides fiber and minerals."
+FRUIT_MADD_NAME,Madd,Saba fruit
+FRUIT_MADD_FACT,"Le madd se déguste avec du sucre, du sel et un peu de piment : acide et sucré à la fois !","Saba fruit is eaten with sugar, salt and a little chili: sour and sweet at once!"
+FRUIT_MADD_GOAL,le Madd,the Saba fruit
+FRUIT_MADD_COUNT_ONE,madd,saba fruit
+FRUIT_MADD_COUNT_OTHER,madds,saba fruits
+LORE_MADD_TEXT,"Le madd pousse sur une liane de la forêt de Casamance. On le mange avec du sucre, du sel et une pointe de piment.","Saba fruit grows on a vine in the Casamance forest. It is eaten with sugar, salt and a pinch of chili."
+LORE_MADD_BENEFITS,Riche en vitamine C et en sucres naturels : il rafraîchit et redonne de l'énergie.,Rich in vitamin C and natural sugars: it refreshes and restores energy.
+FRUIT_GOYAVE_NAME,Goyave,Guava
+FRUIT_GOYAVE_FACT,La goyave contient plus de vitamine C qu'une orange.,Guava contains more vitamin C than an orange.
+FRUIT_GOYAVE_GOAL,la Goyave,the Guava
+FRUIT_GOYAVE_COUNT_ONE,goyave,guava
+FRUIT_GOYAVE_COUNT_OTHER,goyaves,guavas
+LORE_GOYAVE_TEXT,"La goyave pousse dans les cours et les jardins de toute l'Afrique de l'Ouest. Sa chair rose se mange crue, en jus ou en confiture.","Guava grows in yards and gardens all over West Africa. Its pink flesh is eaten raw, as juice or as jam."
+LORE_GOYAVE_BENEFITS,"Plus riche en vitamine C qu'une orange, et pleine de fibres.","Richer in vitamin C than an orange, and full of fiber."
+FRUIT_MANGUE_NAME,Mangue,Mango
+FRUIT_MANGUE_FACT,"Il existe des centaines de variétés de mangues : leur saison, c'est la fête au marché.",There are hundreds of mango varieties: mango season is a party at the market.
+FRUIT_MANGUE_GOAL,la Mangue,the Mango
+FRUIT_MANGUE_COUNT_ONE,mangue,mango
+FRUIT_MANGUE_COUNT_OTHER,mangues,mangoes
+LORE_MANGUE_TEXT,"La saison des mangues, de mai à juillet, remplit les étals de Kermel à Ziguinchor. Kent, Keitt, Bouko : chaque variété a ses fans.","Mango season, from May to July, fills the stalls from Kermel to Ziguinchor. Kent, Keitt, Bouko: every variety has its fans."
+LORE_MANGUE_BENEFITS,"Riche en vitamine A (bêta-carotène) et en vitamine C, utiles pour la vue et les défenses de l'organisme.","Rich in vitamin A (beta-carotene) and vitamin C, good for eyesight and the body's defenses."
+FRUIT_PAPAYE_NAME,Papaye,Papaya
+FRUIT_PAPAYE_FACT,Les graines noires de la papaye ont un petit goût poivré.,The black seeds of the papaya have a slightly peppery taste.
+FRUIT_PAPAYE_GOAL,la Papaye,the Papaya
+FRUIT_PAPAYE_COUNT_ONE,papaye,papaya
+FRUIT_PAPAYE_COUNT_OTHER,papayes,papayas
+LORE_PAPAYE_TEXT,"La papaye pousse vite, souvent dans un coin de la cour. Ses graines noires ont un petit goût poivré.","Papaya grows fast, often in a corner of the yard. Its black seeds have a slightly peppery taste."
+LORE_PAPAYE_BENEFITS,"Elle contient de la papaïne, une enzyme qui aide à digérer les protéines, et beaucoup de vitamine C.","It contains papain, an enzyme that helps digest proteins, and lots of vitamin C."
+FRUIT_ANANAS_NAME,Ananas,Pineapple
+FRUIT_ANANAS_FACT,Un pied d'ananas met plus d'un an à donner un seul fruit.,A pineapple plant takes more than a year to grow a single fruit.
+FRUIT_ANANAS_GOAL,l'Ananas,the Pineapple
+FRUIT_ANANAS_COUNT_ONE,ananas,pineapple
+FRUIT_ANANAS_COUNT_OTHER,ananas,pineapples
+LORE_ANANAS_TEXT,Un pied d'ananas met plus d'un an à donner un seul fruit. Ceux de Guinée et de Côte d'Ivoire sont réputés pour leur douceur.,A pineapple plant takes more than a year to grow a single fruit. Those from Guinea and Côte d'Ivoire are famous for their sweetness.
+LORE_ANANAS_BENEFITS,"Il contient de la bromélaïne, une enzyme digestive, et il est riche en vitamine C et en manganèse.","It contains bromelain, a digestive enzyme, and is rich in vitamin C and manganese."
+FRUIT_COCO_NAME,Noix de coco,Coconut
+FRUIT_COCO_FACT,"L'eau de coco, fraîche et sucrée, se boit directement dans la noix.","Fresh, sweet coconut water is drunk straight from the nut."
+FRUIT_COCO_GOAL,la Noix de coco,the Coconut
+FRUIT_COCO_COUNT_ONE,noix de coco,coconut
+FRUIT_COCO_COUNT_OTHER,noix de coco,coconuts
+LORE_COCO_TEXT,"Sur la plage, on boit l'eau de coco directement dans la noix ouverte à la machette. La chair râpée parfume desserts et sauces.","On the beach, coconut water is drunk straight from the nut, opened with a machete. The grated flesh flavors desserts and sauces."
+LORE_COCO_BENEFITS,L'eau de coco apporte du potassium et des minéraux qui hydratent ; la chair est riche en fibres.,Coconut water provides potassium and minerals that hydrate; the flesh is rich in fiber.
+FRUIT_PAIN_DE_SINGE_NAME,Pain de singe,Baobab fruit
+FRUIT_PAIN_DE_SINGE_FACT,"Le pain de singe est le fruit du baobab, l'arbre à palabres. Sa pulpe donne le bouye, une boisson douce.","Monkey bread is the fruit of the baobab, the palaver tree. Its pulp makes bouye, a sweet drink."
+FRUIT_PAIN_DE_SINGE_GOAL,le Pain de singe,the Baobab fruit
+FRUIT_PAIN_DE_SINGE_COUNT_ONE,pain de singe,baobab fruit
+FRUIT_PAIN_DE_SINGE_COUNT_OTHER,pains de singe,baobab fruits
+LORE_PAIN_DE_SINGE_TEXT,"C'est le fruit du baobab, l'arbre à palabres où l'on se réunit pour discuter. Sa pulpe blanche donne le bouye, une boisson douce et onctueuse.","It is the fruit of the baobab, the palaver tree where people gather to talk. Its white pulp makes bouye, a sweet and creamy drink."
+LORE_PAIN_DE_SINGE_BENEFITS,"Sa pulpe est riche en vitamine C, en calcium et en fibres : on la surnomme souvent « superfruit ».","Its pulp is rich in vitamin C, calcium and fiber: it is often called a « superfruit »."
+POWERUP_SHAKE_NAME,Secouer,Shake
+POWERUP_SHAKE_DESC,Secoue le panier : les fruits se déplacent et fusionnent souvent.,Shakes the basket: the fruits move around and often merge.
+POWERUP_PESTLE_NAME,Pilon,Pestle
+POWERUP_PESTLE_DESC,Touche un fruit pour l'écraser.,Tap a fruit to crush it.
+POWERUP_SWAP_NAME,Échange,Swap
+POWERUP_SWAP_DESC,Change le fruit à lâcher.,Changes the fruit to drop.
+POWERUP_GROW_NAME,Agrandir,Grow
+POWERUP_GROW_DESC,Le prochain fruit lâché monte d'un rang (jusqu'à la Goyave).,The next fruit you drop goes up one size (up to the Guava).

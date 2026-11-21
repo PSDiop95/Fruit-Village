@@ -14,7 +14,7 @@ func _init(p_level: int, p_coins: int, p_unlocks: Array[StringName]) -> void:
 	level = p_level
 	coins = p_coins
 	unlocks = p_unlocks
-	super("Niveau supérieur !", 860.0)
+	super("LEVELUP_TITLE", 860.0)
 	close_button.visible = false
 
 
@@ -41,17 +41,18 @@ func _ready() -> void:
 		var row := HBoxContainer.new()
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		body.add_child(row)
-		row.add_child(MetaUi.label("Récompense :  ", 44, UiTheme.INK, true))
+		row.add_child(MetaUi.tlabel("LEVELUP_REWARD", [], 44, UiTheme.INK, true))
 		row.add_child(MetaUi.coin_pill(coins, 44))
 	for f in unlocks:
-		var l := MetaUi.label("Débloqué : %s" % MetaUi.feature_name(f), 46, UiTheme.WAX_GREEN, true)
+		var l := MetaUi.tlabel("LEVELUP_UNLOCKED", [StringName(MetaUi.feature_key(f))], 46,
+			UiTheme.WAX_GREEN, true)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		body.add_child(l)
 		if f == ProgressionCore.POWERUPS:
-			var g := MetaUi.label("1 de chaque power-up offert !", 36, UiTheme.INK_SOFT)
+			var g := MetaUi.tlabel("LEVELUP_POWERUP_GIFT", [], 36, UiTheme.INK_SOFT)
 			g.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			body.add_child(g)
-	body.add_child(MetaUi.button("Super !", &"ButtonGreen", Vector2(440, 120), close, 52))
+	body.add_child(MetaUi.button("LEVELUP_OK", &"ButtonGreen", Vector2(440, 120), close, 52))
 	_big.scale = Vector2.ONE * 0.2
 	var tw := create_tween().set_ignore_time_scale(true)
 	tw.tween_property(_big, "scale", Vector2.ONE, 0.6).set_trans(Tween.TRANS_ELASTIC) \

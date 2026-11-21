@@ -7,13 +7,13 @@ const SAVE_PATH := "user://test_ui_save.json"
 
 
 func before_each() -> void:
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
+	SaveManager.erase_files(SAVE_PATH)
 	SaveManager.use_path(SAVE_PATH)
 
 
 func after_each() -> void:
 	get_tree().paused = false
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
+	SaveManager.erase_files(SAVE_PATH)
 	SaveManager.use_path(SaveManager.DEFAULT_SAVE_PATH)
 
 

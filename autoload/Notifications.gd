@@ -22,6 +22,8 @@ func _ready() -> void:
 		if k == &"notifications_on":
 			reschedule())
 	Progression.level_up.connect(_on_level_up)
+	# Textes des rappels dans la nouvelle langue (V2-0).
+	Locale.changed.connect(func(_l: String) -> void: reschedule())
 	reschedule.call_deferred()
 	# Permission déjà demandée (cadeau débloqué) : réenregistre l'appareil pour
 	# le push à chaque lancement (sans nouvelle fenêtre).

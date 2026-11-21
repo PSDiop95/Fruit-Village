@@ -176,14 +176,16 @@ func refresh() -> void:
 		var cd := controller.cooldown_left(id)
 		# Pièce seulement devant un prix (maquette : « [pièce] 300 »).
 		(_coin_icons[id] as Control).visible = unlocked and cd <= 0.0 and stock == 0 and not free_ad
+		# Rafraîchi toutes les REFRESH_EVERY s : suit la langue sans liaison.
+		info.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 		if not unlocked:
-			info.text = "Niv. %d" % Progression.unlock_level(ProgressionCore.POWERUPS)
+			info.text = Loc.f("META_LEVEL_SHORT", [Progression.unlock_level(ProgressionCore.POWERUPS)])
 		elif cd > 0.0:
-			info.text = "%d s" % ceili(cd)
+			info.text = Loc.f("POWERUP_COOLDOWN", [ceili(cd)])
 		elif stock > 0:
-			info.text = def.display_name
+			info.text = Loc.t(Loc.powerup_key(def.id, "NAME"))
 		elif free_ad:
-			info.text = "%s Pub" % MetaUi.AD_GLYPH
+			info.text = Loc.f("POWERUP_FREE_AD", [MetaUi.AD_GLYPH])
 		else:
 			info.text = "%d" % def.price
 
@@ -214,14 +216,14 @@ func _modal(title: String) -> MetaModal:
 
 
 func _explain_locked() -> MetaModal:
-	var m := _modal("Power-ups")
-	var l := MetaUi.label("Secouer, Pilon, Échange, Agrandir : débloqués au niveau %d.\nUn de chaque offert !"
-		% Progression.unlock_level(ProgressionCore.POWERUPS), 42)
+	var m := _modal("FEATURE_POWERUPS")
+	var l := MetaUi.tlabel("POWERUP_LOCKED_INFO",
+		[Progression.unlock_level(ProgressionCore.POWERUPS)], 42)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(620, 0)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	m.body.add_child(l)
-	m.body.add_child(MetaUi.button("OK", &"ButtonGreen", Vector2(360, 116), m.close, 48))
+	m.body.add_child(MetaUi.button("COMMON_OK", &"ButtonGreen", Vector2(360, 116), m.close, 48))
 	offer = m
 	return m
 
@@ -230,25 +232,26 @@ func _explain_locked() -> MetaModal:
 ## et qu'une pub est prête). Le jeu est en pause pendant l'offre.
 func open_offer(id: StringName) -> MetaModal:
 	var def := controller.config.get_def(id)
-	var m := _modal(def.display_name)
+	var m := _modal(Loc.powerup_key(def.id, "NAME"))
 	offer = m
-	var d := MetaUi.label(def.description, 42)
+	var d := MetaUi.tlabel(Loc.powerup_key(def.id, "DESC"), [], 42)
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	d.custom_minimum_size = Vector2(620, 0)
 	m.body.add_child(d)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	m.body.add_child(row)
-	row.add_child(MetaUi.label("Tu as  ", 40))
+	row.add_child(MetaUi.tlabel("POWERUP_YOU_HAVE", [], 40))
 	row.add_child(MetaUi.coin_pill(Wallet.coins(), 40))
-	var buy := MetaUi.button("Acheter  %d" % def.price, &"ButtonGreen", Vector2(560, 116), func() -> void:
+	var buy := MetaUi.button("", &"ButtonGreen", Vector2(560, 116), func() -> void:
 		m.close()
 		controller.buy_and_use(id), 46)
+	Loc.set_text(buy, "POWERUP_BUY", [def.price])
 	buy.disabled = not Wallet.can_afford(def.price)
 	m.body.add_child(buy)
 	if controller.ad_placement(id) != &"" and AdsManager.is_rewarded_ready(controller.ad_placement(id)):
 		AdsManager.offer(controller.ad_placement(id))
-		m.body.add_child(MetaUi.ad_button("Gratuit avec une pub", Vector2(640, 116), func() -> void:
+		m.body.add_child(MetaUi.ad_button("POWERUP_FREE_WITH_AD", Vector2(640, 116), func() -> void:
 			m.close()
 			controller.use_with_ad(id), 44))
 	return m
@@ -268,14 +271,15 @@ func _show_aim() -> void:
 	tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	aim_overlay.add_child(tint)
 	ScreenFit.bleed_to_screen(tint)
-	var banner := MetaUi.outlined("Touche un fruit à écraser", 56, UiTheme.CREAM, 14)
+	var banner := MetaUi.outlined("", 56, UiTheme.CREAM, 14)
+	Loc.set_text(banner, "POWERUP_PESTLE_AIM")
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	# En haut, sous la barre « Prochain » : loin d'« Annuler » (en bas).
 	banner.position = Vector2(0, AIM_BANNER_Y)
 	banner.size = Vector2(1080, 80)
 	aim_overlay.add_child(banner)
 	UiJuice.breathe(banner, 0.05, 1.0)
-	var cancel := MetaUi.button("Annuler", &"ButtonCream", Vector2(360, 112), controller.cancel_aim, 44)
+	var cancel := MetaUi.button("COMMON_CANCEL", &"ButtonCream", Vector2(360, 112), controller.cancel_aim, 44)
 	cancel.position = Vector2(540 - 180, get_viewport_rect().size.y - 150)
 	aim_overlay.add_child(cancel)
 	aim_overlay.gui_input.connect(func(e: InputEvent) -> void:

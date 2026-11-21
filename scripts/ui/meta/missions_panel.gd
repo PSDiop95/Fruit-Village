@@ -9,7 +9,7 @@ var _clock := MetaClock.new()
 
 
 func _init() -> void:
-	super("Missions du jour", 980.0)
+	super("FEATURE_MISSIONS", 980.0)
 
 
 func _ready() -> void:
@@ -24,8 +24,8 @@ func _rebuild() -> void:
 		c.queue_free()
 	rows.clear()
 	if not Missions.is_unlocked():
-		body.add_child(MetaUi.label("Débloqué au niveau %d" %
-			Progression.unlock_level(ProgressionCore.MISSIONS), 46))
+		body.add_child(MetaUi.tlabel("META_UNLOCKED_AT",
+			[Progression.unlock_level(ProgressionCore.MISSIONS)], 46))
 		return
 	Missions.refresh()
 	_timer_label = MetaUi.label("", 36, UiTheme.INK_SOFT)
@@ -44,7 +44,7 @@ func _row(i: int) -> Control:
 	sec.add_child(v)
 	var top := HBoxContainer.new()
 	v.add_child(top)
-	var txt := MetaUi.label(Missions.describe(i), 42, UiTheme.INK, true)
+	var txt := MetaUi.tlabel("%s", [Missions.describe.bind(i)], 42, UiTheme.INK, true)
 	txt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	txt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	top.add_child(txt)
@@ -61,7 +61,8 @@ func _row(i: int) -> Control:
 	row.add_child(MetaUi.label("%d/%d" % [int(m["progress"]), int(m["target"])], 36))
 	var entry := {"bar": bar}
 	if m["claimed"]:
-		row.add_child(MetaUi.label("✓ Reçu" + (" x2" if m["doubled"] else ""), 38, UiTheme.WAX_GREEN, true))
+		row.add_child(MetaUi.tlabel("MISSION_RECEIVED_X2" if m["doubled"] else "MISSION_RECEIVED", [],
+			38, UiTheme.WAX_GREEN, true))
 	elif Missions.can_claim(i):
 		var actions := HBoxContainer.new()
 		actions.alignment = BoxContainer.ALIGNMENT_END
@@ -71,7 +72,7 @@ func _row(i: int) -> Control:
 			AdsManager.offer(AdsConfig.DOUBLE_MISSION)
 			entry["double"] = MetaUi.ad_button("x2", Vector2(220, 104), _claim_doubled.bind(i), 40)
 			actions.add_child(entry["double"])
-		entry["claim"] = MetaUi.button("Récupérer", &"ButtonGreen", Vector2(330, 104),
+		entry["claim"] = MetaUi.button("DAILY_CLAIM", &"ButtonGreen", Vector2(330, 104),
 			func() -> void: Missions.claim(i), 40)
 		actions.add_child(entry["claim"])
 	rows.append(entry)
@@ -90,4 +91,4 @@ func _update_timer() -> void:
 	if _timer_label == null or not is_instance_valid(_timer_label):
 		return
 	var s := _clock.seconds_until_midnight()
-	_timer_label.text = "Nouvelles missions dans %d h %02d" % [s / 3600, (s % 3600) / 60]
+	Loc.set_text(_timer_label, "MISSION_NEW_IN", [s / 3600, (s % 3600) / 60])

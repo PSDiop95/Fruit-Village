@@ -19,6 +19,14 @@ static func label(text: String, size: int = 44, color: Color = UiTheme.INK,
 	return l
 
 
+## Label traduit, lié à sa clé (suit les changements de langue, Loc).
+static func tlabel(key: String, args: Array = [], size: int = 44, color: Color = UiTheme.INK,
+		display := false) -> Label:
+	var l := label("", size, color, display)
+	Loc.set_text(l, key, args)
+	return l
+
+
 ## Texte « bois » contouré (lisible sur le décor).
 static func outlined(text: String, size: int, color: Color = UiTheme.CREAM,
 		outline: int = 12) -> Label:
@@ -77,7 +85,7 @@ static func format_int(n: int) -> String:
 static func button(text: String, variation: StringName, min_size: Vector2, cb: Callable,
 		font_size: int = 0) -> Button:
 	var b := Button.new()
-	b.text = text
+	Loc.set_text(b, text)
 	b.theme_type_variation = variation
 	b.custom_minimum_size = min_size
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -89,8 +97,19 @@ static func button(text: String, variation: StringName, min_size: Vector2, cb: C
 
 ## Bouton rewarded (bleu, « ▶ ») : n'existe que si la pub est prête (le
 ## bouton est masqué sinon, jamais de bouton qui ne fait rien).
-static func ad_button(text: String, min_size: Vector2, cb: Callable, font_size: int = 44) -> Button:
-	return button("%s  %s" % [AD_GLYPH, text], &"ButtonBlue", min_size, cb, font_size)
+## `key` : clé de traduction du libellé (Loc).
+static func ad_button(key: String, min_size: Vector2, cb: Callable, font_size: int = 44) -> Button:
+	var b := button("", &"ButtonBlue", min_size, cb, font_size)
+	set_ad_text(b, key)
+	return b
+
+
+## Libellé « ▶  texte » d'un bouton rewarded, lié à sa clé.
+static func set_ad_text(b: Button, key: String, args: Array = []) -> void:
+	if args.is_empty():
+		Loc.set_text(b, "%s  %s", [AD_GLYPH, StringName(key)])
+	else:
+		Loc.set_text(b, "%s  %s", [AD_GLYPH, Loc.f.bind(key, args)])
 
 
 ## Barre du thème M3 (celle de l'objectif « prochain fruit »), teinte de
@@ -135,11 +154,16 @@ static func badge(text: String = "!") -> Label:
 	return l
 
 
-## Nom de fonctionnalité (déblocages).
-static func feature_name(f: StringName) -> String:
+## Clé du nom de fonctionnalité (déblocages).
+static func feature_key(f: StringName) -> String:
 	match f:
-		ProgressionCore.MISSIONS: return "Missions du jour"
-		ProgressionCore.POWERUPS: return "Power-ups"
-		ProgressionCore.DAILY: return "Cadeau du jour"
-		ProgressionCore.ALBUM: return "Album des fruits"
+		ProgressionCore.MISSIONS: return "FEATURE_MISSIONS"
+		ProgressionCore.POWERUPS: return "FEATURE_POWERUPS"
+		ProgressionCore.DAILY: return "FEATURE_DAILY"
+		ProgressionCore.ALBUM: return "FEATURE_ALBUM"
 	return String(f)
+
+
+## Nom de fonctionnalité traduit (déblocages).
+static func feature_name(f: StringName) -> String:
+	return Loc.t(feature_key(f))

@@ -11,18 +11,20 @@ signal closed
 signal quality_changed(setting: int)
 
 const SOUND_TOGGLES := [
-	[&"music_on", "Musique"],
-	[&"sfx_on", "Sons"],
-	[&"vibration_on", "Vibrations"],
+	[&"music_on", "SETTINGS_MUSIC"],
+	[&"sfx_on", "SETTINGS_SFX"],
+	[&"vibration_on", "SETTINGS_VIBRATION"],
 ]
 const DISPLAY_TOGGLES := [
-	[&"reduced_effects", "Effets réduits"],
+	[&"reduced_effects", "SETTINGS_REDUCED_EFFECTS"],
 ]
 ## M4 : rappels locaux et statistiques d'usage.
 const PRIVACY_TOGGLES := [
-	[&"notifications_on", "Rappels quotidiens"],
-	[&"analytics_on", "Statistiques d'usage"],
+	[&"notifications_on", "SETTINGS_REMINDERS"],
+	[&"analytics_on", "SETTINGS_ANALYTICS"],
 ]
+## V2-0 : langues proposées (nom de chaque langue dans sa propre langue).
+const LANGUAGE_CHOICES := [LocaleCore.FR, LocaleCore.EN]
 const QUALITY_CHOICES := [VisualQuality.AUTO, JuiceConfig.Quality.LOW, JuiceConfig.Quality.MEDIUM,
 	JuiceConfig.Quality.HIGH]
 const WIDTH := 900.0
@@ -30,6 +32,7 @@ const WIDTH := 900.0
 var toggles: Dictionary = {}  # clé -> CheckButton
 var quality_buttons: Array[Button] = []
 var ambiance_buttons: Array[Button] = []
+var language_buttons: Array[Button] = []
 var close_button: Button
 var x_button: Button
 var consent_button: Button
@@ -49,11 +52,27 @@ func _ready() -> void:
 	var head := HBoxContainer.new()
 	box.add_child(head)
 	var title := Label.new()
-	title.text = "Réglages"
+	Loc.set_text(title, "MENU_SETTINGS")
 	title.theme_type_variation = &"LabelTitle"
 	title.add_theme_font_size_override("font_size", 76)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
+	# V2-0 : langue dans l'en-tête (FR | EN), sans hauteur en plus : la carte
+	# doit tenir en 9:16. Le choix actif est la langue appliquée (choix du
+	# joueur, sinon langue du téléphone) ; nom complet en infobulle.
+	var lang_labels: Array[String] = []
+	for c in LANGUAGE_CHOICES:
+		lang_labels.append("LANGUAGE_CODE_%s" % c.to_upper())
+	language_buttons = _segmented(head, lang_labels, LANGUAGE_CHOICES, Locale.SETTING,
+		func(v: Variant) -> void: Locale.set_language(str(v)),
+		func() -> Variant: return Locale.language)
+	var lang_bg := language_buttons[0].get_parent().get_parent() as Control
+	lang_bg.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# Chaque langue est nommée dans sa propre langue (infobulle, accessibilité).
+	for i in language_buttons.size():
+		var b := language_buttons[i]
+		b.custom_minimum_size = Vector2(108, 92)
+		b.tooltip_text = Loc.t("LANGUAGE_NAME_%s" % LANGUAGE_CHOICES[i].to_upper())
 	x_button = Button.new()
 	x_button.text = "×"
 	x_button.theme_type_variation = &"ButtonCream"
@@ -63,29 +82,29 @@ func _ready() -> void:
 	x_button.pressed.connect(close)
 	head.add_child(x_button)
 
-	var sound := _section(box, "Son")
+	var sound := _section(box, "SETTINGS_SECTION_SOUND")
 	for t in SOUND_TOGGLES:
 		_toggle(sound, t[0], t[1])
-	var display := _section(box, "Affichage")
+	var display := _section(box, "SETTINGS_SECTION_DISPLAY")
 	for t in DISPLAY_TOGGLES:
 		_toggle(display, t[0], t[1])
-	_caption(display, "Qualité")
+	_caption(display, "SETTINGS_QUALITY")
 	var labels: Array[String] = []
 	for q in QUALITY_CHOICES:
-		labels.append(VisualQuality.label(q))
+		labels.append(VisualQuality.label_key(q))
 	quality_buttons = _segmented(display, labels, QUALITY_CHOICES, &"quality",
-		func(v: int) -> void: _set_quality(v))
-	_caption(display, "Ambiance")
-	var amb_labels: Array[String] = ["Auto"]
+		func(v: Variant) -> void: _set_quality(int(v)))
+	_caption(display, "SETTINGS_AMBIANCE")
+	var amb_labels: Array[String] = ["QUALITY_AUTO"]
 	var amb_values := [Ambiances.AUTO]
 	var amb := Ambiances.load_default()
 	for i in amb.list.size():
-		amb_labels.append(amb.list[i].short_name)
+		amb_labels.append(String(Loc.data_key("AMBIANCE", amb.list[i].id, "SHORT")))
 		amb_values.append(i)
 	ambiance_buttons = _segmented(display, amb_labels, amb_values, &"ambiance",
-		func(v: int) -> void: SaveManager.set_setting(&"ambiance", v))
+		func(v: Variant) -> void: SaveManager.set_setting(&"ambiance", int(v)))
 
-	var privacy := _section(box, "Vie privée")
+	var privacy := _section(box, "SETTINGS_SECTION_PRIVACY")
 	for t in PRIVACY_TOGGLES:
 		_toggle(privacy, t[0], t[1], privacy_toggles)
 	# Consentement + politique côte à côte (la carte doit tenir en 9:16).
@@ -93,14 +112,14 @@ func _ready() -> void:
 	links.add_theme_constant_override("separation", 12)
 	privacy.add_child(links)
 	if AdsManager.privacy_options_required():
-		consent_button = _link_button("Consentement", AdsManager.show_privacy_options)
+		consent_button = _link_button("SETTINGS_CONSENT", AdsManager.show_privacy_options)
 		links.add_child(consent_button)
-	privacy_button = _link_button("Confidentialité",
+	privacy_button = _link_button("SETTINGS_PRIVACY_POLICY",
 		func() -> void: OS.shell_open(AdsManager.config.privacy_policy_url))
 	links.add_child(privacy_button)
 
 	close_button = Button.new()
-	close_button.text = "OK"
+	Loc.set_text(close_button, "COMMON_OK")
 	close_button.theme_type_variation = &"ButtonGreen"
 	close_button.custom_minimum_size = Vector2(420, 120)
 	close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -111,7 +130,7 @@ func _ready() -> void:
 
 func _link_button(text: String, cb: Callable) -> Button:
 	var b := Button.new()
-	b.text = text
+	Loc.set_text(b, text)
 	b.theme_type_variation = &"ButtonCream"
 	b.add_theme_font_size_override("font_size", 38)
 	b.custom_minimum_size = Vector2(0, 100)
@@ -122,7 +141,7 @@ func _link_button(text: String, cb: Callable) -> Button:
 
 ## Section : titre discret + fond un ton plus sombre.
 func _section(parent: Container, label: String) -> VBoxContainer:
-	_caption(parent, label.to_upper())
+	_caption(parent, label)
 	var p := PanelContainer.new()
 	p.theme_type_variation = &"PanelSection"
 	parent.add_child(p)
@@ -134,14 +153,14 @@ func _section(parent: Container, label: String) -> VBoxContainer:
 
 func _caption(parent: Container, text: String) -> void:
 	var l := Label.new()
-	l.text = text
+	Loc.set_text(l, text)
 	l.theme_type_variation = &"LabelCaption"
 	parent.add_child(l)
 
 
 func _toggle(parent: Container, key: StringName, label: String, into: Variant = null) -> void:
 	var cb := CheckButton.new()
-	cb.text = label
+	Loc.set_text(cb, label)
 	cb.button_pressed = bool(SaveManager.get_setting(key))
 	cb.custom_minimum_size = Vector2(0, 92)
 	cb.toggled.connect(func(on: bool) -> void: SaveManager.set_setting(key, on))
@@ -151,8 +170,10 @@ func _toggle(parent: Container, key: StringName, label: String, into: Variant = 
 
 
 ## Contrôle segmenté sur fond de section : le choix actif est le bouton orange.
+## `labels` : clés de traduction. `current` : valeur active (défaut : le
+## réglage `key`, entier).
 func _segmented(parent: Container, labels: Array[String], values: Array, key: StringName,
-		on_pick: Callable) -> Array[Button]:
+		on_pick: Callable, current := Callable()) -> Array[Button]:
 	var bg := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = UiTheme.CARD
@@ -167,14 +188,15 @@ func _segmented(parent: Container, labels: Array[String], values: Array, key: St
 	var out: Array[Button] = []
 	for i in labels.size():
 		var b := Button.new()
-		b.text = labels[i]
+		Loc.set_text(b, labels[i])
 		b.toggle_mode = true
 		b.button_group = group
 		b.custom_minimum_size = Vector2(0, 104)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var v: int = values[i]
+		var v: Variant = values[i]
 		b.set_meta(&"value", v)
-		b.button_pressed = int(SaveManager.get_setting(key)) == v
+		b.set_meta(&"current", current)
+		b.button_pressed = _current_value(key, current) == v
 		b.pressed.connect(func() -> void:
 			on_pick.call(v)
 			_refresh_segments(out, key))
@@ -184,10 +206,16 @@ func _segmented(parent: Container, labels: Array[String], values: Array, key: St
 	return out
 
 
+static func _current_value(key: StringName, current: Callable) -> Variant:
+	return current.call() if current.is_valid() else int(SaveManager.get_setting(key))
+
+
 func _refresh_segments(buttons: Array[Button], key: StringName) -> void:
-	var cur := int(SaveManager.get_setting(key))
+	if buttons.is_empty():
+		return
+	var cur: Variant = _current_value(key, buttons[0].get_meta(&"current"))
 	for b in buttons:
-		var on := int(b.get_meta(&"value")) == cur
+		var on: bool = b.get_meta(&"value") == cur
 		b.theme_type_variation = &"Button" if on else &"ButtonSegment"
 		b.add_theme_font_size_override("font_size", 36)
 
