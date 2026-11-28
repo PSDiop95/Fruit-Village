@@ -41,6 +41,24 @@ installé avec bundletool **sans publication**. Noter pour chaque ligne : PASS /
 - **Sauvegarde supprimée : PASS.** `save.json` effacé → progression rechargée depuis `.bak` (69 pièces, record
   3091, XP 174), `save.json` réécrit.
 
+- **Crashlytics (28/11/2026) : transmission BLOCKED.** Hors EEE (`gdprApplies=0`) le consentement est accordé
+  d'office ; avec « Statistiques d'usage » activé, la collecte s'active ~13 s après le lancement (journaux FA).
+  Le bouton « Test plantage » **ne fait pas planter l'app** : `crash()` du plugin godotx 3.1.0 lève une
+  `NullPointerException` sur le thread de rendu de Godot, que le pont Java de Godot intercepte (journal
+  « Forcing crash for testing… », même processus). Aucun rapport ne peut donc être produit par ce bouton.
+  Conséquence plus large : sans NDK, Crashlytics ne voit que les plantages Java/Kotlin (plugins, AdMob, Firebase)
+  et les ANR, **pas** les plantages natifs du moteur Godot. Options : plugin corrigé (lancer l'exception sur le
+  thread UI), ou NDK (option B, non autorisée).
+- **Session 20 min (28/11/2026) : PASS** (2e essai, hors ligne, appli redémarrée en mode avion pour qu'aucune
+  pub ne soit chargée, arrêt automatique si le jeu n'est plus au premier plan). 20 minutes de jeu continu dans
+  Fruit Village, même processus du début à la fin, **0 plantage, 0 ANR**, mémoire stable 635–713 Mo (pas de
+  fuite), 49–60 FPS ; plusieurs parties enchaînées (record 5166, power-ups débloqués). Le 1er essai (pub de test
+  au premier plan, appuis partis dans Chrome puis `com.mergerush.prototype`) est écarté.
+
+- **Anomalie non reproduite** : après les tests de sauvegarde, la langue enregistrée est passée de `fr` à `en`
+  sans action visible. Rejouée (FR, relance, modification, suppression, ouverture des Réglages) : non
+  reproduite. Possible appui automatique parasite ; à surveiller.
+
 ## 0. Préparation
 - [ ] `adb devices` voit l'appareil ; `adb logcat -c`.
 - [ ] Désinstaller l'app, réinstaller l'APK V2-0. Garder aussi l'APK V1 (code 6) pour la mise à jour.
@@ -75,7 +93,7 @@ installé avec bundletool **sans publication**. Noter pour chaque ligne : PASS /
 - [ ] Aucun texte coupé ni débordant (écran 1080×2408, plus long que 9:16) ; carte Réglages entière avec la barre de navigation.
 
 ## 5. Stabilité et ANR
-- [ ] Session de 20 min (≈ 6 parties) : aucun plantage, aucun « L'application ne répond pas ».
+- [x] Session de 20 min (≈ 6 parties) : aucun plantage, aucun « L'application ne répond pas ».
 - [ ] 20 allers-retours arrière-plan / premier plan (bouton accueil) dont pendant une pub de test : pas d'ANR.
 - [ ] Rotation verrouillée, écran éteint / rallumé en partie : reprise correcte.
 - [ ] Après la session : Play Console « Android vitals » (si build interne) ou `adb shell dumpsys activity anr` vide.
